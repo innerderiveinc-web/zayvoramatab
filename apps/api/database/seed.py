@@ -1159,7 +1159,123 @@ def seed_development_data(db_path: str = None) -> None:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED');
             """, (r_id, s_item, r_type, t_item, direct, strn, cnotes, s_id))
 
-        # 28. Capability Registry (Updated with Prompt 03, 04, 05, and 06 Engines)
+        # 28. Normalized Substances Catalog (Prompt 07)
+        substances_seed = [
+            (
+                'sub-senna', 'Senna', 'BOTANICAL', 'Cassia angustifolia', 'Leaves', 'Purified Dried Foliage',
+                'A06AB06', 'Hot 1, Dry 2', 'NON_TOXIC', 0, 'RESOLVED', 'APPROVED', 1
+            ),
+            (
+                'sub-filfil-siah', 'Filfil Siah', 'BOTANICAL', 'Piper nigrum', 'Fruit', 'Coarse Powder',
+                'A16AX', 'Hot 3, Dry 3', 'NON_TOXIC', 0, 'RESOLVED', 'APPROVED', 1
+            ),
+            (
+                'sub-azaraqi', 'Azaraqi (Kuchla)', 'BOTANICAL', 'Strychnos nux-vomica', 'Seeds', 'Mudabbar Detoxified Seeds',
+                'N07XX', 'Hot 4, Dry 4', 'SCHEDULE_E1_POISON', 1, 'RESOLVED', 'APPROVED', 1
+            ),
+            (
+                'sub-digoxin', 'Digoxin', 'SYNTHETIC_ALLOPATHIC', None, None, 'Pharmaceutical Grade',
+                'C01AA05', None, 'CAUTION_RESTRICTED', 0, 'RESOLVED', 'APPROVED', 1
+            ),
+            (
+                'sub-warfarin', 'Warfarin', 'SYNTHETIC_ALLOPATHIC', None, None, 'Pharmaceutical Grade',
+                'B01AA03', None, 'CAUTION_RESTRICTED', 0, 'RESOLVED', 'APPROVED', 1
+            )
+        ]
+        for s_id, cname, stype, bname, part, prep, code, temp, tox, mud, rstat, rev_stat, is_syn in substances_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO normalized_substances (
+                    id, canonical_name, substance_type, botanical_binomial, plant_part,
+                    preparation_details, atc_or_rxnorm_code, unani_temperament, toxicity_classification,
+                    is_mudabbar_required, resolution_status, review_status, is_synthetic
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (s_id, cname, stype, bname, part, prep, code, temp, tox, mud, rstat, rev_stat, is_syn))
+
+        # 29. Substance Aliases & Transliterations
+        aliases_seed = [
+            ('al-senna-1', 'sub-senna', 'Sana Makki', 'ur', 1),
+            ('al-senna-2', 'sub-senna', 'Cassia senna', 'en', 0),
+            ('al-senna-3', 'sub-senna', 'Senna alexandrina', 'en', 0),
+            ('al-filfil-1', 'sub-filfil-siah', 'Black Pepper', 'en', 1),
+            ('al-filfil-2', 'sub-filfil-siah', 'Kali Mirch', 'hi', 1),
+            ('al-azaraqi-1', 'sub-azaraqi', 'Kuchla', 'ur', 1),
+            ('al-azaraqi-2', 'sub-azaraqi', 'Nux Vomica', 'en', 1),
+            ('al-azaraqi-3', 'sub-azaraqi', 'Strychnos nux-vomica', 'en', 0)
+        ]
+        for a_id, s_id, aname, lang, pref in aliases_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO substance_aliases (
+                    id, substance_id, alias_name, language, is_preferred
+                ) VALUES (?, ?, ?, ?, ?);
+            """, (a_id, s_id, aname, lang, pref))
+
+        # 30. Governed Safety Rules
+        safety_rules_seed = [
+            (
+                'rule-saf-allg-01', 'SAF-ALLERGY-001', 'ALLERGY_MATCH',
+                'Documented Patient Allergy Match',
+                'Prescribed product or constituent ingredient matches patient documented allergy record.',
+                json.dumps({'match_target': 'allergen_name'}), json.dumps(['allergies']),
+                'critical', 'established', 'Discontinue prescribed item immediately.',
+                'Cross-reactivity between botanical families requires verified clinical monograph.',
+                'src-upi-synth', 'SYSTEMATIC_REVIEW_GRADE_A', 'approved', '1.0.0', 0, 1
+            ),
+            (
+                'rule-saf-tox-01', 'SAF-TOX-001', 'CONTRAINDICATION',
+                'Schedule E(1) Toxin / Mudabbar Verification',
+                'Substance is a Schedule E(1) restricted toxic botanical requiring verified Mudabbar processing.',
+                json.dumps({'toxicity_class': 'SCHEDULE_E1_POISON', 'mudabbar_required': 1}), json.dumps([]),
+                'critical', 'established', 'Verify and document certified Mudabbar detoxification prior to sign-off.',
+                'Unprocessed botanical administration strictly prohibited by AYUSH drug rules.',
+                'src-upi-synth', 'SYSTEMATIC_REVIEW_GRADE_A', 'approved', '1.0.0', 0, 1
+            ),
+            (
+                'rule-saf-preg-senna', 'SAF-PREG-SENNA', 'CONTRAINDICATION',
+                'Pregnancy Contraindication: Stimulant Anthraquinone Laxatives',
+                'High-dose stimulant anthraquinone laxatives (Senna) carry risk of reflex pelvic congestion.',
+                json.dumps({'substance': 'Senna', 'condition': 'PREGNANCY'}), json.dumps(['is_pregnant']),
+                'critical', 'established', 'Avoid Senna during first trimester; substitute bulk-forming Ispaghol.',
+                'Short-term low dose under direct supervision in late pregnancy requires documented justification.',
+                'src-nice-dyspepsia-synth', 'SYSTEMATIC_REVIEW_GRADE_A', 'approved', '1.0.0', 0, 1
+            )
+        ]
+        for r_id, rcode, rtype, title, desc, trig, req_f, sev, cert, act, lim, src_id, ev_lvl, stat, ver, ovr, is_syn in safety_rules_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO safety_rules (
+                    id, rule_code, rule_type, title, description, trigger_expression_json,
+                    required_patient_factors_json, severity, certainty, action_guidance,
+                    limitations, source_citation_id, evidence_level, status, version,
+                    is_overridable, is_synthetic
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (r_id, rcode, rtype, title, desc, trig, req_f, sev, cert, act, lim, src_id, ev_lvl, stat, ver, ovr, is_syn))
+
+        # 31. Herb-Drug & Drug-Drug Interactions Catalog
+        interactions_seed = [
+            (
+                'int-senna-digoxin', 'sub-senna', 'sub-digoxin', 'HERB_DRUG', 'critical', 'established',
+                'Chronic or high-dose Senna laxative use may induce hypokalemia, significantly potentiating Digoxin cardiac toxicity.',
+                'Increased risk of fatal cardiac arrhythmias and digitalis intoxication.',
+                'Avoid concurrent administration. Monitor serum potassium and cardiac rhythm if co-prescribed.',
+                'HUMAN_CLINICAL', 'src-nice-dyspepsia-synth', 'Risk correlates with duration of laxative overuse.', 'APPROVED', '1.0.0'
+            ),
+            (
+                'int-filfil-warfarin', 'sub-filfil-siah', 'sub-warfarin', 'HERB_DRUG', 'moderate', 'probable',
+                'Piperine in Filfil Siah inhibits CYP3A4 and P-glycoprotein, potentially elevating free plasma Warfarin concentration.',
+                'Elevated INR and potential bleeding risk.',
+                'Monitor International Normalized Ratio (INR) when introducing high doses of Filfil Siah.',
+                'HUMAN_CLINICAL', 'src-who-cough-synth', 'Observed with standardized piperine extract doses > 20 mg/day.', 'APPROVED', '1.0.0'
+            )
+        ]
+        for i_id, p_id, s_id, itype, sev, cert, cdesc, outc, mguid, etype, scit, lim, rstat, ver in interactions_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO interaction_records (
+                    id, primary_substance_id, secondary_substance_id, interaction_type,
+                    severity, certainty, clinical_description, reported_outcome, management_guidance,
+                    evidence_type, source_citation_id, limitations, review_status, version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (i_id, p_id, s_id, itype, sev, cert, cdesc, outc, mguid, etype, scit, lim, rstat, ver))
+
+        # 32. Capability Registry (Updated with Prompt 07 Engine)
         capabilities_seed = [
             ('core.identity', 'Identity and Tenancy Engine', '1.1.0', 'FUNCTIONALLY_TESTED', 1, None, 'users:manage'),
             ('core.tenancy', 'Organization/Facility Scope Filter', '1.1.0', 'FUNCTIONALLY_TESTED', 1, None, 'facility:manage'),
@@ -1188,6 +1304,9 @@ def seed_development_data(db_path: str = None) -> None:
             # Prompt 06: Clinical Knowledge Base & Evidence Retrieval Engine
             ('clinical.knowledge_base', 'Governed Clinical Knowledge & Sources Registry', '1.6.0', 'FUNCTIONALLY_TESTED', 1, None, 'knowledge:read'),
             ('clinical.evidence_retrieval', 'Hybrid Evidence Retrieval & Contextual Citation Engine', '1.6.0', 'FUNCTIONALLY_TESTED', 1, None, 'knowledge:read'),
+
+            # Prompt 07: Clinical Safety Firewall & Interaction Engine
+            ('clinical.safety_firewall', 'Clinical Safety Firewall & Herb-Drug Interaction Engine', '1.7.0', 'FUNCTIONALLY_TESTED', 1, None, 'prescription:validate'),
 
             # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1
             ('clinical.consultation', 'Single 3-Zone Consultation Canvas', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Prescribing vertical complete; full 3-zone canvas scheduled for Phase 3', 'encounters:write'),

@@ -11,6 +11,7 @@ from apps.api.domains.care_plans import CarePlanService
 from apps.api.domains.modern_assessment import ModernAssessmentService
 from apps.api.domains.clinical_rules import ClinicalRulesEngine
 from apps.api.domains.knowledge import KnowledgeRetrievalEngine
+from apps.api.domains.safety_firewall import SafetyFirewallEngine
 
 __all__ = [
     "PatientService",
@@ -24,4 +25,5 @@ __all__ = [
     "ModernAssessmentService",
     "ClinicalRulesEngine",
     "KnowledgeRetrievalEngine",
+    "SafetyFirewallEngine",
 ]

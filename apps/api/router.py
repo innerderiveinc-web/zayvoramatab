@@ -11,7 +11,7 @@ from apps.api.database.connection import get_db
 from apps.api.routes import (
     health, auth, tenancy, admin, audit, capabilities, patients, encounters,
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
-    modern_assessment, clinical_rules, knowledge
+    modern_assessment, clinical_rules, knowledge, safety_firewall
 )
 
 ROUTES = [
@@ -151,6 +151,12 @@ ROUTES = [
     ("POST", r"^/api/v1/knowledge/review/(?P<id>[^/]+)/request-changes$", knowledge.handle_request_changes_item, True),
     ("GET", r"^/api/v1/knowledge/review/queue$", knowledge.handle_get_review_queue, True),
     ("GET", r"^/api/v1/knowledge/audit-logs/(?P<id>[^/]+)$", knowledge.handle_get_review_logs, True),
+
+    # Prompt 07: Clinical Safety Firewall & Interaction Engine
+    ("POST", r"^/api/v1/safety/preflight$", safety_firewall.handle_run_preflight, True),
+    ("GET", r"^/api/v1/safety/preflight/(?P<run_id>[^/]+)$", safety_firewall.handle_get_preflight_run, True),
+    ("POST", r"^/api/v1/safety/findings/(?P<finding_id>[^/]+)/disposition$", safety_firewall.handle_record_disposition, True),
+    ("GET", r"^/api/v1/safety/substances/resolve$", safety_firewall.handle_resolve_substance, True),
 ]
 
 class ApiRouter:

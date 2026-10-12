@@ -206,3 +206,19 @@
 - **Context:** Multi-dialect clinical workflows in Unani and modern medicine require robust transliteration without overstepping into autonomous prescribing.
 - **Decision:** Hybrid search combining canonical match, alias index, transliteration synonym dictionaries, and relevance scoring; encounter context retrieval with non-prescribing boundary; reviewer-only approval lifecycle.
 
+---
+
+## ADR-020: Deterministic Clinical Safety Firewall, Substance Identity, and Fail-Closed Evaluation
+- **Status:** Accepted
+- **File:** [ADR-020-deterministic-clinical-safety-firewall.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-020-deterministic-clinical-safety-firewall.md)
+- **Context:** Prescribing toxic botanicals or conflicting medications without deterministic checks risks severe adverse events.
+- **Decision:** Deterministic safety rule engine; fail-closed on ambiguous or unmapped substances; non-overridable critical blocks on documented allergies and unpurified Schedule E(1) toxins; server-side re-evaluation immediately before electronic signing.
+
+---
+
+## ADR-021: Auditable Preflight Overrides, Honest Coverage Summary, and Non-Safe Semantics
+- **Status:** Accepted
+- **File:** [ADR-021-auditable-overrides-and-coverage-summary.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-021-auditable-overrides-and-coverage-summary.md)
+- **Context:** Reassuring green "safe" badges create false security, while silent dismissals destroy audit accountability.
+- **Decision:** Explicit coverage report detailing checks run, skipped, and dataset limitations; "no applicable alert found" semantics rather than "safe"; mandatory clinician rationale for overridable findings; preflight invalidation on material prescription edits.
+

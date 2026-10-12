@@ -524,7 +524,10 @@ async function runSafetyPreflight(container, prescriptionId) {
     if (findings.length === 0) {
       findingsBox.innerHTML = `
         <div class="alert-box alert-success" style="font-size: 0.85rem; margin-bottom: 0;">
-          ✓ <strong>Safety Preflight Passed:</strong> No contraindications, unpurified toxins, or allergen conflicts detected.
+          ✓ <strong>No Applicable Alert Found:</strong> No contraindications, toxic botanicals, or allergen conflicts detected in the reviewed dataset.
+          <div style="font-size: 0.75rem; color: var(--matab-color-text-muted); margin-top: 0.25rem;">
+            <em>Dataset limitation:</em> Evaluation limited to approved rules in ZAYVORA MATAB OS. Absence of alert does not imply combination is completely risk-free.
+          </div>
         </div>
       `;
     } else {
