@@ -378,6 +378,76 @@ class EncounterService:
         except sqlite3.OperationalError:
             pass
 
+        # 6. Fetch Modern Clinical Assessments (Prompt 05)
+        try:
+            cursor.execute("""
+                SELECT mca.id, mca.status, mca.assessment_date, mca.chief_complaint,
+                       mca.working_assessment, mca.uncertainty_level, mca.signed_at,
+                       mca.created_at, mca.encounter_id,
+                       u.full_name as author_name, f.name as facility_name
+                FROM modern_clinical_assessments mca
+                JOIN facilities f ON mca.facility_id = f.id
+                JOIN users u ON mca.author_id = u.id
+                WHERE mca.patient_id = ? AND mca.organization_id = ?
+                ORDER BY mca.created_at DESC;
+            """, (patient_id, organization_id))
+            for r in cursor.fetchall():
+                timeline_items.append({
+                    "event_id": f"mca-{r['id']}",
+                    "event_type": "MODERN_CLINICAL_ASSESSMENT",
+                    "category": "CLINICAL",
+                    "timestamp": r["signed_at"] or r["created_at"],
+                    "status": r["status"],
+                    "title": f"Modern Assessment: {r['chief_complaint'] or 'General'} ({r['status']})",
+                    "facility_name": r["facility_name"],
+                    "actor_name": r["author_name"],
+                    "details": {
+                        "assessment_id": r["id"],
+                        "chief_complaint": r["chief_complaint"],
+                        "working_assessment": r["working_assessment"],
+                        "uncertainty_level": r["uncertainty_level"],
+                        "encounter_id": r["encounter_id"],
+                        "status": r["status"]
+                    }
+                })
+        except sqlite3.OperationalError:
+            pass
+
+        # 7. Fetch Clinical Referrals (Prompt 05)
+        try:
+            cursor.execute("""
+                SELECT ref.id, ref.target_specialty, ref.urgency, ref.actual_status,
+                       ref.destination_facility, ref.reason_for_referral, ref.created_at,
+                       ref.encounter_id, u.full_name as author_name, f.name as facility_name
+                FROM referral_records ref
+                JOIN facilities f ON ref.facility_id = f.id
+                JOIN users u ON ref.author_id = u.id
+                WHERE ref.patient_id = ? AND ref.organization_id = ?
+                ORDER BY ref.created_at DESC;
+            """, (patient_id, organization_id))
+            for r in cursor.fetchall():
+                timeline_items.append({
+                    "event_id": f"ref-{r['id']}",
+                    "event_type": "CLINICAL_REFERRAL",
+                    "category": "CLINICAL",
+                    "timestamp": r["created_at"],
+                    "status": r["actual_status"],
+                    "title": f"Referral: {r['target_specialty']} [{r['urgency']}]",
+                    "facility_name": r["facility_name"],
+                    "actor_name": r["author_name"],
+                    "details": {
+                        "referral_id": r["id"],
+                        "target_specialty": r["target_specialty"],
+                        "destination_facility": r["destination_facility"],
+                        "urgency": r["urgency"],
+                        "reason": r["reason_for_referral"],
+                        "encounter_id": r["encounter_id"],
+                        "status": r["actual_status"]
+                    }
+                })
+        except sqlite3.OperationalError:
+            pass
+
         # Sort combined timeline descending by timestamp
         timeline_items.sort(key=lambda x: x["timestamp"], reverse=True)
         total = len(timeline_items)

@@ -486,6 +486,24 @@ async function renderTimelineTab(contentArea, patientId) {
                   </div>
                 </div>
               ` : ""}
+              ${item.event_type === 'MODERN_CLINICAL_ASSESSMENT' && item.details ? `
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-top: 0.5rem;">
+                  <div><strong>Chief Complaint:</strong> ${escapeHtml(item.details.chief_complaint || "Routine Evaluation")}</div>
+                  <div style="font-size: 0.8rem; color: var(--matab-color-text-secondary); margin-top: 0.25rem;">
+                    Assessment: <em>${escapeHtml(item.details.working_assessment || "Under clinical evaluation")}</em>
+                    • Status: <span class="badge ${getStatusBadgeClass(item.details.status || item.status)}">${item.details.status || item.status}</span>
+                  </div>
+                </div>
+              ` : ""}
+              ${item.event_type === 'CLINICAL_REFERRAL' && item.details ? `
+                <div style="background: #fff7ed; border: 1px solid #ffedd5; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-top: 0.5rem;">
+                  <div><strong>Referral Specialty:</strong> ${escapeHtml(item.details.target_specialty)} [${escapeHtml(item.details.urgency || "ROUTINE")}]</div>
+                  <div style="font-size: 0.8rem; color: var(--matab-color-text-secondary); margin-top: 0.25rem;">
+                    Reason: ${escapeHtml(item.details.reason || "Specialist review")}
+                    • Status: <span class="badge badge-warning">${item.details.status || "DOCUMENTED"}</span>
+                  </div>
+                </div>
+              ` : ""}
             </div>
           </div>
         `).join("")}

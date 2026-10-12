@@ -166,3 +166,27 @@
 - **Context:** Treatment principles (Tanqia-e-Mawad, Ta'deel-e-Mizaj, Taghdhiya, Ilaj-bil-Tadbir) must guide clinical care while maintaining a strict boundary against automatic drug ordering.
 - **Decision:** Governed treatment principles vocabulary; modular care plan items with priority and cautions; prescription linkage indicates clinical intent only and does NOT sign or dispense medication; cross-patient linkage strictly blocked (HTTP 409).
 
+---
+
+## ADR-015: Dual-Lane Clinical Assessment Architecture (Modern Biomedical and Unani Separation)
+- **Status:** Accepted
+- **File:** [ADR-015-modern-clinical-assessment-lane.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-015-modern-clinical-assessment-lane.md)
+- **Context:** Conflating modern biomedical diagnostic findings with Unani temperamental evaluations risks clinical confusion and regulatory exposure.
+- **Decision:** Dedicated modern clinical assessment lane operating alongside the Unani assessment in the Consultation workspace; separate domain tables; zero cross-lane overwrites; unified encounter timeline tracking.
+
+---
+
+## ADR-016: Deterministic Clinical Rule Evaluation, Red Flag Safety and Fail-Closed Governance
+- **Status:** Accepted
+- **File:** [ADR-016-governed-differential-and-red-flag-rules.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-016-governed-differential-and-red-flag-rules.md)
+- **Context:** Non-deterministic or silent ML models risk false reassurance in critical situations like acute coronary syndromes or sepsis.
+- **Decision:** Deterministic rules engine with fail-closed semantics (`CONTENT_UNAVAILABLE` on empty catalog, `INCOMPLETE` on missing vitals); explainable differential candidates with supporting/contradicting findings; mandatory clinician acknowledgment of red flags.
+
+---
+
+## ADR-017: Investigation Considerations, Referral Records, and Cryptographic Sign-Off
+- **Status:** Accepted
+- **File:** [ADR-017-investigation-and-referral-safety.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-017-investigation-and-referral-safety.md)
+- **Context:** Decision support must not trigger unauthorized diagnostic orders, and completed clinical assessments must resist retroactive tampering.
+- **Decision:** Investigation considerations enforce a strict non-ordering contract (`is_order: false`); governed referral records with urgency tiers; clinician PIN electronic signing generating SHA-256 canonical snapshot digests; formal amendment lifecycle.
+

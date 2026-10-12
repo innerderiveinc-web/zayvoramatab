@@ -8,6 +8,8 @@ from apps.api.domains.safety_preflight import SafetyPreflightEngine
 from apps.api.domains.unani_assessment import UnaniAssessmentService
 from apps.api.domains.organ_axis import OrganAxisService
 from apps.api.domains.care_plans import CarePlanService
+from apps.api.domains.modern_assessment import ModernAssessmentService
+from apps.api.domains.clinical_rules import ClinicalRulesEngine
 
 __all__ = [
     "PatientService",
@@ -18,4 +20,6 @@ __all__ = [
     "UnaniAssessmentService",
     "OrganAxisService",
     "CarePlanService",
+    "ModernAssessmentService",
+    "ClinicalRulesEngine",
 ]

@@ -10,7 +10,8 @@ from apps.api.core.security import validate_session
 from apps.api.database.connection import get_db
 from apps.api.routes import (
     health, auth, tenancy, admin, audit, capabilities, patients, encounters,
-    formulations, prescriptions, unani_assessment, organ_axis, care_plans
+    formulations, prescriptions, unani_assessment, organ_axis, care_plans,
+    modern_assessment, clinical_rules
 )
 
 ROUTES = [
@@ -107,6 +108,28 @@ ROUTES = [
     ("POST", r"^/api/v1/care-plans/(?P<id>[^/]+)/items/(?P<item_id>[^/]+)/link-prescription$", care_plans.handle_care_plan_link_prescription, True),
     ("POST", r"^/api/v1/care-plans/(?P<id>[^/]+)/items/(?P<item_id>[^/]+)/outcomes$", care_plans.handle_care_plan_record_outcome, True),
     ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/care-plans$", care_plans.handle_patient_care_plans_list, True),
+
+    # Prompt 05: Modern Clinical Assessment & Decision Support
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/modern-assessments$", modern_assessment.handle_modern_assessment_create_for_encounter, True),
+    ("GET", r"^/api/v1/encounters/(?P<id>[^/]+)/modern-assessments$", modern_assessment.handle_modern_assessment_get_for_encounter, True),
+    ("GET", r"^/api/v1/modern-assessments/(?P<id>[^/]+)$", modern_assessment.handle_modern_assessment_get, True),
+    ("PATCH", r"^/api/v1/modern-assessments/(?P<id>[^/]+)$", modern_assessment.handle_modern_assessment_update_draft, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/observations$", modern_assessment.handle_modern_assessment_observations_add, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/run-safety-checks$", modern_assessment.handle_modern_assessment_run_safety_checks, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/red-flags/(?P<alert_id>[^/]+)/acknowledge$", modern_assessment.handle_modern_assessment_acknowledge_red_flag, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/differential-support$", modern_assessment.handle_modern_assessment_run_differential, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/differential-candidates/(?P<candidate_id>[^/]+)/decision$", modern_assessment.handle_modern_assessment_decide_differential, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/problems$", modern_assessment.handle_modern_assessment_problem_add, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/investigations/(?P<inv_id>[^/]+)/decision$", modern_assessment.handle_modern_assessment_decide_investigation, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/referrals$", modern_assessment.handle_modern_assessment_referral_create, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/sign$", modern_assessment.handle_modern_assessment_sign, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/amend$", modern_assessment.handle_modern_assessment_amend, True),
+    ("POST", r"^/api/v1/modern-assessments/(?P<id>[^/]+)/cancel$", modern_assessment.handle_modern_assessment_cancel, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/modern-assessments$", modern_assessment.handle_patient_modern_assessments_list, True),
+
+    # Prompt 05: Clinical Content & Governed Rules Catalog
+    ("GET", r"^/api/v1/clinical-content/status$", clinical_rules.handle_clinical_content_status, True),
+    ("GET", r"^/api/v1/clinical-rules$", clinical_rules.handle_clinical_rules_list, True),
 ]
 
 class ApiRouter:

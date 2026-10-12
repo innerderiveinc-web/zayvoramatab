@@ -12,19 +12,20 @@
 
 import { apiClient } from "/packages/api-client/client.js";
 import { state } from "../state.js";
+import { loadModernAssessmentPane } from "./modern_assessment_view.js";
 
 export async function renderConsultation(container) {
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
       <div>
-        <h1 style="font-size: 1.4rem; color: var(--matab-color-brand-primary);">Unani Clinical Assessment & Care Plan</h1>
+        <h1 style="font-size: 1.4rem; color: var(--matab-color-brand-primary);">Consultation & Assessment Workspace</h1>
         <p style="color: var(--matab-color-text-secondary); font-size: 0.9rem;">
-          Clinician-Governed Mizaj Assessment, Organ-Axis Context & Usul-e-Ilaj Planner
+          Modern Clinical Decision Support, Unani Mizaj Assessment & Usul-e-Ilaj Care Planner
         </p>
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <span class="badge badge-success">Prompt 04 Engine</span>
-        <span class="badge badge-warning" title="Synthetic development fixtures">Catalog: Al-Qanun [Synthetic]</span>
+        <span class="badge badge-success">Dual-Lane Clinical Engine</span>
+        <span class="badge badge-warning" title="Synthetic development fixtures">Catalog: NICE / Al-Qanun [Synthetic]</span>
       </div>
     </div>
 
@@ -39,20 +40,24 @@ export async function renderConsultation(container) {
     <!-- Main Consultation Workspace (Rendered once encounter is active) -->
     <div id="consultation-workspace" style="display: none;">
       <!-- Navigation Sub-tabs -->
-      <div style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--matab-color-border-subtle); margin-bottom: 1.25rem;">
-        <button id="tab-btn-unani" class="btn btn-secondary btn-sm" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 2px solid var(--matab-color-brand-primary); font-weight: 600;">
-          1. Unani Assessment (Mizaj & Afaal)
+      <div style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--matab-color-border-subtle); margin-bottom: 1.25rem; overflow-x: auto;">
+        <button id="tab-btn-modern" class="btn btn-secondary btn-sm" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 2px solid var(--matab-color-brand-primary); font-weight: 600;">
+          1. Modern Clinical Lane (History, Vitals & Decision Support)
+        </button>
+        <button id="tab-btn-unani" class="btn btn-secondary btn-sm" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+          2. Unani Assessment (Mizaj & Afaal)
         </button>
         <button id="tab-btn-organ-axis" class="btn btn-secondary btn-sm" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
-          2. Organ-Axis Context Review
+          3. Organ-Axis Context Review
         </button>
         <button id="tab-btn-care-plan" class="btn btn-secondary btn-sm" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
-          3. Usul-e-Ilaj Care Plan
+          4. Usul-e-Ilaj Care Plan
         </button>
       </div>
 
       <!-- Tab Content Panes -->
-      <div id="pane-unani" class="consultation-pane"></div>
+      <div id="pane-modern" class="consultation-pane"></div>
+      <div id="pane-unani" class="consultation-pane" style="display: none;"></div>
       <div id="pane-organ-axis" class="consultation-pane" style="display: none;"></div>
       <div id="pane-care-plan" class="consultation-pane" style="display: none;"></div>
     </div>
@@ -157,25 +162,32 @@ async function initConsultationContext(container) {
 }
 
 function setupWorkspaceTabs(container, patientId, encounterId) {
+  const btnModern = container.querySelector("#tab-btn-modern");
   const btnUnani = container.querySelector("#tab-btn-unani");
   const btnOrgan = container.querySelector("#tab-btn-organ-axis");
   const btnCare = container.querySelector("#tab-btn-care-plan");
 
+  const paneModern = container.querySelector("#pane-modern");
   const paneUnani = container.querySelector("#pane-unani");
   const paneOrgan = container.querySelector("#pane-organ-axis");
   const paneCare = container.querySelector("#pane-care-plan");
 
   function switchTab(activeBtn, activePane) {
-    [btnUnani, btnOrgan, btnCare].forEach(b => {
+    [btnModern, btnUnani, btnOrgan, btnCare].forEach(b => {
       b.style.borderBottom = "none";
       b.style.fontWeight = "normal";
     });
-    [paneUnani, paneOrgan, paneCare].forEach(p => p.style.display = "none");
+    [paneModern, paneUnani, paneOrgan, paneCare].forEach(p => p.style.display = "none");
 
     activeBtn.style.borderBottom = "2px solid var(--matab-color-brand-primary)";
     activeBtn.style.fontWeight = "600";
     activePane.style.display = "block";
   }
+
+  btnModern.addEventListener("click", () => {
+    switchTab(btnModern, paneModern);
+    loadModernAssessmentPane(container, paneModern, patientId, encounterId);
+  });
 
   btnUnani.addEventListener("click", () => {
     switchTab(btnUnani, paneUnani);
@@ -192,8 +204,8 @@ function setupWorkspaceTabs(container, patientId, encounterId) {
     loadCarePlanPane(container, paneCare, patientId, encounterId);
   });
 
-  // Default active pane
-  loadUnaniAssessmentPane(container, paneUnani, patientId, encounterId);
+  // Default active pane: Modern Clinical Lane
+  loadModernAssessmentPane(container, paneModern, patientId, encounterId);
 }
 
 // -------------------------------------------------------------
