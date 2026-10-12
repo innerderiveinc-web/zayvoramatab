@@ -12,6 +12,7 @@ from apps.api.domains.modern_assessment import ModernAssessmentService
 from apps.api.domains.clinical_rules import ClinicalRulesEngine
 from apps.api.domains.knowledge import KnowledgeRetrievalEngine
 from apps.api.domains.safety_firewall import SafetyFirewallEngine
+from apps.api.domains.consultation_orchestrator import ConsultationOrchestratorService
 
 __all__ = [
     "PatientService",
@@ -26,4 +27,6 @@ __all__ = [
     "ClinicalRulesEngine",
     "KnowledgeRetrievalEngine",
     "SafetyFirewallEngine",
+    "ConsultationOrchestratorService",
 ]
+

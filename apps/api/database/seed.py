@@ -120,8 +120,13 @@ def seed_development_data(db_path: str = None) -> None:
             ('perm-clin-rules-read', 'clinical_rules:read', 'Read Governed Clinical Rules & Decision Support', 'CLINICAL'),
             ('perm-clin-rules-manage', 'clinical_rules:manage', 'Manage Clinical Decision Rules & Sources', 'GOVERNANCE'),
             ('perm-knowledge-read', 'knowledge:read', 'Search and Read Clinical Knowledge & Citations', 'CLINICAL'),
-            ('perm-knowledge-manage', 'knowledge:manage', 'Author, Review, and Approve Clinical Knowledge & Sources', 'GOVERNANCE')
+            ('perm-knowledge-manage', 'knowledge:manage', 'Author, Review, and Approve Clinical Knowledge & Sources', 'GOVERNANCE'),
+            # Prompt 08 Unified Consultation Workspace & Orchestrator Permissions
+            ('perm-enc-finalize', 'encounter:finalize', 'Electronically Sign and Finalize Consultations', 'CLINICAL'),
+            ('perm-enc-sign', 'encounter:sign', 'Electronic Signature on Encounter Documents', 'CLINICAL'),
+            ('perm-enc-sections', 'encounter:manage_sections', 'Manage Consultation Guided Section States', 'CLINICAL')
         ]
+
         for p_id, code, name, cat in permissions_data:
             conn.execute("""
                 INSERT OR REPLACE INTO permissions (id, code, name, category)
@@ -146,7 +151,8 @@ def seed_development_data(db_path: str = None) -> None:
             'care_plan:read', 'care_plan:create', 'care_plan:update', 'care_plan:finalise',
             'modern_assessment:read', 'modern_assessment:create_draft', 'modern_assessment:update_draft',
             'modern_assessment:cancel', 'clinical_rules:read', 'clinical_rules:manage',
-            'knowledge:read', 'knowledge:manage'
+            'knowledge:read', 'knowledge:manage',
+            'encounter:finalize', 'encounter:sign', 'encounter:manage_sections'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
@@ -166,7 +172,8 @@ def seed_development_data(db_path: str = None) -> None:
             'care_plan:read', 'care_plan:create', 'care_plan:update', 'care_plan:finalise',
             'modern_assessment:read', 'modern_assessment:create_draft', 'modern_assessment:update_draft',
             'modern_assessment:sign', 'modern_assessment:amend', 'modern_assessment:cancel',
-            'clinical_rules:read', 'knowledge:read'
+            'clinical_rules:read', 'knowledge:read',
+            'encounter:finalize', 'encounter:sign', 'encounter:manage_sections'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
@@ -1308,15 +1315,21 @@ def seed_development_data(db_path: str = None) -> None:
             # Prompt 07: Clinical Safety Firewall & Interaction Engine
             ('clinical.safety_firewall', 'Clinical Safety Firewall & Herb-Drug Interaction Engine', '1.7.0', 'FUNCTIONALLY_TESTED', 1, None, 'prescription:validate'),
 
+            # Prompt 08: Unified Consultation Workspace & Clinical Workflow Orchestrator
+            ('clinical.consultation_orchestrator', 'Unified Consultation Workspace & Workflow Orchestrator', '1.8.0', 'FUNCTIONALLY_TESTED', 1, None, 'encounters:write'),
+
             # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1
             ('clinical.consultation', 'Single 3-Zone Consultation Canvas', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Prescribing vertical complete; full 3-zone canvas scheduled for Phase 3', 'encounters:write'),
+            ('operations.followups', 'Care Continuum Follow-up Queues', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 4 clinic operations', 'encounters:read'),
+
+            # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1
             ('clinical.unani_mizaj', 'Unani Mizaj & Ajnas Scoring Engine', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Automated score classifier disabled; clinician-entered assessment active in clinical.unani_assessment', 'encounters:write'),
             ('operations.dispensary', 'FEFO Batch Dispensary Inventory', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 4 clinic operations', 'facility:manage'),
-            ('operations.followups', 'Care Continuum Follow-up Queues', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 4 clinic operations', 'encounters:read'),
             ('integration.abdm', 'FHIR / ABDM Adapter Connector', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Disabled by default; pending hospital accreditation', 'org:manage'),
             ('ai.scribe', 'Contextual AI Note Scribe', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Excluded from core clinical safety path', 'encounters:write'),
             ('hospital.ipd', 'Inpatient Nursing Ward Engine', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Disabled for initial Matab profile', 'org:manage')
         ]
+
 
         for eng_id, name, ver, status, enabled, reason, perm in capabilities_seed:
             conn.execute("""

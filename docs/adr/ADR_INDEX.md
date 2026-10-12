@@ -222,3 +222,20 @@
 - **Context:** Reassuring green "safe" badges create false security, while silent dismissals destroy audit accountability.
 - **Decision:** Explicit coverage report detailing checks run, skipped, and dataset limitations; "no applicable alert found" semantics rather than "safe"; mandatory clinician rationale for overridable findings; preflight invalidation on material prescription edits.
 
+---
+
+## ADR-022: Unified Consultation Workspace & Server-Authoritative Workflow Orchestrator
+- **Status:** Accepted
+- **File:** [ADR-022-unified-consultation-orchestrator.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-022-unified-consultation-orchestrator.md)
+- **Context:** Fragmented multi-module views create cognitive fatigue for practicing Hakeems, while relying on frontend status flags compromises clinical safety.
+- **Decision:** 7-section guided single-canvas consultation workspace; server-authoritative encounter state machine with audited transitions; mandatory clinical justification for marking sections not applicable; deterministic server sign-off gating; debounced autosave with optimistic concurrency control.
+
+---
+
+## ADR-023: Consultation Output Document Bundle & Care Continuum Follow-up
+- **Status:** Accepted
+- **File:** [ADR-023-consultation-document-bundle-and-followup.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-023-consultation-document-bundle-and-followup.md)
+- **Context:** Completed clinical consultations require tamper-evident legal and patient artifacts alongside integrated follow-up care continuity.
+- **Decision:** Atomic PIN-verified consultation finalization generating immutable document snapshots (`consultation_summary`, `prescription_bundle`, `patient_instruction_sheet`) with SHA-256 cryptographic digests, integrated follow-up task scheduling, and idempotency protection.
+
+

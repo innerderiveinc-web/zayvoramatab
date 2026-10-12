@@ -16,6 +16,7 @@ ALLOWED_TRANSITIONS: Dict[str, List[str]] = {
     "CANCELLED": []  # Terminal state
 }
 
+
 class EncounterService:
     @staticmethod
     def create_encounter(conn: sqlite3.Connection, organization_id: str, facility_id: str,

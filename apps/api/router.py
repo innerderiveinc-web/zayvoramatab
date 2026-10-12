@@ -11,8 +11,10 @@ from apps.api.database.connection import get_db
 from apps.api.routes import (
     health, auth, tenancy, admin, audit, capabilities, patients, encounters,
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
-    modern_assessment, clinical_rules, knowledge, safety_firewall
+    modern_assessment, clinical_rules, knowledge, safety_firewall,
+    consultation_orchestrator
 )
+
 
 ROUTES = [
     # Observability & Liveness
@@ -157,6 +159,18 @@ ROUTES = [
     ("GET", r"^/api/v1/safety/preflight/(?P<run_id>[^/]+)$", safety_firewall.handle_get_preflight_run, True),
     ("POST", r"^/api/v1/safety/findings/(?P<finding_id>[^/]+)/disposition$", safety_firewall.handle_record_disposition, True),
     ("GET", r"^/api/v1/safety/substances/resolve$", safety_firewall.handle_resolve_substance, True),
+
+    # Prompt 08: Unified Consultation Workspace & Clinical Workflow Orchestrator
+    ("GET", r"^/api/v1/encounters/(?P<id>[^/]+)/workspace$", consultation_orchestrator.handle_get_workspace, True),
+    ("PATCH", r"^/api/v1/encounters/(?P<id>[^/]+)/workspace$", consultation_orchestrator.handle_update_workspace_draft, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/autosave$", consultation_orchestrator.handle_autosave, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/sections/(?P<section_key>[^/]+)/complete$", consultation_orchestrator.handle_complete_section, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/sections/(?P<section_key>[^/]+)/mark-not-applicable$", consultation_orchestrator.handle_mark_section_na, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/state-transition$", consultation_orchestrator.handle_orchestrator_transition, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/validate-signoff$", consultation_orchestrator.handle_validate_signoff, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/finalize$", consultation_orchestrator.handle_finalize_encounter, True),
+    ("GET", r"^/api/v1/encounters/(?P<id>[^/]+)/documents$", consultation_orchestrator.handle_get_documents, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/followup-tasks$", consultation_orchestrator.handle_create_followup, True),
 ]
 
 class ApiRouter:
@@ -203,8 +217,10 @@ class ApiRouter:
             "auth_token": token,
             "client_ip": client_ip,
             "request_id": request_id,
-            "path_params": {}
+            "path_params": {},
+            "db_path": db_path
         }
+
 
         with get_db(db_path) as conn:
             for route_method, pattern, handler_fn, requires_auth in ROUTES:
