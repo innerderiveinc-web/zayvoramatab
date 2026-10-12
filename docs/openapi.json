@@ -1,0 +1,137 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ZAYVORA MATAB OS API",
+    "version": "1.1.0",
+    "description": "Standalone Unani-First Clinical Operating System REST API"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000",
+      "description": "Local Matab Server"
+    }
+  ],
+  "paths": {
+    "/api/v1/system/health": {
+      "get": {
+        "summary": "Health and Readiness Check",
+        "responses": {
+          "200": { "description": "System healthy and connected" }
+        }
+      }
+    },
+    "/api/v1/system/capabilities": {
+      "get": {
+        "summary": "Engine and Feature Capability Registry",
+        "responses": {
+          "200": { "description": "8-state capability listing" }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "User Authentication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Authentication successful" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/v1/patients": {
+      "get": {
+        "summary": "Search Patients",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "List of matching patients" }
+        }
+      },
+      "post": {
+        "summary": "Register Patient",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": { "type": "string" },
+                  "last_name": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "gender": { "type": "string" },
+                  "dob": { "type": "string" }
+                },
+                "required": ["first_name", "phone", "gender"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Patient registered" },
+          "409": { "description": "Duplicate detected" }
+        }
+      }
+    },
+    "/api/v1/encounters/queue": {
+      "get": {
+        "summary": "Today's OPD Queue and Tokens",
+        "responses": {
+          "200": { "description": "Active queue list" }
+        }
+      }
+    },
+    "/api/v1/prescriptions/{id}/safety-check": {
+      "post": {
+        "summary": "Run Deterministic Safety Preflight",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Preflight evaluation result" }
+        }
+      }
+    },
+    "/api/v1/prescriptions/{id}/sign": {
+      "post": {
+        "summary": "Electronically Sign Prescription",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pin": { "type": "string" }
+                },
+                "required": ["pin"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Prescription signed and hashed" },
+          "400": { "description": "Safety blocked or invalid PIN" }
+        }
+      }
+    }
+  }
+}

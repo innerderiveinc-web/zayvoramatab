@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zayvora-matab-os"
+version = "1.1.0"
+description = "Standalone Unani-First Clinical Operating System for practicing Hakeems, clinics, and hospitals."
+authors = [{ name = "Zayvora Health Engineering" }]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+matab-os = "matab.server:run_server"
