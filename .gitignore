@@ -10,8 +10,10 @@ venv/
 
 # Database files & WAL journals (created by migrations)
 matab.db
-matab.db-shm
-matab.db-wal
+matab_os.db
+*.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 

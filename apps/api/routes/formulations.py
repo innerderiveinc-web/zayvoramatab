@@ -36,7 +36,7 @@ def handle_formulations_search(conn: sqlite3.Connection, req: Dict[str, Any]) ->
     formulations, total = FormulationService.search_formulations(
         conn=conn,
         organization_id=user["organization_id"],
-        query=query,
+        q=query,
         dosage_form=dosage_form,
         status=status,
         limit=limit,
@@ -99,7 +99,7 @@ def handle_formulation_submit_review(conn: sqlite3.Connection, req: Dict[str, An
         user_id=user["user_id"],
         notes=notes
     )
-    return 200, res
+    return 200, {"formulation": res}
 
 def handle_formulation_approve(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
     """Approve or reject formulation version (Clinical Governance)."""
@@ -110,12 +110,11 @@ def handle_formulation_approve(conn: sqlite3.Connection, req: Dict[str, Any]) ->
     decision = body.get("decision", "APPROVED")
     notes = body.get("notes")
 
-    res = FormulationService.approve_formulation(
+    res = FormulationService.approve_formulation_version(
         conn=conn,
         organization_id=user["organization_id"],
-        reviewer_id=user["user_id"],
         formulation_version_id=version_id,
-        decision=decision,
+        reviewer_id=user["user_id"],
         notes=notes
     )
-    return 200, res
+    return 200, {"formulation": res}

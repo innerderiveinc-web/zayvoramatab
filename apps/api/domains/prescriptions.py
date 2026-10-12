@@ -376,6 +376,8 @@ class PrescriptionService:
         # Create new draft child
         new_id = str(uuid.uuid4())
         new_version = parent["version_number"] + 1
+        base_rx_num = parent["prescription_number"].split("-A")[0]
+        amended_rx_number = f"{base_rx_num}-A{new_version}"
 
         conn.execute("""
             INSERT INTO prescriptions (
@@ -385,7 +387,7 @@ class PrescriptionService:
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', 'UNKNOWN', ?, ?, ?);
         """, (
-            new_id, organization_id, parent["facility_id"], parent["prescription_number"],
+            new_id, organization_id, parent["facility_id"], amended_rx_number,
             parent["patient_id"], parent["encounter_id"], parent["practitioner_id"],
             new_version, prescription_id, amendment_reason.strip(),
             parent.get("patient_instructions_language", "ur")
@@ -641,3 +643,44 @@ class PrescriptionService:
             ))
 
         return report
+
+    @staticmethod
+    def validate_prescription(conn: sqlite3.Connection, organization_id: str, prescription_id: str) -> List[Dict[str, Any]]:
+        """Public validation endpoint handler."""
+        rx = PrescriptionService.get_prescription_by_id(conn, organization_id, prescription_id)
+        report = PrescriptionService._run_and_persist_preflight(
+            conn=conn,
+            organization_id=organization_id,
+            prescription_id=prescription_id,
+            patient_id=rx["patient_id"],
+            version=rx["version_number"],
+            items=rx["items"]
+        )
+        return report["findings"]
+
+    @staticmethod
+    def update_prescription_draft(conn: sqlite3.Connection, organization_id: str,
+                                  prescription_id: str, client_version: int,
+                                  items: List[Dict[str, Any]], user_id: Optional[str] = None,
+                                  actor_id: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """Convenience alias for update_draft_items matching route parameter order."""
+        act_id = actor_id or user_id or "usr-system"
+        return PrescriptionService.update_draft_items(
+            conn=conn,
+            organization_id=organization_id,
+            prescription_id=prescription_id,
+            items=items,
+            current_version=client_version,
+            actor_id=act_id
+        )
+
+    @staticmethod
+    def list_prescriptions_for_patient(conn: sqlite3.Connection, organization_id: str,
+                                       patient_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Convenience alias for list_patient_prescriptions."""
+        return PrescriptionService.list_patient_prescriptions(
+            conn=conn,
+            organization_id=organization_id,
+            patient_id=patient_id,
+            limit=limit
+        )

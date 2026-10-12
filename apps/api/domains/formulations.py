@@ -134,7 +134,8 @@ class FormulationService:
         return rows, total
 
     @staticmethod
-    def get_formulation_by_id(conn: sqlite3.Connection, organization_id: str, formulation_id: str) -> Dict[str, Any]:
+    def get_formulation_by_id(conn: sqlite3.Connection, organization_id: str, formulation_id: str,
+                               version_number: Optional[int] = None, **kwargs) -> Dict[str, Any]:
         """Fetch complete formulation detail with all version monographs and ingredients."""
         cursor = conn.cursor()
         cursor.execute("""
@@ -317,3 +318,67 @@ class FormulationService:
         )
 
         return FormulationService.get_formulation_by_id(conn, organization_id, formulation_id)
+
+    @staticmethod
+    def list_clinical_sources(conn: sqlite3.Connection, organization_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Alias for get_clinical_sources."""
+        return FormulationService.get_clinical_sources(conn)
+
+    @staticmethod
+    def search_ingredients(conn: sqlite3.Connection, query: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+        """Alias for get_ingredients."""
+        return FormulationService.get_ingredients(conn, q=query, limit=limit)
+
+    @staticmethod
+    def create_formulation_draft(conn: sqlite3.Connection, organization_id: str, author_id: str,
+                                 code: str, name: str, transliteration: Optional[str] = None,
+                                 dosage_form: str = "SAFOOF", **kwargs) -> Dict[str, Any]:
+        """Wrapper for create_draft_formulation matching route parameters."""
+        data = {
+            "code": code,
+            "name": name,
+            "transliteration": transliteration,
+            "dosage_form": dosage_form,
+            **kwargs
+        }
+        return FormulationService.create_draft_formulation(
+            conn=conn,
+            organization_id=organization_id,
+            actor_id=author_id,
+            data=data
+        )
+
+    @staticmethod
+    def submit_formulation_review(conn: sqlite3.Connection, organization_id: str,
+                                   formulation_version_id: str, user_id: str,
+                                   notes: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """Submit formulation version for review, resolving formulation_id from version."""
+        cursor = conn.cursor()
+        cursor.execute("SELECT formulation_id FROM formulation_versions WHERE id = ?;", (formulation_version_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise NotFoundError(f"Formulation version '{formulation_version_id}' not found.")
+        return FormulationService.submit_for_review(
+            conn=conn,
+            organization_id=organization_id,
+            formulation_id=row["formulation_id"],
+            actor_id=user_id
+        )
+
+    @staticmethod
+    def approve_formulation_version(conn: sqlite3.Connection, organization_id: str,
+                                    formulation_version_id: str, reviewer_id: str,
+                                    notes: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """Approve formulation version, resolving formulation_id from version."""
+        cursor = conn.cursor()
+        cursor.execute("SELECT formulation_id FROM formulation_versions WHERE id = ?;", (formulation_version_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise NotFoundError(f"Formulation version '{formulation_version_id}' not found.")
+        return FormulationService.approve_formulation(
+            conn=conn,
+            organization_id=organization_id,
+            formulation_id=row["formulation_id"],
+            reviewer_id=reviewer_id,
+            notes=notes or ""
+        )
