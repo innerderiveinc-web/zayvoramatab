@@ -117,3 +117,52 @@
 - **File:** [ADR-008-encounter-lifecycle-concurrency.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-008-encounter-lifecycle-concurrency.md)
 - **Context:** Multiple clinic stations editing records concurrently risks dirty writes and bypassed clinical workflows.
 - **Decision:** Finite state machine (`DRAFT` -> `IN_PROGRESS` -> `COMPLETED`/`CANCELLED`); optimistic concurrency control using integer `version` columns on patients and encounters; automatic daily facility token allocation.
+
+---
+
+## ADR-009: Versioned Formulation Catalog and Monograph Provenance
+- **Status:** Accepted
+- **File:** [ADR-009-versioned-formulation-catalog.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-009-versioned-formulation-catalog.md)
+- **Context:** Classical Unani medicines (Murakkabat) require strict historical provenance, version tracking, and toxicity verification.
+- **Decision:** Separate formulation identity from versioned monographs (`MONOGRAPH_DRAFT` -> `REVIEWED_STANDARD`); enforce Mudabbar (detoxification) flags at the schema layer; tag all development seed fixtures as `[Synthetic]`.
+
+---
+
+## ADR-010: Fail-Closed Deterministic Safety Preflight Engine
+- **Status:** Accepted
+- **File:** [ADR-010-fail-closed-safety-preflight.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-010-fail-closed-safety-preflight.md)
+- **Context:** Automated prescribing requires transparent, deterministic checks for allergen conflicts, max dosages, and toxic compounds.
+- **Decision:** Rule-based deterministic engine classifying findings as `BLOCKER` (hard stop) or `WARNING` (mandatory clinician rationale required to override); strictly fail-closed on execution error.
+
+---
+
+## ADR-011: Immutable Signed Prescription Snapshots and Cryptographic Fingerprints
+- **Status:** Accepted
+- **File:** [ADR-011-immutable-signed-prescription-snapshots.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-011-immutable-signed-prescription-snapshots.md)
+- **Context:** Prescriptions are legally binding clinical orders that must resist retroactive tampering.
+- **Decision:** Separate drafting from explicit clinician electronic signing; generate canonical JSON snapshots with SHA-256 digital signature digests; lock signed orders and require formal amendment lifecycle for corrections.
+
+---
+
+## ADR-012: Structured Unani Clinical Assessment, Semantic States, and Clinician Finalisation
+- **Status:** Accepted
+- **File:** [ADR-012-structured-unani-clinical-assessment.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-012-structured-unani-clinical-assessment.md)
+- **Context:** Temperamental assessment (Mizaj), functional indicators (Afaal), and six essential causes (Asbab-e-Sittah) must be documented without autonomous algorithmic overreach.
+- **Decision:** Sole clinician diagnostic authority (zero machine diagnosis); 4 explicit semantic states (`ASSESSED`, `NOT_ASSESSED`, `NOT_APPLICABLE`, `UNOBTAINABLE`); template versioning (`TMPL-UNANI-CORE`); SHA-256 finalisation digest with formal amendment tracking.
+
+---
+
+## ADR-013: Organ-Axis Contextual Association Layer and Fail-Closed Empty State
+- **Status:** Accepted
+- **File:** [ADR-013-organ-axis-contextual-association-layer.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-013-organ-axis-contextual-association-layer.md)
+- **Context:** Multi-organ interactions (e.g., Stomach-Brain axis) require classical Unani literature references and must not hallucinate unverified relationships.
+- **Decision:** Governed concepts and reviewed mappings with classical citations; honest fail-closed empty state (`FAIL_CLOSED_UNREVIEWED`) when querying unreviewed organ pairs; explicit clinician acknowledgement.
+
+---
+
+## ADR-014: Governed Usul-e-Ilaj Treatment Principles, Care Plans, and Prescription Linkage
+- **Status:** Accepted
+- **File:** [ADR-014-governed-usul-e-ilaj-care-plans.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-014-governed-usul-e-ilaj-care-plans.md)
+- **Context:** Treatment principles (Tanqia-e-Mawad, Ta'deel-e-Mizaj, Taghdhiya, Ilaj-bil-Tadbir) must guide clinical care while maintaining a strict boundary against automatic drug ordering.
+- **Decision:** Governed treatment principles vocabulary; modular care plan items with priority and cautions; prescription linkage indicates clinical intent only and does NOT sign or dispense medication; cross-patient linkage strictly blocked (HTTP 409).
+

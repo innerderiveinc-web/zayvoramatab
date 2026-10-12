@@ -50,8 +50,6 @@ class TestCapabilityRegistry(unittest.TestCase):
         future_engines = [
             "clinical.consultation",
             "clinical.unani_mizaj",
-            "clinical.prescriptions_nuskha",
-            "clinical.safety_preflight",
             "operations.dispensary",
             "operations.followups",
             "integration.abdm",

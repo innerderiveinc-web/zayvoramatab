@@ -22,14 +22,34 @@ def sanitize_audit_details(details: Optional[Dict[str, Any]]) -> Dict[str, Any]:
             clean[k] = v
     return clean
 
-def log_audit_event(conn: sqlite3.Connection, action_type: str, target_entity_type: str,
-                    target_entity_id: str, request_id: str, outcome: str = "SUCCESS",
+def log_audit_event(conn: sqlite3.Connection, action_type: Optional[str] = None,
+                    target_entity_type: Optional[str] = None, target_entity_id: Optional[str] = None,
+                    request_id: Optional[str] = None, outcome: str = "SUCCESS",
                     actor_id: Optional[str] = None, organization_id: Optional[str] = None,
                     facility_id: Optional[str] = None, reason_code: Optional[str] = None,
-                    client_ip: Optional[str] = None, details: Optional[Dict[str, Any]] = None) -> str:
+                    client_ip: Optional[str] = None, details: Optional[Dict[str, Any]] = None,
+                    **kwargs) -> str:
     """Record an immutable, append-only audit event."""
+    action = action_type or kwargs.get("event_type") or "UNKNOWN_ACTION"
+    target_type = target_entity_type or kwargs.get("resource_type") or "UNKNOWN_RESOURCE"
+    target_id = target_entity_id or kwargs.get("resource_id") or "UNKNOWN_ID"
+    req_id = request_id or kwargs.get("req_id") or str(uuid.uuid4())
+    act_id = actor_id or kwargs.get("actor_user_id")
+    org_id = organization_id or kwargs.get("organization_id")
+    fac_id = facility_id or kwargs.get("facility_id")
+    res_code = reason_code or kwargs.get("reason_code")
+    outc = outcome or kwargs.get("outcome") or "SUCCESS"
+
+    merged_details = dict(details or {})
+    if "description" in kwargs:
+        merged_details["description"] = kwargs["description"]
+    if "patient_id" in kwargs:
+        merged_details["patient_id"] = kwargs["patient_id"]
+    if "encounter_id" in kwargs:
+        merged_details["encounter_id"] = kwargs["encounter_id"]
+
     event_id = str(uuid.uuid4())
-    clean_details = sanitize_audit_details(details)
+    clean_details = sanitize_audit_details(merged_details)
     details_json = json.dumps(clean_details, sort_keys=True)
     
     conn.execute("""
@@ -38,15 +58,15 @@ def log_audit_event(conn: sqlite3.Connection, action_type: str, target_entity_ty
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
     """, (
         event_id,
-        organization_id,
-        facility_id,
-        actor_id,
-        action_type,
-        target_entity_type,
-        target_entity_id,
-        outcome,
-        reason_code,
-        request_id,
+        org_id,
+        fac_id,
+        act_id,
+        action,
+        target_type,
+        target_id,
+        outc,
+        res_code,
+        req_id,
         client_ip,
         details_json
     ))

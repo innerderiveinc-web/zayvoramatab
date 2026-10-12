@@ -460,6 +460,32 @@ async function renderTimelineTab(contentArea, patientId) {
                   <strong>Cancellation Reason:</strong> ${escapeHtml(item.details.cancellation_reason)}
                 </div>
               ` : ""}
+              ${item.event_type === 'UNANI_ASSESSMENT' && item.details ? `
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-top: 0.5rem;">
+                  <div><strong>Mizaj Assessed:</strong> ${escapeHtml(item.details.primary_mizaj || "Not Recorded")} (${escapeHtml(item.details.dominance_level || "Standard")})</div>
+                  <div style="font-size: 0.8rem; color: var(--matab-color-text-secondary); margin-top: 0.25rem;">
+                    Template: <code>${escapeHtml(item.details.template_name || item.details.template_version_id || "Unani Core")}</code>
+                    ${item.details.integrity_hash ? ` • Signed: <code title="${escapeHtml(item.details.integrity_hash)}">${item.details.integrity_hash.substring(0, 10)}...</code>` : ""}
+                  </div>
+                </div>
+              ` : ""}
+              ${item.event_type === 'CARE_PLAN' && item.details ? `
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-top: 0.5rem;">
+                  <div><strong>Usul-e-Ilaj Principles:</strong> ${item.details.items_count || 0} active principle(s) planned</div>
+                  <div style="font-size: 0.8rem; color: var(--matab-color-text-secondary); margin-top: 0.25rem;">
+                    Status: <span class="badge ${getStatusBadgeClass(item.details.status || item.status)}">${item.details.status || item.status}</span>
+                  </div>
+                </div>
+              ` : ""}
+              ${item.event_type === 'PRESCRIPTION_ORDER' && item.details ? `
+                <div style="background: #faf5ff; border: 1px solid #e9d5ff; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-top: 0.5rem;">
+                  <div><strong>Nuskha Formulations:</strong> ${item.details.items_count || 0} item(s) prescribed</div>
+                  <div style="font-size: 0.8rem; color: var(--matab-color-text-secondary); margin-top: 0.25rem;">
+                    Rx Status: <span class="badge ${getStatusBadgeClass(item.details.status || item.status)}">${item.details.status || item.status}</span>
+                    ${item.details.digital_signature ? ` • Signed: <code title="${escapeHtml(item.details.digital_signature)}">${item.details.digital_signature.substring(0, 10)}...</code>` : ""}
+                  </div>
+                </div>
+              ` : ""}
             </div>
           </div>
         `).join("")}
@@ -1072,14 +1098,22 @@ function openEncounterLifecycleWorkspace(container, encounter, onDone) {
               </div>
             </div>
 
-            <!-- Honest Consultation Boundary Banner -->
-            <div class="unimplemented-banner" style="padding: 1.5rem 1rem; margin-bottom: 1.25rem;">
-              <h4 style="color: var(--matab-color-text-secondary); margin-bottom: 0.25rem;">
-                📋 Clinical Documentation Scheduled for Phase 3
+            <!-- Active Clinical Navigation Controls -->
+            <div style="background: var(--matab-color-bg-surface); border: 1px solid var(--matab-color-border-subtle); border-radius: var(--matab-radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+              <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--matab-color-brand-primary);">
+                🩺 Clinical Documentation & Prescribing
               </h4>
-              <p style="font-size: 0.85rem; margin-bottom: 0;">
-                Full 3-zone clinical charting, Mizaj scoring, and electronic Nuskha prescription signing will be connected in <strong>Phase 3 (Nuskha & Safety Slice)</strong>.
+              <p style="font-size: 0.85rem; color: var(--matab-color-text-secondary); margin-bottom: 0.75rem;">
+                Document Unani clinical assessment (Mizaj, Afaal, Asbab), Organ-Axis context, Usul-e-Ilaj care plan, and author Nuskha prescriptions for this encounter.
               </p>
+              <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <button id="btn-open-consultation" class="btn btn-primary btn-sm">
+                  🩺 Open Unani Assessment & Care Plan
+                </button>
+                <button id="btn-open-prescriptions" class="btn btn-secondary btn-sm">
+                  📜 Open Nuskha Prescriptions
+                </button>
+              </div>
             </div>
 
             ${encounter.reason_for_visit ? `
@@ -1137,7 +1171,23 @@ function openEncounterLifecycleWorkspace(container, encounter, onDone) {
     modalContainer.querySelector("#ws-close").addEventListener("click", closeWs);
     modalContainer.querySelector("#ws-done").addEventListener("click", closeWs);
 
-    const alertArea = modalContainer.querySelector("#ws-alert-area");
+    const openConsultationBtn = modalContainer.querySelector("#btn-open-consultation");
+    if (openConsultationBtn) {
+      openConsultationBtn.addEventListener("click", () => {
+        closeWs();
+        state.setActiveEncounter(encounter.patient_id, encounter.id);
+        state.setActiveTab("consultation");
+      });
+    }
+
+    const openPrescriptionsBtn = modalContainer.querySelector("#btn-open-prescriptions");
+    if (openPrescriptionsBtn) {
+      openPrescriptionsBtn.addEventListener("click", () => {
+        closeWs();
+        state.setActiveEncounter(encounter.patient_id, encounter.id);
+        state.setActiveTab("prescriptions");
+      });
+    }
 
     const inProgBtn = modalContainer.querySelector("#btn-trans-inprog");
     if (inProgBtn) {

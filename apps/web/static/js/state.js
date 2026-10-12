@@ -5,7 +5,8 @@
 export const state = {
   user: null,
   activeTab: "today",
-  activeFacilityId: null,
+  activePatientId: null,
+  activeEncounterId: null,
   capabilities: [],
   listeners: [],
 
@@ -33,6 +34,12 @@ export const state = {
 
   setActiveFacility(facilityId) {
     this.activeFacilityId = facilityId;
+    this.notify();
+  },
+
+  setActiveEncounter(patientId, encounterId) {
+    this.activePatientId = patientId;
+    this.activeEncounterId = encounterId;
     this.notify();
   },
 

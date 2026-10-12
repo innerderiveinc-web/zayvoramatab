@@ -8,7 +8,10 @@ from typing import Dict, Any, Tuple, Optional
 from apps.api.core.errors import AppError, NotFoundError, AuthenticationError
 from apps.api.core.security import validate_session
 from apps.api.database.connection import get_db
-from apps.api.routes import health, auth, tenancy, admin, audit, capabilities, patients, encounters
+from apps.api.routes import (
+    health, auth, tenancy, admin, audit, capabilities, patients, encounters,
+    formulations, prescriptions, unani_assessment, organ_axis, care_plans
+)
 
 ROUTES = [
     # Observability & Liveness
@@ -57,6 +60,53 @@ ROUTES = [
     ("GET", r"^/api/v1/encounters/(?P<id>[^/]+)$", encounters.handle_encounter_get, True),
     ("PATCH", r"^/api/v1/encounters/(?P<id>[^/]+)$", encounters.handle_encounter_update_draft, True),
     ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/transition$", encounters.handle_encounter_transition, True),
+
+    # Prompt 03: Formulary & Knowledge Sources
+    ("GET", r"^/api/v1/clinical-sources$", formulations.handle_clinical_sources_list, True),
+    ("GET", r"^/api/v1/ingredients$", formulations.handle_ingredients_search, True),
+    ("GET", r"^/api/v1/formulations$", formulations.handle_formulations_search, True),
+    ("GET", r"^/api/v1/formulations/(?P<id>[^/]+)$", formulations.handle_formulation_get, True),
+    ("POST", r"^/api/v1/formulations$", formulations.handle_formulation_create_draft, True),
+    ("POST", r"^/api/v1/formulations/versions/(?P<version_id>[^/]+)/submit-review$", formulations.handle_formulation_submit_review, True),
+    ("POST", r"^/api/v1/formulations/versions/(?P<version_id>[^/]+)/approve$", formulations.handle_formulation_approve, True),
+
+    # Prompt 03: Prescriptions & Nuskha Engine
+    ("POST", r"^/api/v1/prescriptions$", prescriptions.handle_prescription_create_draft, True),
+    ("GET", r"^/api/v1/prescriptions/(?P<id>[^/]+)$", prescriptions.handle_prescription_get, True),
+    ("PATCH", r"^/api/v1/prescriptions/(?P<id>[^/]+)$", prescriptions.handle_prescription_update_draft, True),
+    ("POST", r"^/api/v1/prescriptions/(?P<id>[^/]+)/validate$", prescriptions.handle_prescription_validate, True),
+    ("POST", r"^/api/v1/prescriptions/(?P<id>[^/]+)/findings/(?P<finding_id>[^/]+)/acknowledge$", prescriptions.handle_prescription_acknowledge_warning, True),
+    ("POST", r"^/api/v1/prescriptions/(?P<id>[^/]+)/sign$", prescriptions.handle_prescription_sign, True),
+    ("POST", r"^/api/v1/prescriptions/(?P<id>[^/]+)/amend$", prescriptions.handle_prescription_amend, True),
+    ("POST", r"^/api/v1/prescriptions/(?P<id>[^/]+)/cancel$", prescriptions.handle_prescription_cancel, True),
+    ("GET", r"^/api/v1/prescriptions/(?P<id>[^/]+)/document$", prescriptions.handle_prescription_render_document, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/prescriptions$", prescriptions.handle_patient_prescriptions_list, True),
+
+    # Prompt 04: Unani Assessment Templates & Encounter Assessments
+    ("GET", r"^/api/v1/unani/templates$", unani_assessment.handle_unani_templates_list, True),
+    ("GET", r"^/api/v1/unani/templates/versions/(?P<version_id>[^/]+)$", unani_assessment.handle_unani_template_version_get, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/unani-assessments$", unani_assessment.handle_unani_assessment_create_for_encounter, True),
+    ("GET", r"^/api/v1/unani-assessments/(?P<id>[^/]+)$", unani_assessment.handle_unani_assessment_get, True),
+    ("PATCH", r"^/api/v1/unani-assessments/(?P<id>[^/]+)$", unani_assessment.handle_unani_assessment_update_draft, True),
+    ("POST", r"^/api/v1/unani-assessments/(?P<id>[^/]+)/finalise$", unani_assessment.handle_unani_assessment_finalise, True),
+    ("POST", r"^/api/v1/unani-assessments/(?P<id>[^/]+)/amend$", unani_assessment.handle_unani_assessment_amend, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/unani-assessments$", unani_assessment.handle_patient_unani_assessments_list, True),
+
+    # Prompt 04: Organ-Axis Contextual Mappings
+    ("GET", r"^/api/v1/organ-axis/concepts$", organ_axis.handle_organ_axis_concepts_list, True),
+    ("GET", r"^/api/v1/organ-axis/mappings$", organ_axis.handle_organ_axis_mappings_list, True),
+    ("GET", r"^/api/v1/organ-axis/mappings/(?P<id>[^/]+)$", organ_axis.handle_organ_axis_mapping_get, True),
+    ("POST", r"^/api/v1/organ-axis/mappings/(?P<id>[^/]+)/acknowledge$", organ_axis.handle_organ_axis_mapping_acknowledge, True),
+
+    # Prompt 04: Usul-e-Ilaj Treatment Principles & Care Plans
+    ("GET", r"^/api/v1/usul-e-ilaj/principles$", care_plans.handle_principles_list, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/care-plans$", care_plans.handle_care_plan_create_for_encounter, True),
+    ("GET", r"^/api/v1/care-plans/(?P<id>[^/]+)$", care_plans.handle_care_plan_get, True),
+    ("PATCH", r"^/api/v1/care-plans/(?P<id>[^/]+)$", care_plans.handle_care_plan_update_draft, True),
+    ("POST", r"^/api/v1/care-plans/(?P<id>[^/]+)/transition$", care_plans.handle_care_plan_transition, True),
+    ("POST", r"^/api/v1/care-plans/(?P<id>[^/]+)/items/(?P<item_id>[^/]+)/link-prescription$", care_plans.handle_care_plan_link_prescription, True),
+    ("POST", r"^/api/v1/care-plans/(?P<id>[^/]+)/items/(?P<item_id>[^/]+)/outcomes$", care_plans.handle_care_plan_record_outcome, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/care-plans$", care_plans.handle_patient_care_plans_list, True),
 ]
 
 class ApiRouter:
@@ -66,6 +116,14 @@ class ApiRouter:
         """Dispatch incoming request through middleware, authentication, and route handlers."""
         # Correlation / Request ID tracking
         request_id = headers.get("x-request-id") or str(uuid.uuid4())
+
+        if "?" in path:
+            raw_path, raw_qs = path.split("?", 1)
+            path = raw_path
+            if not query_params:
+                from urllib.parse import parse_qs
+                parsed = parse_qs(raw_qs)
+                query_params = {k: v[0] for k, v in parsed.items()}
 
         # Parse JSON payload
         body = {}

@@ -1,9 +1,14 @@
-"""Database Connection Provider with WAL Mode and Referential Integrity."""
-
 import sqlite3
 from contextlib import contextmanager
 from typing import Iterator, Optional
 from apps.api.config import config
+
+# Register robust timestamp and date converters to support ISO-8601 strings
+def _convert_timestamp(val: bytes) -> str:
+    return val.decode("utf-8")
+
+sqlite3.register_converter("TIMESTAMP", _convert_timestamp)
+sqlite3.register_converter("timestamp", _convert_timestamp)
 
 class DatabaseConnection:
     def __init__(self, db_path: Optional[str] = None):

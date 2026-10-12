@@ -124,3 +124,21 @@ def validate_session(conn: sqlite3.Connection, token: str) -> Dict[str, Any]:
     user_ctx["roles"] = list(roles)
     user_ctx["permissions"] = list(perms)
     return user_ctx
+
+def hash_pin(pin: str) -> str:
+    """Generate SHA-256 hash for practitioner digital signing PIN."""
+    return hashlib.sha256(pin.strip().encode("utf-8")).hexdigest()
+
+def verify_pin(pin: str, stored_pin_hash: str) -> bool:
+    """Verify practitioner signing PIN against stored hash."""
+    if not pin or not stored_pin_hash:
+        return False
+    computed = hash_pin(pin)
+    return hmac.compare_digest(computed, stored_pin_hash)
+
+def calculate_prescription_hash(prescription_data: Dict[str, Any]) -> str:
+    """Compute deterministic SHA-256 fingerprint for an immutable prescription."""
+    import json
+    canonical_json = json.dumps(prescription_data, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+

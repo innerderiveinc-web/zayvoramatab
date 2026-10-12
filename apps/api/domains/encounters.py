@@ -274,6 +274,110 @@ class EncounterService:
                 }
             })
 
+        # 3. Fetch Prescriptions (Prompt 03)
+        try:
+            cursor.execute("""
+                SELECT pr.id, pr.prescription_number, pr.status, pr.overall_safety_state,
+                       pr.signed_at, pr.created_at, pr.encounter_id,
+                       u.full_name as practitioner_name, f.name as facility_name
+                FROM prescriptions pr
+                JOIN facilities f ON pr.facility_id = f.id
+                JOIN users u ON pr.practitioner_id = u.id
+                WHERE pr.patient_id = ? AND pr.organization_id = ?
+                ORDER BY pr.created_at DESC;
+            """, (patient_id, organization_id))
+            for r in cursor.fetchall():
+                timeline_items.append({
+                    "event_id": f"rx-{r['id']}",
+                    "event_type": "PRESCRIPTION_ORDER",
+                    "category": "CLINICAL",
+                    "timestamp": r["signed_at"] or r["created_at"],
+                    "status": r["status"],
+                    "title": f"Prescription {r['prescription_number']} ({r['status']})",
+                    "facility_name": r["facility_name"],
+                    "actor_name": r["practitioner_name"],
+                    "details": {
+                        "prescription_id": r["id"],
+                        "prescription_number": r["prescription_number"],
+                        "status": r["status"],
+                        "safety_state": r["overall_safety_state"],
+                        "encounter_id": r["encounter_id"]
+                    }
+                })
+        except sqlite3.OperationalError:
+            pass
+
+        # 4. Fetch Unani Assessments (Prompt 04)
+        try:
+            cursor.execute("""
+                SELECT ua.id, ua.status, ua.assessment_date, ua.dominant_mizaj,
+                       ua.mizaj_uncertainty, ua.signed_at, ua.created_at, ua.encounter_id,
+                       u.full_name as author_name, f.name as facility_name,
+                       t.name as template_name
+                FROM unani_assessments ua
+                JOIN facilities f ON ua.facility_id = f.id
+                JOIN users u ON ua.author_id = u.id
+                JOIN unani_assessment_template_versions tv ON ua.template_version_id = tv.id
+                JOIN unani_assessment_templates t ON tv.template_id = t.id
+                WHERE ua.patient_id = ? AND ua.organization_id = ?
+                ORDER BY ua.created_at DESC;
+            """, (patient_id, organization_id))
+            for r in cursor.fetchall():
+                timeline_items.append({
+                    "event_id": f"uas-{r['id']}",
+                    "event_type": "UNANI_ASSESSMENT",
+                    "category": "CLINICAL",
+                    "timestamp": r["signed_at"] or r["created_at"],
+                    "status": r["status"],
+                    "title": f"Unani Assessment: {r['dominant_mizaj']} ({r['status']})",
+                    "facility_name": r["facility_name"],
+                    "actor_name": r["author_name"],
+                    "details": {
+                        "assessment_id": r["id"],
+                        "dominant_mizaj": r["dominant_mizaj"],
+                        "uncertainty": r["mizaj_uncertainty"],
+                        "template_name": r["template_name"],
+                        "encounter_id": r["encounter_id"],
+                        "status": r["status"]
+                    }
+                })
+        except sqlite3.OperationalError:
+            pass
+
+        # 5. Fetch Care Plans (Prompt 04)
+        try:
+            cursor.execute("""
+                SELECT cp.id, cp.title, cp.status, cp.overall_goal, cp.review_date,
+                       cp.finalised_at, cp.created_at, cp.encounter_id,
+                       u.full_name as author_name, f.name as facility_name
+                FROM care_plans cp
+                JOIN facilities f ON cp.facility_id = f.id
+                JOIN users u ON cp.author_id = u.id
+                WHERE cp.patient_id = ? AND cp.organization_id = ?
+                ORDER BY cp.created_at DESC;
+            """, (patient_id, organization_id))
+            for r in cursor.fetchall():
+                timeline_items.append({
+                    "event_id": f"cpl-{r['id']}",
+                    "event_type": "CARE_PLAN",
+                    "category": "CLINICAL",
+                    "timestamp": r["finalised_at"] or r["created_at"],
+                    "status": r["status"],
+                    "title": f"Care Plan: {r['title']} ({r['status']})",
+                    "facility_name": r["facility_name"],
+                    "actor_name": r["author_name"],
+                    "details": {
+                        "care_plan_id": r["id"],
+                        "title": r["title"],
+                        "goal": r["overall_goal"],
+                        "review_date": r["review_date"],
+                        "encounter_id": r["encounter_id"],
+                        "status": r["status"]
+                    }
+                })
+        except sqlite3.OperationalError:
+            pass
+
         # Sort combined timeline descending by timestamp
         timeline_items.sort(key=lambda x: x["timestamp"], reverse=True)
         total = len(timeline_items)

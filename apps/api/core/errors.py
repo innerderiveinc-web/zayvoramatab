@@ -45,3 +45,8 @@ class ConflictError(AppError):
 class RateLimitError(AppError):
     def __init__(self, message: str = "Too many requests. Please slow down.", details: Optional[Dict[str, Any]] = None, request_id: Optional[str] = None):
         super().__init__(message, code="RATE_LIMITED", status_code=429, details=details, request_id=request_id)
+
+class SafetyBlockedError(AppError):
+    def __init__(self, message: str = "Prescription blocked by clinical safety preflight engine.", details: Optional[Dict[str, Any]] = None, request_id: Optional[str] = None):
+        super().__init__(message, code="SAFETY_BLOCKED", status_code=422, details=details, request_id=request_id)
+

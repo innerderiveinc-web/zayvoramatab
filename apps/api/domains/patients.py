@@ -446,6 +446,64 @@ class PatientService:
         """, (patient_id,))
         recent_encounters = [dict(r) for r in cursor.fetchall()]
 
+        # Allergies (Prompt 03)
+        allergies = []
+        try:
+            cursor.execute("""
+                SELECT id, allergen_name, severity, reaction, recorded_at
+                FROM patient_allergies
+                WHERE patient_id = ?
+                ORDER BY severity DESC, recorded_at DESC;
+            """, (patient_id,))
+            allergies = [dict(r) for r in cursor.fetchall()]
+        except sqlite3.OperationalError:
+            pass
+
+        # Recent Prescriptions (Prompt 03)
+        recent_prescriptions = []
+        try:
+            cursor.execute("""
+                SELECT id, prescription_number, status, overall_safety_state, signed_at, created_at
+                FROM prescriptions
+                WHERE patient_id = ?
+                ORDER BY created_at DESC
+                LIMIT 5;
+            """, (patient_id,))
+            recent_prescriptions = [dict(r) for r in cursor.fetchall()]
+        except sqlite3.OperationalError:
+            pass
+
+        # Latest Unani Assessment (Prompt 04)
+        latest_unani_assessment = None
+        try:
+            cursor.execute("""
+                SELECT id, status, assessment_date, dominant_mizaj, secondary_mizaj,
+                       mizaj_uncertainty, mizaj_rationale, clinical_reasoning,
+                       signed_at, created_at
+                FROM unani_assessments
+                WHERE patient_id = ?
+                ORDER BY created_at DESC
+                LIMIT 1;
+            """, (patient_id,))
+            r = cursor.fetchone()
+            if r:
+                latest_unani_assessment = dict(r)
+        except sqlite3.OperationalError:
+            pass
+
+        # Active Care Plans (Prompt 04)
+        active_care_plans = []
+        try:
+            cursor.execute("""
+                SELECT id, title, status, overall_goal, review_date, created_at
+                FROM care_plans
+                WHERE patient_id = ? AND status IN ('ACTIVE', 'PROPOSED', 'DRAFT')
+                ORDER BY created_at DESC;
+            """, (patient_id,))
+            active_care_plans = [dict(r) for r in cursor.fetchall()]
+        except sqlite3.OperationalError:
+            pass
+
         # Log Access Audit Event
         log_audit_event(
             conn=conn,
@@ -466,7 +524,11 @@ class PatientService:
             "identifiers": identifiers,
             "addresses": addresses,
             "consents": consents,
-            "recent_encounters": recent_encounters
+            "recent_encounters": recent_encounters,
+            "allergies": allergies,
+            "recent_prescriptions": recent_prescriptions,
+            "latest_unani_assessment": latest_unani_assessment,
+            "active_care_plans": active_care_plans
         }
 
     @staticmethod

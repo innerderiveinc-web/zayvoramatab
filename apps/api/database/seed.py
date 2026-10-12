@@ -3,6 +3,8 @@ Enforces non-production execution safeguard. All generated accounts are strictly
 """
 
 import sys
+import json
+import hashlib
 from datetime import datetime
 from apps.api.config import config
 from apps.api.database.connection import DatabaseConnection
@@ -74,7 +76,37 @@ def seed_development_data(db_path: str = None) -> None:
             ('perm-consent-read', 'consent:read', 'View Patient Consents', 'CLINICAL'),
             ('perm-consent-record', 'consent:record', 'Record Patient Consent', 'CLINICAL'),
             ('perm-consent-withdraw', 'consent:withdraw', 'Withdraw Patient Consent', 'CLINICAL'),
-            ('perm-prescriptions-sign', 'prescriptions:sign', 'Sign Medical Prescriptions', 'CLINICAL')
+            ('perm-prescriptions-sign', 'prescriptions:sign', 'Sign Medical Prescriptions', 'CLINICAL'),
+            # Prompt 03 Formulary & Prescription Permissions
+            ('perm-form-read', 'formulary:read', 'Browse Formulation Catalog', 'CLINICAL'),
+            ('perm-form-create', 'formulary:draft_create', 'Author Draft Formulations', 'CLINICAL'),
+            ('perm-form-update', 'formulary:draft_update', 'Edit Draft Formulations', 'CLINICAL'),
+            ('perm-form-submit', 'formulary:submit_review', 'Submit Formulations for Review', 'CLINICAL'),
+            ('perm-form-approve', 'formulary:approve', 'Approve/Reject Formulations', 'GOVERNANCE'),
+            ('perm-rx-create', 'prescription:create_draft', 'Create Prescription Drafts', 'CLINICAL'),
+            ('perm-rx-read', 'prescription:read', 'Read Prescription Records', 'CLINICAL'),
+            ('perm-rx-update', 'prescription:update_draft', 'Update Draft Prescription Items', 'CLINICAL'),
+            ('perm-rx-validate', 'prescription:validate', 'Run Safety Preflight Validation', 'CLINICAL'),
+            ('perm-rx-sign', 'prescription:sign', 'Electronically Sign Prescriptions', 'CLINICAL'),
+            ('perm-rx-amend', 'prescription:amend', 'Amend Signed Prescriptions', 'CLINICAL'),
+            ('perm-rx-cancel', 'prescription:cancel', 'Cancel Prescriptions', 'CLINICAL'),
+            ('perm-rx-export', 'prescription:export', 'Print / Export Prescription Documents', 'CLINICAL'),
+            # Prompt 04 Unani Assessment, Organ-Axis & Care Planning Permissions
+            ('perm-assess-read', 'assessment:read', 'View Unani Clinical Assessments', 'CLINICAL'),
+            ('perm-assess-create', 'assessment:create_draft', 'Create Draft Unani Assessment', 'CLINICAL'),
+            ('perm-assess-update', 'assessment:update_draft', 'Update Draft Unani Assessment', 'CLINICAL'),
+            ('perm-assess-finalise', 'assessment:finalise', 'Clinically Finalise & Attest Unani Assessment', 'CLINICAL'),
+            ('perm-assess-amend', 'assessment:amend', 'Amend Finalised Unani Assessment', 'CLINICAL'),
+            ('perm-tpl-read', 'template:read', 'Read Assessment Templates', 'CLINICAL'),
+            ('perm-tpl-manage', 'template:manage', 'Manage Assessment Templates & Versions', 'GOVERNANCE'),
+            ('perm-oa-read', 'organ_axis:read', 'Browse Organ-Axis Contextual Mappings', 'CLINICAL'),
+            ('perm-oa-manage', 'organ_axis:manage', 'Govern Organ-Axis Mappings', 'GOVERNANCE'),
+            ('perm-usul-read', 'usul_e_ilaj:read', 'Browse Usul-e-Ilaj Principle Vocabulary', 'CLINICAL'),
+            ('perm-usul-manage', 'usul_e_ilaj:manage', 'Govern Usul-e-Ilaj Principle Definitions', 'GOVERNANCE'),
+            ('perm-cp-read', 'care_plan:read', 'View Longitudinal Care Plans', 'CLINICAL'),
+            ('perm-cp-create', 'care_plan:create', 'Create Usul-e-Ilaj Care Plans', 'CLINICAL'),
+            ('perm-cp-update', 'care_plan:update', 'Update Care Plans and Items', 'CLINICAL'),
+            ('perm-cp-finalise', 'care_plan:finalise', 'Finalise and Activate Care Plans', 'CLINICAL')
         ]
         for p_id, code, name, cat in permissions_data:
             conn.execute("""
@@ -87,30 +119,61 @@ def seed_development_data(db_path: str = None) -> None:
         for p_id, _, _, _ in permissions_data:
             conn.execute("INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES ('role-org-admin', ?);", (p_id,))
         
-        # PRACTITIONER gets clinical, patients, encounters, sign, consent, capabilities:read
+        # CLINIC_ADMIN gets all formulary, prescription, assessment, and care plan permissions
         for p_code in [
             'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics',
             'encounters:read', 'encounters:write', 'encounter:read', 'encounter:create', 'encounter:update_draft', 'encounter:cancel',
-            'consent:read', 'consent:record', 'prescriptions:sign', 'capabilities:read'
+            'consent:read', 'consent:record', 'prescriptions:sign', 'capabilities:read',
+            'formulary:read', 'formulary:draft_create', 'formulary:draft_update', 'formulary:submit_review', 'formulary:approve',
+            'prescription:create_draft', 'prescription:read', 'prescription:update_draft', 'prescription:validate',
+            'prescription:sign', 'prescription:amend', 'prescription:cancel', 'prescription:export',
+            'assessment:read', 'assessment:create_draft', 'assessment:update_draft', 'assessment:finalise', 'assessment:amend',
+            'template:read', 'template:manage', 'organ_axis:read', 'organ_axis:manage', 'usul_e_ilaj:read', 'usul_e_ilaj:manage',
+            'care_plan:read', 'care_plan:create', 'care_plan:update', 'care_plan:finalise'
+        ]:
+            conn.execute("""
+                INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
+                SELECT 'role-clinic-admin', id FROM permissions WHERE code = ?;
+            """, (p_code,))
+
+        # PRACTITIONER gets full clinical assessment, prescribing, and care planning
+        for p_code in [
+            'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics',
+            'encounters:read', 'encounters:write', 'encounter:read', 'encounter:create', 'encounter:update_draft', 'encounter:cancel',
+            'consent:read', 'consent:record', 'prescriptions:sign', 'capabilities:read',
+            'formulary:read', 'formulary:draft_create', 'formulary:draft_update', 'formulary:submit_review',
+            'prescription:create_draft', 'prescription:read', 'prescription:update_draft', 'prescription:validate',
+            'prescription:sign', 'prescription:amend', 'prescription:cancel', 'prescription:export',
+            'assessment:read', 'assessment:create_draft', 'assessment:update_draft', 'assessment:finalise', 'assessment:amend',
+            'template:read', 'organ_axis:read', 'usul_e_ilaj:read',
+            'care_plan:read', 'care_plan:create', 'care_plan:update', 'care_plan:finalise'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-practitioner', id FROM permissions WHERE code = ?;
             """, (p_code,))
 
-        # RECEPTIONIST gets patient read/create/update/duplicate, encounter read/create/cancel, consent read/record, capabilities:read
+        # RECEPTIONIST gets patient read/create/update/duplicate, encounter read/create/cancel, consent read/record, prescription read/export
         for p_code in [
             'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics', 'patient:resolve_duplicate',
             'encounters:read', 'encounter:read', 'encounter:create', 'encounter:cancel',
-            'consent:read', 'consent:record', 'capabilities:read'
+            'consent:read', 'consent:record', 'capabilities:read', 'prescription:read', 'prescription:export',
+            'care_plan:read'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-receptionist', id FROM permissions WHERE code = ?;
             """, (p_code,))
 
-        # READ_ONLY_AUDITOR gets audit:read, patient:read, encounter:read, consent:read, capabilities:read
-        for p_code in ['audit:read', 'patients:read', 'patient:read', 'encounters:read', 'encounter:read', 'consent:read', 'capabilities:read']:
+        # PHARMACIST gets formulary read, prescription read, care_plan read, and export
+        for p_code in ['formulary:read', 'prescription:read', 'prescription:export', 'capabilities:read', 'care_plan:read']:
+            conn.execute("""
+                INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
+                SELECT 'role-pharmacist', id FROM permissions WHERE code = ?;
+            """, (p_code,))
+
+        # READ_ONLY_AUDITOR gets audit:read, patient:read, encounter:read, consent:read, formulary:read, prescription:read, assessment:read, care_plan:read, capabilities:read
+        for p_code in ['audit:read', 'patients:read', 'patient:read', 'encounters:read', 'encounter:read', 'consent:read', 'formulary:read', 'prescription:read', 'assessment:read', 'care_plan:read', 'organ_axis:read', 'usul_e_ilaj:read', 'capabilities:read']:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-auditor', id FROM permissions WHERE code = ?;
@@ -254,7 +317,420 @@ def seed_development_data(db_path: str = None) -> None:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?);
             """, (e_id, o_id, f_id, p_id, prac_id, tok, etype, st, reason, cby))
 
-        # 9. Capability Registry (Updated with Phase 2 Clinical Verticals)
+        # 9. Seed Synthetic Clinical Sources
+        sources_seed = [
+            ('src-nfum', 'NFUM', 'National Formulary of Unani Medicine (NFUM) Parts I-VI', 'Ministry of AYUSH / CCRUM, Govt of India', 'Second Edition', 2006, 'STATUTORY', 'https://ayush.gov.in/nfum', 'VERIFIED'),
+            ('src-upi', 'UPI', 'Unani Pharmacopoeia of India (UPI) Parts I-II', 'Pharmacopoeia Commission for Indian Medicine & Homoeopathy', 'First Edition', 2007, 'STATUTORY', 'https://pcim.gov.in/upi', 'VERIFIED'),
+            ('src-bayaz', 'BAYAZ_KABIR', 'Bayaz-e-Kabir (Dawa-Sazi)', 'Hakeem Kabiruddin', 'Daftar-e-Maseeh Edition', 1935, 'HISTORICAL_BENCHMARK', 'Classical Formulary Benchmark', 'VERIFIED')
+        ]
+        for s_id, code, title, auth, ed, yr, leg, ref, ver_st in sources_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO clinical_sources (id, code, title, author_authority, edition, publication_year, legal_status, url_or_reference, verification_status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (s_id, code, title, auth, ed, yr, leg, ref, ver_st))
+
+        # 10. Seed Synthetic Ingredients Catalog
+        ingredients_seed = [
+            ('ing-badam', 'Almond / Badam', 'Badam Shireen', 'Prunus dulcis', 'BOTANICAL', 'HOT_MOIST', 1, 5000, 15000, 30000, 0, 0, 'src-upi', 'APPROVED'),
+            ('ing-bekh-kasni', 'Chicory Root', 'Bekh-e-Kasni', 'Cichorium intybus', 'BOTANICAL', 'COLD_MOIST', 1, 3000, 7000, 15000, 0, 0, 'src-upi', 'APPROVED'),
+            ('ing-tukhm-kheera', 'Cucumber Seed', 'Tukhm-e-Kheera', 'Cucumis sativus', 'BOTANICAL', 'COLD_MOIST', 1, 3000, 7000, 14000, 0, 0, 'src-upi', 'APPROVED'),
+            ('ing-tukhm-kakdi', 'Melon Seed', 'Tukhm-e-Kakdi', 'Cucumis melo', 'BOTANICAL', 'COLD_MOIST', 1, 3000, 7000, 14000, 0, 0, 'src-upi', 'APPROVED'),
+            ('ing-tukhm-kahu', 'Lettuce Seed', 'Tukhm-e-Kahu', 'Lactuca sativa', 'BOTANICAL', 'COLD_DRY', 2, 2000, 5000, 10000, 0, 0, 'src-upi', 'APPROVED'),
+            ('ing-kuchla', 'Poison Nut / Nux Vomica', 'Kuchla (Azaaraqi)', 'Strychnos nux-vomica', 'BOTANICAL', 'HOT_DRY', 3, 30, 65, 130, 1, 1, 'src-upi', 'APPROVED'),
+            ('ing-abhal', 'Juniper Berries', 'Abhal', 'Juniperus communis', 'BOTANICAL', 'HOT_DRY', 2, 2000, 5000, 10000, 0, 0, 'src-upi', 'APPROVED'),
+            ('ing-zanjabil', 'Dried Ginger', 'Zanjabil (Sonth)', 'Zingiber officinale', 'BOTANICAL', 'HOT_DRY', 2, 1000, 3000, 6000, 0, 0, 'src-upi', 'APPROVED'),
+            ('ing-filfil', 'Black Pepper', 'Filfil Siyah', 'Piper nigrum', 'BOTANICAL', 'HOT_DRY', 3, 500, 1500, 3000, 0, 0, 'src-upi', 'APPROVED')
+        ]
+        for ing_id, cname, uname, bname, cat, mizaj, deg, smin, smax, dmax, mud, s_e1, src_id, rst in ingredients_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO ingredient_catalog (
+                    id, canonical_name, unani_name, botanical_name, category, temperament_mizaj,
+                    degree, single_dose_min_mg, single_dose_max_mg, daily_dose_max_mg,
+                    is_mudabbar_required, is_schedule_e1, source_id, review_status
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (ing_id, cname, uname, bname, cat, mizaj, deg, smin, smax, dmax, mud, s_e1, src_id, rst))
+
+        # 11. Seed Safety Contraindications
+        conn.execute("""
+            INSERT OR REPLACE INTO safety_contraindications (id, ingredient_id, contraindication_type, severity, rationale)
+            VALUES 
+            ('con-abhal-preg', 'ing-abhal', 'PREGNANCY', 'BLOCK', 'Emmenagogue / Abortifacient: Strictly contraindicated during pregnancy.'),
+            ('con-kuchla-ped', 'ing-kuchla', 'PEDIATRIC', 'BLOCK', 'Potent Strychnine Alkaloid: Contraindicated in pediatric patients under 12 years.');
+        """)
+
+        # 12. Seed Patient Allergies (pat-syn-001 allergic to Badam / Almond)
+        conn.execute("""
+            INSERT OR REPLACE INTO patient_allergies (id, patient_id, organization_id, allergen_name, severity, reaction, recorded_by)
+            VALUES 
+            ('alg-syn-001', 'pat-syn-001', 'org-matab-default', 'Roghan Badam Shireen (Almond)', 'SEVERE', 'Acute angioedema and bronchospasm upon ingestion of almond oil preparations.', 'usr-hakeem-1');
+        """)
+
+        # 13. Seed Formulations and Reviewed Versions
+        formulations_seed = [
+            (
+                'form-sharbat-bazoori', 'org-matab-default', 'FORM-001', 'Sharbat Bazoori Motadil',
+                'شربت بزوری معتدل', 'SHARBAT', 1, 'APPROVED', 'usr-admin-1',
+                'Diuretic, lithotriptic, and liver/kidney deobstruent (Mufattih Sudad)', '20 to 40 ml twice daily with fresh water',
+                'src-nfum', 'NFUM Part I, Page 142'
+            ),
+            (
+                'form-majoon-arad', 'org-matab-default', 'FORM-002', 'Majoon Arad Khurma',
+                'معجون آرد خرما', 'MAJOON', 1, 'APPROVED', 'usr-admin-1',
+                'Nourishing tonic (Muqawwi-e-Bah) and spermatogenic', '10 g twice daily with warm milk',
+                'src-bayaz', 'Bayaz-e-Kabir Vol II, Page 85'
+            ),
+            (
+                'form-hab-azaarqi', 'org-matab-default', 'FORM-003', 'Habb-e-Azaarqi',
+                'حب ازارقی', 'HAB', 1, 'APPROVED', 'usr-admin-1',
+                'Neuromuscular stimulant for chronic joint stiffness and facial palsy', '1 pill (500mg) once daily after meals',
+                'src-nfum', 'NFUM Part II, Page 38'
+            ),
+            (
+                'form-hab-abhal', 'org-matab-default', 'FORM-004', 'Habb-e-Mudir (Abhal Compound)',
+                'حب مدر', 'HAB', 1, 'APPROVED', 'usr-admin-1',
+                'Uterine stimulant and emmenagogue for amenorrhea', '1 to 2 pills BD',
+                'src-bayaz', 'Bayaz-e-Kabir Vol I, Page 112'
+            ),
+            (
+                'form-draft-unreviewed', 'org-matab-default', 'FORM-999', 'Jawarish Mastagi (Trial Compound)',
+                'جوارش مصطگی', 'MAJOON', 1, 'DRAFT', 'usr-hakeem-1',
+                'Gastric tonic formulation currently under trial review', '5 g BD',
+                'src-bayaz', 'Unreviewed monograph entry'
+            )
+        ]
+
+        for f_id, o_id, code, name, translit, dform, ver, st, author, indic, dose, src_id, loc in formulations_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO formulations (id, organization_id, code, name, transliteration, dosage_form, current_version, status, created_by, updated_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (f_id, o_id, code, name, translit, dform, ver, st, author, author))
+
+            v_id = f"ver-{f_id}-1"
+            conn.execute("""
+                INSERT OR REPLACE INTO formulation_versions (
+                    id, formulation_id, version_number, standard_indication, standard_adult_dose,
+                    classical_source_id, source_locator, status, reviewed_by, reviewed_at, review_notes
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 'Synthetic verified formulation monograph');
+            """, (v_id, f_id, ver, indic, dose, src_id, loc, st, author))
+
+        # 14. Seed Formulation Ingredients
+        form_ingredients = [
+            # Sharbat Bazoori Motadil ingredients
+            ('fi-baz-1', 'ver-form-sharbat-bazoori-1', 'ing-bekh-kasni', 5000, 1),
+            ('fi-baz-2', 'ver-form-sharbat-bazoori-1', 'ing-tukhm-kheera', 3000, 0),
+            ('fi-baz-3', 'ver-form-sharbat-bazoori-1', 'ing-tukhm-kakdi', 3000, 0),
+            ('fi-baz-4', 'ver-form-sharbat-bazoori-1', 'ing-tukhm-kahu', 2000, 0),
+            # Majoon Arad Khurma (Contains Almond -> allergen)
+            ('fi-arad-1', 'ver-form-majoon-arad-1', 'ing-badam', 4000, 1),
+            ('fi-arad-2', 'ver-form-majoon-arad-1', 'ing-zanjabil', 1000, 0),
+            # Habb-e-Azaarqi (Contains Kuchla -> Schedule E1 toxin)
+            ('fi-aza-1', 'ver-form-hab-azaarqi-1', 'ing-kuchla', 60, 1),
+            ('fi-aza-2', 'ver-form-hab-azaarqi-1', 'ing-filfil', 120, 0),
+            # Habb-e-Abhal (Contains Abhal -> Pregnancy contraindication)
+            ('fi-abh-1', 'ver-form-hab-abhal-1', 'ing-abhal', 500, 1),
+            ('fi-abh-2', 'ver-form-hab-abhal-1', 'ing-zanjabil', 250, 0)
+        ]
+        for fi_id, fv_id, ing_id, q_mg, is_chief in form_ingredients:
+            conn.execute("""
+                INSERT OR REPLACE INTO formulation_ingredients (id, formulation_version_id, ingredient_id, quantity_mg, is_chief_ingredient)
+                VALUES (?, ?, ?, ?, ?);
+            """, (fi_id, fv_id, ing_id, q_mg, is_chief))
+
+        # 15. Seed Synthetic Prescriptions
+        # rx-syn-001: Signed prescription for pat-syn-003 in enc-syn-002
+        rx_snapshot = json.dumps({
+            "prescription_number": "RX-2026-00001",
+            "patient_mrn": "MRN-2026-00003",
+            "patient_name": "Maryam Khatoon",
+            "encounter_id": "enc-syn-002",
+            "practitioner_name": "Hakeem Tariq Ahmad",
+            "items": [
+                {
+                    "item_name": "Sharbat Bazoori Motadil",
+                    "dosage_form": "SHARBAT",
+                    "dose_amount": "20",
+                    "dose_unit": "ml",
+                    "route": "ORAL",
+                    "frequency": "BD",
+                    "duration_days": 14,
+                    "anupan_vehicle": "Aab-e-Taza (Fresh Water)",
+                    "instructions": "Take 20 ml with 1 glass of fresh water in the morning and evening."
+                }
+            ],
+            "signed_at": "2026-10-12T10:30:00Z"
+        })
+        rx_hash = hashlib.sha256(rx_snapshot.encode("utf-8")).hexdigest()
+
+        conn.execute("""
+            INSERT OR REPLACE INTO prescriptions (
+                id, organization_id, facility_id, prescription_number, patient_id, encounter_id,
+                practitioner_id, version_number, status, overall_safety_state, signed_at, signed_by,
+                signature_hash, signed_snapshot
+            )
+            VALUES (
+                'rx-syn-001', 'org-matab-default', 'fac-central-opd', 'RX-2026-00001', 'pat-syn-003',
+                'enc-syn-002', 'usr-hakeem-1', 1, 'SIGNED', 'PASS', CURRENT_TIMESTAMP, 'usr-hakeem-1',
+                ?, ?
+            );
+        """, (rx_hash, rx_snapshot))
+
+        conn.execute("""
+            INSERT OR REPLACE INTO prescription_items (
+                id, prescription_id, item_type, formulation_id, formulation_version_id, item_name,
+                dosage_form, dose_amount, dose_unit, route, frequency, duration_days, instructions, anupan_vehicle, sort_order
+            )
+            VALUES (
+                'rxi-syn-001', 'rx-syn-001', 'CATALOG_FORMULATION', 'form-sharbat-bazoori', 'ver-form-sharbat-bazoori-1',
+                'Sharbat Bazoori Motadil', 'SHARBAT', '20', 'ml', 'ORAL', 'BD', 14,
+                'Take 20 ml with 1 glass of fresh water in the morning and evening.', 'Aab-e-Taza (Fresh Water)', 1
+            );
+        """)
+
+        # 16. Prompt 04: Statutory Source for Classical Physiology (Al-Qanun)
+        conn.execute("""
+            INSERT OR REPLACE INTO clinical_sources (id, organization_id, code, title, author_authority, edition, publication_year, legal_status, url_or_reference, verification_status)
+            VALUES ('src-al-qanun', NULL, 'AL_QANUN', 'Al-Qanun fi al-Tibb (The Canon of Medicine)', 'Ibn Sina (Avicenna)', 'Standard Arabic/Urdu Critical Edition', 1025, 'HISTORICAL_BENCHMARK', 'Jamia Hamdard / CCRUM Archives', 'VERIFIED');
+        """)
+
+        # 17. Prompt 04: Unani Assessment Templates & Core Version
+        conn.execute("""
+            INSERT OR REPLACE INTO unani_assessment_templates (id, code, name, purpose, language, status)
+            VALUES ('tmpl-unani-core', 'TMPL-UNANI-CORE', 'Standard Unani Clinical Examination & Mizaj Assessment', 'Routine OPD clinical examination covering Ajnas-e-Ashara, Afaal, and Asbab-e-Sittah', 'ur', 'ACTIVE');
+        """)
+
+        tmpl_def = json.dumps({
+            "sections": ["mizaj_indicators", "afaal_functional", "asbab_sittah", "examination_nabz_baul_baraz"],
+            "scoring_rule": "CLINICIAN_ENTERED_ONLY",
+            "instruction": "Record observed and patient-reported signs. Clinician must explicitly enter final Mizaj determination and uncertainty."
+        })
+        conn.execute("""
+            INSERT OR REPLACE INTO unani_assessment_template_versions (
+                id, template_id, version_number, definition_json, validation_metadata,
+                status, effective_date
+            )
+            VALUES ('ver-tmpl-unani-core-1', 'tmpl-unani-core', 1, ?, '{"mandatory_domains": ["MIZAJ", "AFAAL"]}', 'APPROVED', '2026-01-01');
+        """, (tmpl_def,))
+
+        domains_seed = [
+            ('dom-mizaj', 'ver-tmpl-unani-core-1', 'MIZAJ', 'Mizaj (Temperament) Indicators', 'Ajnas-e-Ashara indicators including complexion, touch, build, and sleep', 1, 1),
+            ('dom-afaal', 'ver-tmpl-unani-core-1', 'AFAAL', 'Afaal (Functional & Faculty Observations)', 'Assessment of Quwa (faculties) and Afaal (functions: digestive, respiratory, cognitive)', 2, 1),
+            ('dom-asbab', 'ver-tmpl-unani-core-1', 'ASBAB_SITTAH', 'Asbab-e-Sittah Zarooriyyah (Lifestyle Context)', 'Air, food/drink, bodily movement/rest, psychic movement/rest, sleep/wakefulness, retention/evacuation', 3, 0),
+            ('dom-nabz', 'ver-tmpl-unani-core-1', 'NABZ', 'Nabz (Pulse Examination)', 'Ten pulse characteristics: volume, strength, speed, frequency, compressibility, etc.', 4, 0),
+            ('dom-baul', 'ver-tmpl-unani-core-1', 'BAUL', 'Baul (Urine Examination)', 'Color, consistency, transparency, sediment, and froth', 5, 0),
+            ('dom-baraz', 'ver-tmpl-unani-core-1', 'BARAZ', 'Baraz (Stool Examination)', 'Color, quantity, odor, and evacuation transit', 6, 0)
+        ]
+        for d_id, tv_id, key, lbl, desc, s_ord, mand in domains_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO unani_assessment_domains (id, template_version_id, domain_key, label, description, sort_order, is_mandatory)
+                VALUES (?, ?, ?, ?, ?, ?, ?);
+            """, (d_id, tv_id, key, lbl, desc, s_ord, mand))
+
+        options_seed = [
+            ('opt-miz-dam', 'dom-mizaj', 'DAMAWWI', 'Damawwi (Hot & Moist / Sanguineous)', 'Predominance of blood humor (Dam)', 1),
+            ('opt-miz-bal', 'dom-mizaj', 'BALGHAMI', 'Balghami (Cold & Moist / Phlegmatic)', 'Predominance of phlegm humor (Balgham)', 2),
+            ('opt-miz-saf', 'dom-mizaj', 'SAFRAWI', 'Safrawi (Hot & Dry / Choleric)', 'Predominance of yellow bile (Safra)', 3),
+            ('opt-miz-sau', 'dom-mizaj', 'SAUDAWI', 'Saudawi (Cold & Dry / Melancholic)', 'Predominance of black bile (Sauda)', 4),
+            ('opt-miz-mot', 'dom-mizaj', 'MOTADIL', 'Motadil (Balanced / Eutemperament)', 'Harmonious humoral equilibrium', 5)
+        ]
+        for o_id, d_id, o_key, o_lbl, o_desc, s_ord in options_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO unani_assessment_options (id, domain_id, option_key, label, description, sort_order)
+                VALUES (?, ?, ?, ?, ?, ?);
+            """, (o_id, d_id, o_key, o_lbl, o_desc, s_ord))
+
+        # 18. Prompt 04: Organ-Axis Concepts Catalog & Contextual Mappings
+        oa_concepts = [
+            ('oac-meda', 'MEDA', 'Stomach (Meda)', 'معدہ', 'Gastric cavity / Digestive tract', 'ACTIVE'),
+            ('oac-dimagh', 'DIMAGH', 'Brain (Dimagh)', 'دماغ', 'Central nervous system & Psychic faculty', 'ACTIVE'),
+            ('oac-kabid', 'KABID', 'Liver (Kabid)', 'کبد', 'Hepato-biliary system & Nutritive faculty', 'ACTIVE'),
+            ('oac-qalb', 'QALB', 'Heart (Qalb)', 'قلب', 'Cardiovascular system & Vital faculty', 'ACTIVE'),
+            ('oac-kulyah', 'KULYAH', 'Kidneys (Kulyah)', 'گردہ', 'Renal urinary excretion system', 'ACTIVE')
+        ]
+        for cid, code, cname, uname, anat, st in oa_concepts:
+            conn.execute("""
+                INSERT OR REPLACE INTO organ_axis_concepts (id, code, canonical_name, unani_name, anatomical_correlate, status)
+                VALUES (?, ?, ?, ?, ?, ?);
+            """, (cid, code, cname, uname, anat, st))
+
+        oa_mappings = [
+            (
+                'oam-meda-dimagh', 'oac-meda', 'oac-dimagh', 'ASSOCIATED_WITH',
+                'Su-e-Hazm (impaired gastric digestion) produces noxious gastric vapors (Bukharaat-e-Meda) that ascend to the brain, inducing secondary cephalalgia (Sudaa) and vertigo.',
+                'Examine gastric history, food intake, and epigastric discomfort when evaluating chronic headaches.',
+                'HISTORICAL_BENCHMARK', 'APPROVED', 'src-al-qanun', 'Vol 1, Book 3, Treatise on Cephalalgia & Gastric Axis',
+                'usr-hakeem-1', '2026-01-10'
+            ),
+            (
+                'oam-meda-kabid', 'oac-meda', 'oac-kabid', 'TRADITIONALLY_RELATED_TO',
+                'First digestion in the stomach (Hazm-e-Midi) directly prepares chyme (Kylos) for the second digestion in the liver (Hazm-e-Kabidi). Raw gastric chyme leads to sluggish hepatic humor synthesis.',
+                'Consider gentle liver tonic (Muqawwi-e-Kabid) when treating chronic chronic gastric hypomotility.',
+                'HISTORICAL_BENCHMARK', 'APPROVED', 'src-al-qanun', 'Vol 1, Discourse on the Four Stages of Digestion',
+                'usr-hakeem-1', '2026-01-10'
+            )
+        ]
+        for mid, scid, tcid, rel, exp, util, ev, st, s_id, s_loc, r_by, r_at in oa_mappings:
+            conn.execute("""
+                INSERT OR REPLACE INTO organ_axis_mappings (
+                    id, source_concept_id, target_concept_id, relationship_type,
+                    plain_explanation, clinical_utility_notes, evidence_level, status,
+                    source_id, source_locator, reviewed_by, reviewed_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (mid, scid, tcid, rel, exp, util, ev, st, s_id, s_loc, r_by, r_at))
+
+        # 19. Prompt 04: Usul-e-Ilaj Treatment Principles Vocabulary & Versions
+        principles_seed = [
+            ('uip-tanqiya', 'TANQIYA', 'Tanqiya', 'Evacuation / Humoral Cleansing', 'تنقیہ', 'ACTIVE'),
+            ('uip-tadeel', 'TADEEL_E_MIZAJ', 'Tadeel-e-Mizaj', 'Temperamental Normalization', 'تعدیل مزاج', 'ACTIVE'),
+            ('uip-tahleel', 'TAHLEEL', 'Tahleel', 'Resolution of Morbid Humors', 'تحلیل', 'ACTIVE'),
+            ('uip-taqwiyat', 'TAQWIYAT', 'Taqwiyat', 'Target Faculty Strengthening', 'تقویت', 'ACTIVE'),
+            ('uip-hifz', 'HIFZ_E_SEHAT', 'Hifz-e-Sehat', 'Preservation of Health / Regimen', 'حفظ صحت', 'ACTIVE'),
+            ('uip-taskeen', 'TASKEEN', 'Taskeen', 'Palliative Symptom Relief', 'تسکین', 'ACTIVE')
+        ]
+        for pid, code, nunani, neng, nurdu, st in principles_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO usul_e_ilaj_principles (id, code, name_unani, name_english, name_urdu, status)
+                VALUES (?, ?, ?, ?, ?, ?);
+            """, (pid, code, nunani, neng, nurdu, st))
+
+        principle_versions_seed = [
+            (
+                'ver-uip-tanqiya-1', 'uip-tanqiya', 1,
+                'Evacuation of accumulated morbid humors (Mawad-e-Fasida) via natural emunctory pathways (emesis, purgation, diuresis, diaphoresis).',
+                'Indicated in plethora (Imtila) and Maddi diseases where morbid matter is confirmed.',
+                'Contraindicated in severe physical debility, advanced cachexia, and acute dehydration.',
+                'Monitor hydration, pulse stability, and abdominal cramping during evacuant regimen.',
+                'APPROVED', 'src-al-qanun', 'Book 1, Canon of Therapeutics'
+            ),
+            (
+                'ver-uip-tadeel-1', 'uip-tadeel', 1,
+                'Restoring temperamental balance through counter-acting qualities (Ilaj-bid-Didd) using foods, herbs, and climatic adjustments.',
+                'Indicated in all simple Su-e-Mizaj (Sada) and post-evacuation convalescence.',
+                'Requires accurate ongoing determination of target organ temperament.',
+                'Weekly monitoring of pulse (Nabz) and digestive fire (Hazm).',
+                'APPROVED', 'src-al-qanun', 'Book 1, Discourse on Temperamental Rectification'
+            ),
+            (
+                'ver-uip-taqwiyat-1', 'uip-taqwiyat', 1,
+                'Consolidating and strengthening the innate faculty (Quwwat) of the affected organ using specific tonics (Muqawwiyat).',
+                'Indicated following humor resolution to prevent disease recurrence.',
+                'Contraindicated while acute active inflammation or morbid matter is unexpelled.',
+                'Bi-weekly functional review of digestion, stamina, and sleep.',
+                'APPROVED', 'src-al-qanun', 'Book 1, Strengthening Weakened Organs'
+            )
+        ]
+        for pvid, pid, vnum, defn, ind, cind, mon, st, sid, sloc in principle_versions_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO usul_e_ilaj_principle_versions (
+                    id, principle_id, version_number, definition, indications, contraindications,
+                    monitoring_guidance, status, source_id, source_locator
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (pvid, pid, vnum, defn, ind, cind, mon, st, sid, sloc))
+
+        # 20. Prompt 04: Synthetic Finalised Unani Assessment for pat-syn-001
+        uas_snapshot = json.dumps({
+            "assessment_id": "uas-syn-001",
+            "dominant_mizaj": "BALGHAMI",
+            "secondary_mizaj": "SAUDAWI",
+            "mizaj_uncertainty": "HIGH_CONFIDENCE",
+            "clinical_reasoning": "Su-e-Mizaj Balghami Maddi affecting the gastric faculty (Meda) with secondary Bukharaat-e-Meda causing Sudaa (headache).",
+            "signed_at": "2026-10-12T10:15:00Z"
+        })
+        uas_hash = hashlib.sha256(uas_snapshot.encode("utf-8")).hexdigest()
+
+        conn.execute("""
+            INSERT OR REPLACE INTO unani_assessments (
+                id, organization_id, facility_id, patient_id, encounter_id, template_version_id,
+                author_id, status, assessment_date, dominant_mizaj, secondary_mizaj, mizaj_rationale,
+                mizaj_uncertainty, clinical_reasoning, version_number, signed_at, signed_by,
+                signature_hash, signed_snapshot
+            )
+            VALUES (
+                'uas-syn-001', 'org-matab-default', 'fac-central-opd', 'pat-syn-001', 'enc-syn-001',
+                'ver-tmpl-unani-core-1', 'usr-hakeem-1', 'FINALISED', '2026-10-12', 'BALGHAMI', 'SAUDAWI',
+                'Pale complexion, cold/moist touch, sluggish digestion after dairy intake.',
+                'HIGH_CONFIDENCE', 'Su-e-Mizaj Balghami Maddi affecting Meda with Bukharaat ascending to Dimagh.',
+                1, CURRENT_TIMESTAMP, 'usr-hakeem-1', ?, ?
+            );
+        """, (uas_hash, uas_snapshot))
+
+        # Assessment responses
+        conn.execute("""
+            INSERT OR REPLACE INTO unani_assessment_responses (
+                id, assessment_id, domain_key, field_key, field_label, field_value, data_type,
+                semantic_state, provenance, notes
+            )
+            VALUES 
+            ('uar-syn-001', 'uas-syn-001', 'MIZAJ', 'lawn_complexion', 'Complexion', 'Pale whitish tinge', 'TEXT', 'OBSERVED', 'CLINICIAN_OBSERVED', 'Consistent with Balghami predominance'),
+            ('uar-syn-002', 'uas-syn-001', 'AFAAL', 'hazm_digestion', 'Digestive Transit', 'Sluggish, delayed gastric emptying', 'TEXT', 'IMPAIRED', 'PATIENT_REPORTED', 'Complains of heaviness 2-3 hours after meals'),
+            ('uar-syn-003', 'uas-syn-001', 'ASBAB_SITTAH', 'makool_mashroob', 'Dietary Intake', 'High consumption of cold yoghurt and chilled water', 'TEXT', 'OBSERVED', 'PATIENT_REPORTED', 'Aggravating cold/moist qualities');
+        """)
+
+        # Assessment conclusion
+        conn.execute("""
+            INSERT OR REPLACE INTO unani_assessment_conclusions (
+                id, assessment_id, conclusion_type, code, title, description, certainty, sort_order
+            )
+            VALUES ('uac-syn-001', 'uas-syn-001', 'SU_E_MIZAJ', 'SU-BALGHAM-MADDI', 'Su-e-Mizaj Balghami Maddi (Gastric Axis)', 'Phlegmatic dyscrasia of gastric faculty with secondary cephalalgia', 'DEFINITIVE', 1);
+        """)
+
+        # 21. Prompt 04: Synthetic Active Care Plan for pat-syn-001
+        conn.execute("""
+            INSERT OR REPLACE INTO care_plans (
+                id, organization_id, facility_id, patient_id, encounter_id, author_id,
+                responsible_practitioner_id, title, overall_goal, clinical_rationale,
+                status, review_date, finalised_at, finalised_by, version_number
+            )
+            VALUES (
+                'cpl-syn-001', 'org-matab-default', 'fac-central-opd', 'pat-syn-001', 'enc-syn-001',
+                'usr-hakeem-1', 'usr-hakeem-1', 'Care Plan: Su-e-Mizaj Balghami Resolution',
+                'Restore gastric temperament, eliminate cold/moist stagnation, and resolve reflex headache.',
+                'Two-stage protocol: initial gentle evacuation of phlegm followed by temperamental normalization and gastric faculty strengthening.',
+                'ACTIVE', '2026-10-26', CURRENT_TIMESTAMP, 'usr-hakeem-1', 1
+            );
+        """)
+
+        conn.execute("""
+            INSERT OR REPLACE INTO care_plan_items (
+                id, care_plan_id, principle_id, principle_version_id, objective,
+                clinician_rationale, intended_intervention, cautions, monitoring_plan,
+                expected_outcome, status, sort_order
+            )
+            VALUES 
+            (
+                'cpi-syn-001', 'cpl-syn-001', 'uip-tanqiya', 'ver-uip-tanqiya-1',
+                'Gentle evacuation of excess cold moist chyme and mucosal stagnation',
+                'Required prior to tonic therapy to avoid locking morbid matter in tissues',
+                'Warm decoctions with Anise and Fennel seeds; dietary cessation of chilled dairy',
+                'Avoid harsh purgatives; check hydration',
+                'Daily stool consistency check; monitoring of epigastric fullness',
+                'Reduced post-prandial heaviness within 7 days',
+                'ACTIVE', 1
+            ),
+            (
+                'cpi-syn-002', 'cpl-syn-001', 'uip-tadeel', 'ver-uip-tadeel-1',
+                'Temperamental normalization of gastric faculty (Meda)',
+                'Restore physiological warmth to enhance gastric transformation',
+                'Sharbat Bazoori Motadil and warm regimen',
+                'Confirm absence of acute hot inflammatory fever before administering',
+                'Follow up in 14 days for pulse (Nabz) and symptom score review',
+                'Resolution of headache and restoration of natural appetite',
+                'ACTIVE', 2
+            );
+        """)
+
+        # Link cpi-syn-002 to rx-syn-001
+        conn.execute("""
+            INSERT OR REPLACE INTO care_plan_links (
+                id, care_plan_id, care_plan_item_id, link_type, prescription_id, notes
+            )
+            VALUES ('cpl-link-001', 'cpl-syn-001', 'cpi-syn-002', 'PRESCRIPTION_SIGNED', 'rx-syn-001', 'Linked to Sharbat Bazoori Motadil prescription');
+        """)
+
+        # 22. Capability Registry (Updated with Prompt 03 & 04 Engines)
         capabilities_seed = [
             ('core.identity', 'Identity and Tenancy Engine', '1.1.0', 'FUNCTIONALLY_TESTED', 1, None, 'users:manage'),
             ('core.tenancy', 'Organization/Facility Scope Filter', '1.1.0', 'FUNCTIONALLY_TESTED', 1, None, 'facility:manage'),
@@ -262,15 +738,23 @@ def seed_development_data(db_path: str = None) -> None:
             ('core.audit', 'Append-Only Audit Event Logger', '1.1.0', 'FUNCTIONALLY_TESTED', 1, None, 'audit:read'),
             ('core.capabilities', 'Capability & Engine State Registry', '1.1.0', 'FUNCTIONALLY_TESTED', 1, None, 'capabilities:read'),
             
-            # Prompt 02: Core Clinical Workflow (Patient MPI and Encounter Lifecycle)
+            # Prompt 02: Core Clinical Workflow
             ('clinical.patients_mpi', 'Master Patient Index & Demographics Registry', '1.2.0', 'FUNCTIONALLY_TESTED', 1, None, 'patient:read'),
             ('clinical.encounters', 'Encounter Lifecycle & OPD Queue Engine', '1.2.0', 'FUNCTIONALLY_TESTED', 1, None, 'encounter:read'),
             
-            # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1 / Phase 2
-            ('clinical.consultation', 'Single 3-Zone Consultation Canvas', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Phase 2 Foundation completed; clinical charting scheduled for Phase 3', 'encounters:write'),
-            ('clinical.unani_mizaj', 'Unani Mizaj & Ajnas Scoring Engine', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 3 validation', 'encounters:write'),
-            ('clinical.prescriptions_nuskha', 'Nuskha Builder & Posology Compiler', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 3 clinical vertical slice', 'prescriptions:sign'),
-            ('clinical.safety_preflight', 'Deterministic Safety Preflight Engine', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 3 safety gate', 'prescriptions:sign'),
+            # Prompt 03: Formulation Library, Prescription Engine, and Safety Preflight
+            ('clinical.formulary', 'Formulation Library & Monograph Provenance Engine', '1.3.0', 'FUNCTIONALLY_TESTED', 1, None, 'formulary:read'),
+            ('clinical.prescriptions_nuskha', 'Nuskha Builder, Posology & Digital Signing Engine', '1.3.0', 'FUNCTIONALLY_TESTED', 1, None, 'prescription:sign'),
+            ('clinical.safety_preflight', 'Deterministic Safety Preflight Engine (Allergies, Mudabbar, Contraindications)', '1.3.0', 'FUNCTIONALLY_TESTED', 1, None, 'prescription:validate'),
+            
+            # Prompt 04: Unani Clinical Assessment, Organ-Axis Mapping, and Usul-e-Ilaj Care Planning
+            ('clinical.unani_assessment', 'Unani Clinical Assessment & Provenance Engine', '1.4.0', 'FUNCTIONALLY_TESTED', 1, None, 'assessment:read'),
+            ('clinical.organ_axis', 'Organ-Axis Contextual Mapping Layer', '1.4.0', 'FUNCTIONALLY_TESTED', 1, None, 'organ_axis:read'),
+            ('clinical.usul_e_ilaj_planner', 'Usul-e-Ilaj Treatment Principles & Care Plan Engine', '1.4.0', 'FUNCTIONALLY_TESTED', 1, None, 'care_plan:read'),
+
+            # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1
+            ('clinical.consultation', 'Single 3-Zone Consultation Canvas', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Prescribing vertical complete; full 3-zone canvas scheduled for Phase 3', 'encounters:write'),
+            ('clinical.unani_mizaj', 'Unani Mizaj & Ajnas Scoring Engine', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Automated score classifier disabled; clinician-entered assessment active in clinical.unani_assessment', 'encounters:write'),
             ('operations.dispensary', 'FEFO Batch Dispensary Inventory', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 4 clinic operations', 'facility:manage'),
             ('operations.followups', 'Care Continuum Follow-up Queues', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 4 clinic operations', 'encounters:read'),
             ('integration.abdm', 'FHIR / ABDM Adapter Connector', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Disabled by default; pending hospital accreditation', 'org:manage'),
