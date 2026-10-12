@@ -11,6 +11,7 @@ from apps.api.database.migrator import run_migrations
 from apps.api.router import ApiRouter
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+PACKAGES_DIR = Path(__file__).resolve().parent.parent.parent / "packages"
 
 class MatabRequestHandler(BaseHTTPRequestHandler):
     server_version = "ZayvoraMatabOS-Foundation/1.1"
@@ -25,6 +26,9 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self._handle_request("POST")
+
+    def do_PATCH(self):
+        self._handle_request("PATCH")
 
     def do_PUT(self):
         self._handle_request("PUT")
@@ -76,7 +80,14 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
             return
 
         rel_path = path.lstrip("/")
-        if not rel_path or rel_path == "index.html":
+        if path.startswith("/packages/"):
+            pkg_rel = path.replace("/packages/", "", 1)
+            target_file = (PACKAGES_DIR / pkg_rel).resolve()
+            if not str(target_file).startswith(str(PACKAGES_DIR)):
+                self.send_response(403)
+                self.end_headers()
+                return
+        elif not rel_path or rel_path == "index.html":
             target_file = WEB_DIR / "index.html"
         else:
             target_file = (WEB_DIR / rel_path).resolve()

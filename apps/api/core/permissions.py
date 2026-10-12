@@ -4,13 +4,34 @@ from typing import Dict, Any, List
 import sqlite3
 from apps.api.core.errors import ForbiddenError
 
+PERMISSION_ALIASES: Dict[str, List[str]] = {
+    "patient:read": ["patients:read", "patient:read"],
+    "patient:create": ["patients:write", "patient:create"],
+    "patient:update_demographics": ["patients:write", "patient:update_demographics"],
+    "patient:resolve_duplicate": ["patients:write", "patient:resolve_duplicate"],
+    "encounter:read": ["encounters:read", "encounter:read"],
+    "encounter:create": ["encounters:write", "encounter:create"],
+    "encounter:update_draft": ["encounters:write", "encounter:update_draft"],
+    "encounter:cancel": ["encounters:write", "encounter:cancel"],
+    "consent:read": ["consent:read", "patients:read", "patient:read"],
+    "consent:record": ["consent:record", "patients:write", "patient:create"],
+    "consent:withdraw": ["consent:withdraw", "patients:write"],
+    "audit:read": ["audit:read"],
+}
+
 def has_permission(user_ctx: Dict[str, Any], required_perm: str) -> bool:
     """Check if the user has the required permission code or is an ORG_ADMIN."""
     roles = user_ctx.get("roles", [])
     if "ORG_ADMIN" in roles:
         return True
-    permissions = user_ctx.get("permissions", [])
-    return required_perm in permissions
+    permissions = set(user_ctx.get("permissions", []))
+    if required_perm in permissions:
+        return True
+    aliases = PERMISSION_ALIASES.get(required_perm, [])
+    for alias in aliases:
+        if alias in permissions:
+            return True
+    return False
 
 def require_permission(user_ctx: Dict[str, Any], required_perm: str, request_id: str = None) -> None:
     """Enforce permission check with deny-by-default semantics."""

@@ -8,7 +8,7 @@ from typing import Dict, Any, Tuple, Optional
 from apps.api.core.errors import AppError, NotFoundError, AuthenticationError
 from apps.api.core.security import validate_session
 from apps.api.database.connection import get_db
-from apps.api.routes import health, auth, tenancy, admin, audit, capabilities
+from apps.api.routes import health, auth, tenancy, admin, audit, capabilities, patients, encounters
 
 ROUTES = [
     # Observability & Liveness
@@ -36,6 +36,27 @@ ROUTES = [
     # Audit & Governance
     ("GET", r"^/api/v1/audit$", audit.handle_audit_list, True),
     ("GET", r"^/api/v1/system/capabilities$", capabilities.handle_capabilities_list, True),
+
+    # Patients Domain (Master Patient Index, Identifiers, Consents, Duplicates, Timeline)
+    ("POST", r"^/api/v1/patients$", patients.handle_patients_create, True),
+    ("GET", r"^/api/v1/patients$", patients.handle_patients_search, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)$", patients.handle_patient_get_360, True),
+    ("PATCH", r"^/api/v1/patients/(?P<id>[^/]+)$", patients.handle_patient_update_demographics, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/identifiers$", patients.handle_patient_identifiers_list, True),
+    ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/identifiers$", patients.handle_patient_identifier_add, True),
+    ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/identifiers/(?P<identifier_id>[^/]+)/retire$", patients.handle_patient_identifier_retire, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/consents$", patients.handle_patient_consents_list, True),
+    ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/consents$", patients.handle_patient_consent_record, True),
+    ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/consents/(?P<consent_id>[^/]+)/withdraw$", patients.handle_patient_consent_withdraw, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/duplicate-candidates$", patients.handle_patient_duplicate_candidates_get, True),
+    ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/duplicate-resolutions/(?P<candidate_id>[^/]+)$", patients.handle_patient_duplicate_resolution, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/timeline$", patients.handle_patient_timeline, True),
+    ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/encounters$", encounters.handle_encounter_create_for_patient, True),
+
+    # Encounters Domain (Lifecycle, Transitions)
+    ("GET", r"^/api/v1/encounters/(?P<id>[^/]+)$", encounters.handle_encounter_get, True),
+    ("PATCH", r"^/api/v1/encounters/(?P<id>[^/]+)$", encounters.handle_encounter_update_draft, True),
+    ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/transition$", encounters.handle_encounter_transition, True),
 ]
 
 class ApiRouter:

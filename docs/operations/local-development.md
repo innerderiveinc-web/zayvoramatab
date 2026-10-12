@@ -52,3 +52,32 @@ Open `http://127.0.0.1:8000` in your web browser.
 | `reception` | `RECEPTIONIST` | `matab123` | Central Matab OPD |
 | `pharmacy` | `PHARMACIST` | `matab123` | Central Matab OPD |
 | `auditor` | `READ_ONLY_AUDITOR` | `matab123` | Read-only Audit Log |
+
+---
+
+## 4. Synthetic Patient Test Fixtures
+
+The synthetic development seeder provisions 4 representative test patients:
+
+| Patient ID | Name | MRN | Phone | Purpose / Test Scenario |
+|---|---|---|---|---|
+| `pat-syn-001` | فاطمہ زہرا (Fatima Zahra) | `MRN-2026-00001` | `+91-9876543210` | Multilingual Unicode name; matches `dup-pair-001` on phone |
+| `pat-syn-002` | Zayd Farooq | `MRN-2026-00002` | `+91-9876543210` | Co-habitant / shared family phone; matches `dup-pair-001` |
+| `pat-syn-003` | Maryam Khatoon | `MRN-2026-00003` | `+91-9811122233` | Single consultation encounter (`enc-syn-003`) |
+| `pat-syn-004` | Ibrahim Qureshi | `MRN-2026-00004` | `+91-9822233344` | Clean record; estimated age with recorded age timestamp |
+
+---
+
+## 5. Granular Test Suites
+
+```bash
+# Run unit tests only (validation, normalization, transition rules)
+make test-unit
+
+# Run integration tests (registry, duplicates, encounters, tenancy security)
+make test-integration
+
+# Run end-to-end smoke workflows
+make test-e2e
+```
+

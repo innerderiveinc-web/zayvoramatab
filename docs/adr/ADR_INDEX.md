@@ -93,3 +93,27 @@
   8. `DISABLED_OR_DEGRADED`
   The frontend reads this registry to dynamically gate features. A module is only made available in clinical workflows if it has achieved at least `FUNCTIONALLY_TESTED` (for dev/demo) or `PRODUCTION_APPROVED` (for live clinical mode).
 - **Consequences:** Total transparency in system readiness, zero silent mock fallbacks on clinical screens, and defensible release gatekeeping.
+
+---
+
+## ADR-006 (Implementation): Deterministic Duplicate Detection and Human-Controlled Resolution
+- **Status:** Accepted
+- **File:** [ADR-006-deterministic-duplicate-detection.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-006-deterministic-duplicate-detection.md)
+- **Context:** Automated record merging can corrupt drug allergy profiles or mix clinical histories across patients.
+- **Decision:** Employ 3 deterministic matching rules (phone match, identifier match, name+DOB match); enforce registration conflict interlock requiring operator override with human reason; strictly prohibit automatic data merging.
+
+---
+
+## ADR-007 (Implementation): Explicit, Unassumed Patient Consent Management
+- **Status:** Accepted
+- **File:** [ADR-007-explicit-unassumed-consent.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-007-explicit-unassumed-consent.md)
+- **Context:** ABDM and privacy standards require explicit consent for treatment, communications, and data sharing.
+- **Decision:** Zero assumed consent by default; purpose-specific consent tracking (`GENERAL_CARE`, `COMMUNICATION_SMS`, `COMMUNICATION_WHATSAPP`, `DATA_SHARING_RESEARCH`, `EXTERNAL_REFERRAL`); auditable withdrawal with mandatory reason.
+
+---
+
+## ADR-008 (Implementation): Encounter Lifecycle State Machine and Concurrency Control
+- **Status:** Accepted
+- **File:** [ADR-008-encounter-lifecycle-concurrency.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-008-encounter-lifecycle-concurrency.md)
+- **Context:** Multiple clinic stations editing records concurrently risks dirty writes and bypassed clinical workflows.
+- **Decision:** Finite state machine (`DRAFT` -> `IN_PROGRESS` -> `COMPLETED`/`CANCELLED`); optimistic concurrency control using integer `version` columns on patients and encounters; automatic daily facility token allocation.

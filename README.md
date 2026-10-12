@@ -80,7 +80,7 @@ All botanical monographs and formulation recipes cite verified statutory sources
 
 ### Quick Commands (Makefile)
 ```bash
-# Run all 47 automated tests (unit, integration, e2e)
+# Run all 70 automated tests (unit, integration, e2e)
 make test
 
 # Run specific test suites
@@ -104,7 +104,7 @@ python3 -m apps.api.database.migrator
 # Seed synthetic development dataset
 python3 -m apps.api.database.seed
 
-# Run complete test suite (47 tests passing in ~1.1s)
+# Run complete test suite (70 tests passing in ~1.9s)
 python3 -m unittest discover -s tests -p "test_*.py" -v
 
 # Launch the standalone server on http://127.0.0.1:8000
