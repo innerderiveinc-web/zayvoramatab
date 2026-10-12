@@ -1,0 +1,287 @@
+/* ZAYVORA MATAB OS — Web Shell Layout & Component Styles */
+
+@import url("./tokens.css");
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--matab-color-bg-app);
+  color: var(--matab-color-text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: var(--matab-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Environment Banner */
+.env-banner {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #fde68a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* App Header */
+.app-header {
+  background: var(--matab-color-brand-primary);
+  color: var(--matab-color-text-inverse);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-badge {
+  font-size: 0.65rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.facility-dropdown {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--matab-radius-sm);
+  font-size: 0.85rem;
+}
+
+.header-user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-tag {
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--matab-radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Navigation Bar */
+.nav-bar {
+  background: #ffffff;
+  border-bottom: 1px solid var(--matab-color-border-subtle);
+  display: flex;
+  padding: 0 1.5rem;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+
+.nav-tab {
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--matab-color-text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--matab-touch-target-min);
+  transition: all 0.15s ease-in-out;
+}
+
+.nav-tab:hover {
+  color: var(--matab-color-brand-primary);
+}
+
+.nav-tab.active {
+  color: var(--matab-color-brand-primary);
+  border-bottom-color: var(--matab-color-brand-primary);
+}
+
+/* Content Container */
+.main-content {
+  padding: 1.5rem;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+/* Cards & Surfaces */
+.card {
+  background: var(--matab-color-bg-card);
+  border: 1px solid var(--matab-color-border-subtle);
+  border-radius: var(--matab-radius-lg);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--matab-color-border-subtle);
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--matab-color-brand-primary);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: var(--matab-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  min-height: var(--matab-touch-target-min);
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: var(--matab-color-brand-primary);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  background: var(--matab-color-brand-accent);
+}
+
+.btn-secondary {
+  background: var(--matab-color-bg-muted);
+  color: var(--matab-color-text-primary);
+  border-color: var(--matab-color-border-subtle);
+}
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  min-height: 32px;
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  color: var(--matab-color-text-primary);
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--matab-color-border-subtle);
+  border-radius: var(--matab-radius-md);
+  background: #ffffff;
+  min-height: var(--matab-touch-target-min);
+}
+
+/* Tables */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-table th {
+  background: var(--matab-color-bg-muted);
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  font-weight: 600;
+  color: var(--matab-color-text-secondary);
+  border-bottom: 1px solid var(--matab-color-border-subtle);
+}
+
+.data-table td {
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid var(--matab-color-border-subtle);
+  vertical-align: middle;
+}
+
+/* Status Badges */
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--matab-radius-sm);
+  text-transform: uppercase;
+}
+
+.badge-success { background: var(--matab-color-status-success-bg); color: var(--matab-color-status-success); border: 1px solid #bbf7d0; }
+.badge-warning { background: var(--matab-color-status-warning-bg); color: var(--matab-color-status-warning); border: 1px solid #fde68a; }
+.badge-danger { background: var(--matab-color-status-danger-bg); color: var(--matab-color-status-danger); border: 1px solid #fecaca; }
+.badge-info { background: var(--matab-color-status-info-bg); color: var(--matab-color-status-info); border: 1px solid #bae6fd; }
+
+/* Honest Future Module State Banner */
+.unimplemented-banner {
+  background: #f8fafc;
+  border: 2px dashed var(--matab-color-border-strong);
+  border-radius: var(--matab-radius-lg);
+  padding: 3rem 1.5rem;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.unimplemented-banner h3 {
+  color: var(--matab-color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.unimplemented-banner p {
+  color: var(--matab-color-text-muted);
+  max-width: 550px;
+  margin: 0 auto 1.25rem auto;
+  font-size: 0.9rem;
+}

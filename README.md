@@ -76,22 +76,48 @@ All botanical monographs and formulation recipes cite verified statutory sources
 
 ### Prerequisites
 - Python 3.9+ (Standard Library)
-- Modern Web Browser (Edge, Chrome, Safari, Firefox)
+- Modern Web Browser (Chrome, Firefox, Safari, Edge)
 
-### 1. Run Automated Test Suite
+### Quick Commands (Makefile)
 ```bash
+# Run all 47 automated tests (unit, integration, e2e)
+make test
+
+# Run specific test suites
+make test-unit
+make test-integration
+make test-e2e
+
+# Database migration & synthetic seed
+make migrate
+make seed
+
+# Start the standalone server
+make run
+```
+
+### Manual CLI Commands
+```bash
+# Apply schema migrations
+python3 -m apps.api.database.migrator
+
+# Seed synthetic development dataset
+python3 -m apps.api.database.seed
+
+# Run complete test suite (47 tests passing in ~1.1s)
 python3 -m unittest discover -s tests -p "test_*.py" -v
-```
-*(Runs 26 comprehensive unit, integration, and security tests in < 0.5s).*
 
-### 2. Start the Server
-```bash
-python3 -m matab.server
+# Launch the standalone server on http://127.0.0.1:8000
+python3 -m apps.api.main
 ```
-Navigate your browser to `http://127.0.0.1:8000`.
 
-### 3. Demo Credentials
-- **Hakeem (Practitioner):** Username: `hakeem` | Password: `matab123` | Signing PIN: `1234`
-- **Receptionist (Front Desk):** Username: `reception` | Password: `matab123`
-- **Pharmacist (Dispensary):** Username: `pharmacy` | Password: `matab123`
-*(All demo patient records are synthetic and marked with `[SYNTHETIC TEST RECORD]` tags).*
+### Demo Development Accounts
+| Role | Username | Password | Notes |
+|---|---|---|---|
+| Organization Admin | `admin` | `matab123` | Full tenant administration & audit access |
+| Practitioner (Hakeem) | `hakeem` | `matab123` | BUMS clinical practitioner |
+| Front Desk Receptionist | `reception` | `matab123` | Patient check-in & token queues |
+| Pharmacist | `pharmacy` | `matab123` | Dispensary inventory access |
+| Compliance Auditor | `auditor` | `matab123` | Read-only security & audit inspection |
+
+> **Development Disclaimer:** Phase 1 Foundation is for internal development only. Not clinically validated and not production-approved. All seed patients, records, and facilities are marked `[Synthetic]` to eliminate production confusion risk.

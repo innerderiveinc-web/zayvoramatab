@@ -1,16 +1,32 @@
-.PHONY: test run migrate lint help
+.PHONY: test test-unit test-integration test-e2e migrate seed run help
 
 help:
 	@echo "ZAYVORA MATAB OS — Developer Commands"
-	@echo "  make test      Run entire automated test suite"
-	@echo "  make migrate   Apply database migrations"
-	@echo "  make run       Start the standalone MATAB OS server"
+	@echo "  make test             Run full automated test suite"
+	@echo "  make test-unit        Run unit test suite"
+	@echo "  make test-integration Run integration test suite"
+	@echo "  make test-e2e         Run end-to-end smoke test"
+	@echo "  make migrate          Apply database schema migrations"
+	@echo "  make seed             Seed synthetic development dataset"
+	@echo "  make run              Start the standalone MATAB OS server"
 
 test:
 	python3 -m unittest discover -s tests -p "test_*.py" -v
 
+test-unit:
+	python3 -m unittest discover -s tests/unit -p "test_*.py" -v
+
+test-integration:
+	python3 -m unittest discover -s tests/integration -p "test_*.py" -v
+
+test-e2e:
+	python3 -m unittest discover -s tests/e2e -p "test_*.py" -v
+
 migrate:
-	python3 -m matab.database.migrator
+	python3 -m apps.api.database.migrator
+
+seed:
+	python3 -m apps.api.database.seed
 
 run:
-	python3 -m matab.server
+	python3 -m apps.api.main

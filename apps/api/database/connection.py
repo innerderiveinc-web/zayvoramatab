@@ -1,0 +1,37 @@
+"""Database Connection Provider with WAL Mode and Referential Integrity."""
+
+import sqlite3
+from contextlib import contextmanager
+from typing import Iterator, Optional
+from apps.api.config import config
+
+class DatabaseConnection:
+    def __init__(self, db_path: Optional[str] = None):
+        self.db_path = db_path or config.db_path
+
+    def get_connection(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(
+            self.db_path,
+            timeout=30.0,
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
+        )
+        conn.row_factory = sqlite3.Row
+        # Enforce foreign key constraints and Write-Ahead Logging
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute("PRAGMA journal_mode = WAL;")
+        conn.execute("PRAGMA busy_timeout = 5000;")
+        return conn
+
+@contextmanager
+def get_db(db_path: Optional[str] = None) -> Iterator[sqlite3.Connection]:
+    """Obtain a transactional database connection with auto-commit and rollback on error."""
+    manager = DatabaseConnection(db_path)
+    conn = manager.get_connection()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()

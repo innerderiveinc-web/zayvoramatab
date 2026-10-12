@@ -1,0 +1,46 @@
+/* ZAYVORA MATAB OS — Shared Design System Tokens */
+
+:root {
+  /* Restrained Clinical Palette: Deep Emerald & Clean Teal */
+  --matab-color-brand-primary: #064e3b;       /* Forest / Deep Emerald */
+  --matab-color-brand-accent: #0f766e;        /* Clean Clinical Teal */
+  --matab-color-brand-surface: #f0fdf4;       /* Subtle Mint Wash */
+
+  /* Neutral Surfaces & Borders */
+  --matab-color-bg-app: #f8fafc;
+  --matab-color-bg-card: #ffffff;
+  --matab-color-bg-muted: #f1f5f9;
+  --matab-color-border-subtle: #e2e8f0;
+  --matab-color-border-strong: #cbd5e1;
+
+  /* Text & Readability (WCAG AAA) */
+  --matab-color-text-primary: #0f172a;
+  --matab-color-text-secondary: #475569;
+  --matab-color-text-muted: #64748b;
+  --matab-color-text-inverse: #ffffff;
+
+  /* Semantic Feedback Colors */
+  --matab-color-status-success: #15803d;
+  --matab-color-status-success-bg: #f0fdf4;
+  --matab-color-status-warning: #b45309;
+  --matab-color-status-warning-bg: #fffbeb;
+  --matab-color-status-danger: #b91c1c;
+  --matab-color-status-danger-bg: #fef2f2;
+  --matab-color-status-info: #0369a1;
+  --matab-color-status-info-bg: #f0f9ff;
+
+  /* Spacing Scale */
+  --matab-space-1: 0.25rem;
+  --matab-space-2: 0.5rem;
+  --matab-space-3: 0.75rem;
+  --matab-space-4: 1rem;
+  --matab-space-6: 1.5rem;
+  --matab-space-8: 2rem;
+
+  /* Accessible Touch & Focus */
+  --matab-touch-target-min: 44px;
+  --matab-focus-ring: 2px solid var(--matab-color-brand-accent);
+  --matab-radius-sm: 0.25rem;
+  --matab-radius-md: 0.375rem;
+  --matab-radius-lg: 0.5rem;
+}
