@@ -124,7 +124,18 @@ def seed_development_data(db_path: str = None) -> None:
             # Prompt 08 Unified Consultation Workspace & Orchestrator Permissions
             ('perm-enc-finalize', 'encounter:finalize', 'Electronically Sign and Finalize Consultations', 'CLINICAL'),
             ('perm-enc-sign', 'encounter:sign', 'Electronic Signature on Encounter Documents', 'CLINICAL'),
-            ('perm-enc-sections', 'encounter:manage_sections', 'Manage Consultation Guided Section States', 'CLINICAL')
+            ('perm-enc-sections', 'encounter:manage_sections', 'Manage Consultation Guided Section States', 'CLINICAL'),
+            # Prompt 09 Care Continuity, Follow-up, Patient Communications & Outcome Tracking Permissions
+            ('perm-fup-read', 'followup:read', 'View Follow-up Plans, Tasks & Queues', 'CLINICAL'),
+            ('perm-fup-write', 'followup:write', 'Create and Update Follow-up Plans, Tasks & Appointments', 'CLINICAL'),
+            ('perm-fup-assign', 'followup:assign', 'Assign Follow-up Tasks', 'CLINICAL'),
+            ('perm-comm-prefs', 'communications:manage_preferences', 'Manage Patient Communication Preferences & Opt-Out', 'OPERATIONS'),
+            ('perm-comm-send', 'communications:send', 'Queue and Dispatch Governed Patient Communications', 'OPERATIONS'),
+            ('perm-comm-tpl', 'communications:approve_templates', 'Author and Approve Communication Templates', 'GOVERNANCE'),
+            ('perm-out-read', 'outcomes:read', 'View Longitudinal Clinical Outcomes & Trends', 'CLINICAL'),
+            ('perm-out-rec', 'outcomes:record', 'Record Clinical and Patient-Reported Outcomes', 'CLINICAL'),
+            ('perm-adr-report', 'adverse_effects:report', 'Report Suspected Adverse Medication Effects', 'CLINICAL'),
+            ('perm-adr-review', 'adverse_effects:review', 'Clinically Review and Escalate Adverse Effect Reports', 'CLINICAL')
         ]
 
         for p_id, code, name, cat in permissions_data:
@@ -152,7 +163,10 @@ def seed_development_data(db_path: str = None) -> None:
             'modern_assessment:read', 'modern_assessment:create_draft', 'modern_assessment:update_draft',
             'modern_assessment:cancel', 'clinical_rules:read', 'clinical_rules:manage',
             'knowledge:read', 'knowledge:manage',
-            'encounter:finalize', 'encounter:sign', 'encounter:manage_sections'
+            'encounter:finalize', 'encounter:sign', 'encounter:manage_sections',
+            'followup:read', 'followup:write', 'followup:assign',
+            'communications:manage_preferences', 'communications:send', 'communications:approve_templates',
+            'outcomes:read', 'outcomes:record', 'adverse_effects:report', 'adverse_effects:review'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
@@ -173,19 +187,22 @@ def seed_development_data(db_path: str = None) -> None:
             'modern_assessment:read', 'modern_assessment:create_draft', 'modern_assessment:update_draft',
             'modern_assessment:sign', 'modern_assessment:amend', 'modern_assessment:cancel',
             'clinical_rules:read', 'knowledge:read',
-            'encounter:finalize', 'encounter:sign', 'encounter:manage_sections'
+            'encounter:finalize', 'encounter:sign', 'encounter:manage_sections',
+            'followup:read', 'followup:write', 'followup:assign',
+            'communications:manage_preferences', 'communications:send', 'communications:approve_templates',
+            'outcomes:read', 'outcomes:record', 'adverse_effects:report', 'adverse_effects:review'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-practitioner', id FROM permissions WHERE code = ?;
             """, (p_code,))
 
-        # RECEPTIONIST gets patient read/create/update/duplicate, encounter read/create/cancel, consent read/record, prescription read/export
+        # RECEPTIONIST gets patient read/create/update/duplicate, encounter read/create/cancel, consent read/record, prescription read/export, and operational followup/communications
         for p_code in [
             'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics', 'patient:resolve_duplicate',
             'encounters:read', 'encounter:read', 'encounter:create', 'encounter:cancel',
             'consent:read', 'consent:record', 'capabilities:read', 'prescription:read', 'prescription:export',
-            'care_plan:read'
+            'care_plan:read', 'followup:read', 'followup:write', 'communications:manage_preferences', 'communications:send'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
@@ -1318,6 +1335,11 @@ def seed_development_data(db_path: str = None) -> None:
             # Prompt 08: Unified Consultation Workspace & Clinical Workflow Orchestrator
             ('clinical.consultation_orchestrator', 'Unified Consultation Workspace & Workflow Orchestrator', '1.8.0', 'FUNCTIONALLY_TESTED', 1, None, 'encounters:write'),
 
+            # Prompt 09: Follow-up, Care Continuity, Patient Communication & Outcome Tracking
+            ('clinical.care_continuity', 'Follow-up Plans, Tasks & Repeat-Visit Continuity Engine', '1.9.0', 'FUNCTIONALLY_TESTED', 1, None, 'followup:read'),
+            ('operations.patient_communications', 'Consent-Governed Patient Reminder Outbox & Sandbox Adapters', '1.9.0', 'FUNCTIONALLY_TESTED', 1, None, 'communications:send'),
+            ('clinical.outcome_tracking', 'Longitudinal Outcome Tracking & Non-Causal Trend Engine', '1.9.0', 'FUNCTIONALLY_TESTED', 1, None, 'outcomes:read'),
+
             # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1
             ('clinical.consultation', 'Single 3-Zone Consultation Canvas', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Prescribing vertical complete; full 3-zone canvas scheduled for Phase 3', 'encounters:write'),
             ('operations.followups', 'Care Continuum Follow-up Queues', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 4 clinic operations', 'encounters:read'),
@@ -1336,6 +1358,74 @@ def seed_development_data(db_path: str = None) -> None:
                 INSERT OR REPLACE INTO capability_registry (engine_id, name, version, status, is_enabled, health_reason, required_permission)
                 VALUES (?, ?, ?, ?, ?, ?, ?);
             """, (eng_id, name, ver, status, enabled, reason, perm))
+
+        # 33. Prompt 09: Governed Communication Templates, Provider Configs & Outcome Definitions (if migration 009 applied)
+        cur_check = conn.cursor()
+        cur_check.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='communication_templates';")
+        if cur_check.fetchone():
+            templates_seed = [
+                (
+                    'ctpl-appt-reminder-en', 'org-matab-default', 'TPL-APPT-REMINDER-EN',
+                    'Standard Appointment & Follow-up Reminder (Neutral)', 'sms', 'en', 'clinical_reminder',
+                    1, 'approved', 0, 'usr-admin-1',
+                    'ctplv-appt-reminder-en-v1',
+                    'Assalamu Alaikum {{patient_name}}, you have a scheduled clinical review at {{facility_name}} on {{appointment_date}}. For assistance call {{clinic_phone}}.'
+                ),
+                (
+                    'ctpl-whatsapp-followup-en', 'org-matab-default', 'TPL-WHATSAPP-FOLLOWUP-EN',
+                    'WhatsApp Follow-up Check-in (Neutral)', 'whatsapp', 'en', 'clinical_reminder',
+                    1, 'approved', 0, 'usr-admin-1',
+                    'ctplv-whatsapp-followup-en-v1',
+                    'Hello {{patient_name}}, this is a care continuity reminder from {{facility_name}} for your review due on {{appointment_date}}.'
+                ),
+                (
+                    'ctpl-draft-unapproved', 'org-matab-default', 'TPL-DRAFT-UNAPPROVED',
+                    'Unapproved Draft Reminder Template', 'sms', 'en', 'clinical_reminder',
+                    1, 'draft', 0, None,
+                    'ctplv-draft-unapproved-v1',
+                    'Draft message for {{patient_name}} at {{facility_name}}.'
+                )
+            ]
+            for tid, oid, tcode, tname, chan, lang, cat, ver, astat, sens, aby, vid, body_tpl in templates_seed:
+                conn.execute("""
+                    INSERT OR REPLACE INTO communication_templates (
+                        id, organization_id, template_code, name, channel, language, category,
+                        current_version, approval_status, contains_sensitive_fields, approved_by,
+                        approved_at, created_by
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 'usr-admin-1');
+                """, (tid, oid, tcode, tname, chan, lang, cat, ver, astat, sens, aby))
+                conn.execute("""
+                    INSERT OR REPLACE INTO communication_template_versions (
+                        id, template_id, version_number, body_template, approval_status, authored_by, approved_by
+                    ) VALUES (?, ?, 1, ?, ?, 'usr-admin-1', ?);
+                """, (vid, tid, body_tpl, astat, aby))
+
+            providers_seed = [
+                ('pconf-sms-1', 'org-matab-default', 'fac-central-opd', 'sandbox_sms', 'sms'),
+                ('pconf-wa-1', 'org-matab-default', 'fac-central-opd', 'sandbox_whatsapp', 'whatsapp'),
+                ('pconf-em-1', 'org-matab-default', 'fac-central-opd', 'sandbox_email', 'email'),
+                ('pconf-mc-1', 'org-matab-default', 'fac-central-opd', 'manual_call_log', 'phone_call')
+            ]
+            for pid, oid, fid, pcode, chan in providers_seed:
+                conn.execute("""
+                    INSERT OR REPLACE INTO communication_provider_configs (
+                        id, organization_id, facility_id, provider_code, channel, status
+                    ) VALUES (?, ?, ?, ?, ?, 'active');
+                """, (pid, oid, fid, pcode, chan))
+
+            outcome_defs_seed = [
+                ('odef-nrs-pain', 'OUT-NRS-PAIN', 'Numerical Pain Rating Scale (0-10)', 'symptom_severity', 'scale', 'score_0_10', 0.0, 10.0, 'lower_is_better', 'clinical_interview', '1.0', 'approved'),
+                ('odef-dyspepsia', 'OUT-DYSPEPSIA-SCORE', 'Epigastric Discomfort & Dyspepsia Severity (0-10)', 'symptom_severity', 'scale', 'score_0_10', 0.0, 10.0, 'lower_is_better', 'clinical_interview', '1.0', 'approved'),
+                ('odef-sbp', 'OUT-SBP-MMHG', 'Systolic Blood Pressure', 'vital_sign', 'numeric', 'mmHg', 50.0, 260.0, 'lower_is_better', 'automated_cuff', '1.0', 'approved'),
+                ('odef-adherence', 'OUT-REGIMEN-ADHERENCE', 'Self-Reported Regimen Adherence Percentage', 'adherence', 'numeric', 'percent', 0.0, 100.0, 'higher_is_better', 'patient_self_report', '1.0', 'approved')
+            ]
+            for od_id, code, name, dom, rtype, unit, smin, smax, direc, cmeth, iver, rstat in outcome_defs_seed:
+                conn.execute("""
+                    INSERT OR REPLACE INTO outcome_definitions (
+                        id, code, name, domain, response_type, unit, scale_min, scale_max,
+                        directionality, collection_method, instrument_version, review_status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """, (od_id, code, name, dom, rtype, unit, smin, smax, direc, cmeth, iver, rstat))
 
         conn.execute("PRAGMA foreign_keys = ON;")
         conn.commit()

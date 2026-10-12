@@ -12,7 +12,7 @@ from apps.api.routes import (
     health, auth, tenancy, admin, audit, capabilities, patients, encounters,
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
     modern_assessment, clinical_rules, knowledge, safety_firewall,
-    consultation_orchestrator
+    consultation_orchestrator, care_continuity
 )
 
 
@@ -171,6 +171,37 @@ ROUTES = [
     ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/finalize$", consultation_orchestrator.handle_finalize_encounter, True),
     ("GET", r"^/api/v1/encounters/(?P<id>[^/]+)/documents$", consultation_orchestrator.handle_get_documents, True),
     ("POST", r"^/api/v1/encounters/(?P<id>[^/]+)/followup-tasks$", consultation_orchestrator.handle_create_followup, True),
+
+    # Prompt 09: Follow-up, Care Continuity, Patient Communication & Outcome Tracking
+    ("POST", r"^/api/v1/follow-up/plans$", care_continuity.handle_create_follow_up_plan, True),
+    ("GET", r"^/api/v1/follow-up/plans$", care_continuity.handle_list_follow_up_plans, True),
+    ("GET", r"^/api/v1/follow-up/plans/(?P<id>[^/]+)$", care_continuity.handle_get_follow_up_plan, True),
+    ("PATCH", r"^/api/v1/follow-up/plans/(?P<id>[^/]+)$", care_continuity.handle_update_follow_up_plan, True),
+    ("POST", r"^/api/v1/follow-up/tasks$", care_continuity.handle_create_follow_up_task, True),
+    ("GET", r"^/api/v1/follow-up/tasks/(?P<id>[^/]+)$", care_continuity.handle_get_follow_up_task, True),
+    ("POST", r"^/api/v1/follow-up/tasks/(?P<id>[^/]+)/contact-attempts$", care_continuity.handle_record_contact_attempt, True),
+    ("POST", r"^/api/v1/follow-up/tasks/(?P<id>[^/]+)/transition$", care_continuity.handle_transition_follow_up_task, True),
+    ("POST", r"^/api/v1/follow-up/appointments$", care_continuity.handle_create_appointment, True),
+    ("GET", r"^/api/v1/follow-up/appointments/(?P<id>[^/]+)$", care_continuity.handle_get_appointment, True),
+    ("POST", r"^/api/v1/follow-up/appointments/(?P<id>[^/]+)/transition$", care_continuity.handle_transition_appointment, True),
+    ("GET", r"^/api/v1/follow-up/queue$", care_continuity.handle_get_follow_up_queue, True),
+    ("GET", r"^/api/v1/follow-up/analytics$", care_continuity.handle_get_follow_up_analytics, True),
+    ("GET", r"^/api/v1/patient-communications/preferences/(?P<patient_id>[^/]+)$", care_continuity.handle_get_comm_preferences, True),
+    ("PUT", r"^/api/v1/patient-communications/preferences/(?P<patient_id>[^/]+)$", care_continuity.handle_upsert_comm_preferences, True),
+    ("GET", r"^/api/v1/patient-communications/templates$", care_continuity.handle_list_comm_templates, True),
+    ("POST", r"^/api/v1/patient-communications/templates$", care_continuity.handle_create_comm_template, True),
+    ("POST", r"^/api/v1/patient-communications/templates/(?P<id>[^/]+)/approve$", care_continuity.handle_approve_comm_template, True),
+    ("POST", r"^/api/v1/patient-communications/send$", care_continuity.handle_send_communication, True),
+    ("POST", r"^/api/v1/patient-communications/messages/(?P<id>[^/]+)/dispatch$", care_continuity.handle_dispatch_queued_message, True),
+    ("GET", r"^/api/v1/patient-communications/messages/(?P<id>[^/]+)$", care_continuity.handle_get_outbound_message, True),
+    ("POST", r"^/api/v1/patient-communications/provider-webhooks/(?P<provider>[^/]+)$", care_continuity.handle_provider_webhook, False),
+    ("GET", r"^/api/v1/outcomes/definitions$", care_continuity.handle_list_outcome_definitions, True),
+    ("POST", r"^/api/v1/outcomes/definitions$", care_continuity.handle_create_outcome_definition, True),
+    ("POST", r"^/api/v1/outcomes/records$", care_continuity.handle_record_outcome, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/outcomes$", care_continuity.handle_get_patient_outcomes, True),
+    ("POST", r"^/api/v1/adverse-effects$", care_continuity.handle_report_adverse_effect, True),
+    ("POST", r"^/api/v1/adverse-effects/(?P<id>[^/]+)/review$", care_continuity.handle_review_adverse_effect, True),
+    ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/follow-up-summary$", care_continuity.handle_get_patient_continuity_summary, True),
 ]
 
 class ApiRouter:
@@ -214,6 +245,7 @@ class ApiRouter:
             "headers": headers,
             "query_params": query_params,
             "body": body,
+            "body_bytes": body_bytes,
             "auth_token": token,
             "client_ip": client_ip,
             "request_id": request_id,

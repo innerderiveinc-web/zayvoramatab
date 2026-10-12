@@ -238,4 +238,18 @@
 - **Context:** Completed clinical consultations require tamper-evident legal and patient artifacts alongside integrated follow-up care continuity.
 - **Decision:** Atomic PIN-verified consultation finalization generating immutable document snapshots (`consultation_summary`, `prescription_bundle`, `patient_instruction_sheet`) with SHA-256 cryptographic digests, integrated follow-up task scheduling, and idempotency protection.
 
+---
 
+## ADR-024: Versioned Follow-up Plans, Operational Task Invariants, and Consent-Governed Transactional Outbox
+- **Status:** Accepted
+- **File:** [ADR-024-care-continuity-and-consent-governed-outbox.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-024-care-continuity-and-consent-governed-outbox.md)
+- **Context:** Post-consultation care continuity requires versioned follow-up plans, strict task completion rules, conflict-free repeat appointment booking, and consent-governed patient communications without leaking sensitive diagnoses.
+- **Decision:** Immutable version history on follow-up plans (`follow_up_plan_versions`); operational task state machine prohibiting completion via reminder dispatch and requiring logged contact attempts before `unable_to_reach`; practitioner slot-locking and non-mutating linked `FOLLOW_UP` encounter creation; minimum-necessary privacy filtering, quiet-hour deferral, send-time consent re-verification, and HMAC-verified idempotent webhook ingestion.
+
+---
+
+## ADR-025: Non-Causal Longitudinal Outcome Tracking, Unit/Method Compatibility Guards, and Adverse Effect Escalation
+- **Status:** Accepted
+- **File:** [ADR-025-non-causal-outcome-trends-and-adverse-effect-escalation.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-025-non-causal-outcome-trends-and-adverse-effect-escalation.md)
+- **Context:** Longitudinal outcome tracking must avoid scientifically invalid causal efficacy claims, prevent mixed-unit/method trend distortions, isolate unverified AI drafts, and escalate severe adverse events immediately.
+- **Decision:** Enforce non-causal longitudinal disclaimers (`claims_causal_efficacy: false`); halt trend comparison with `cannot_compare_reliably` when units or measurement methods diverge; exclude `AI_DRAFT_UNVERIFIED` records from verified clinical trends; automatically escalate severe or life-threatening adverse effect reports into urgent clinical review tasks.
