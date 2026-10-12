@@ -11,7 +11,7 @@ from apps.api.database.connection import get_db
 from apps.api.routes import (
     health, auth, tenancy, admin, audit, capabilities, patients, encounters,
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
-    modern_assessment, clinical_rules
+    modern_assessment, clinical_rules, knowledge
 )
 
 ROUTES = [
@@ -130,6 +130,27 @@ ROUTES = [
     # Prompt 05: Clinical Content & Governed Rules Catalog
     ("GET", r"^/api/v1/clinical-content/status$", clinical_rules.handle_clinical_content_status, True),
     ("GET", r"^/api/v1/clinical-rules$", clinical_rules.handle_clinical_rules_list, True),
+
+    # Prompt 06: Clinical Knowledge Base, Governed Source Registry, Claims & Evidence
+    ("POST", r"^/api/v1/knowledge/sources$", knowledge.handle_create_source, True),
+    ("GET", r"^/api/v1/knowledge/sources/(?P<id>[^/]+)$", knowledge.handle_get_source, True),
+    ("GET", r"^/api/v1/knowledge/sources$", knowledge.handle_list_sources, True),
+    ("POST", r"^/api/v1/knowledge/items$", knowledge.handle_create_knowledge_item, True),
+    ("GET", r"^/api/v1/knowledge/items/(?P<id>[^/]+)$", knowledge.handle_get_knowledge_item, True),
+    ("GET", r"^/api/v1/knowledge/items/(?P<id>[^/]+)/synthesize$", knowledge.handle_synthesize_evidence, True),
+    ("GET", r"^/api/v1/knowledge/items$", knowledge.handle_list_knowledge_items, True),
+    ("POST", r"^/api/v1/knowledge/claims$", knowledge.handle_create_claim, True),
+    ("GET", r"^/api/v1/knowledge/claims/(?P<id>[^/]+)$", knowledge.handle_get_claim, True),
+    ("POST", r"^/api/v1/knowledge/evidence$", knowledge.handle_create_evidence, True),
+    ("GET", r"^/api/v1/knowledge/evidence/(?P<id>[^/]+)$", knowledge.handle_get_evidence, True),
+    ("GET", r"^/api/v1/knowledge/search$", knowledge.handle_search_knowledge, True),
+    ("POST", r"^/api/v1/knowledge/retrieve$", knowledge.handle_retrieve_context, True),
+    ("GET", r"^/api/v1/knowledge/citations/(?P<id>[^/]+)$", knowledge.handle_get_citation, True),
+    ("POST", r"^/api/v1/knowledge/review/(?P<id>[^/]+)/approve$", knowledge.handle_approve_item, True),
+    ("POST", r"^/api/v1/knowledge/review/(?P<id>[^/]+)/reject$", knowledge.handle_reject_item, True),
+    ("POST", r"^/api/v1/knowledge/review/(?P<id>[^/]+)/request-changes$", knowledge.handle_request_changes_item, True),
+    ("GET", r"^/api/v1/knowledge/review/queue$", knowledge.handle_get_review_queue, True),
+    ("GET", r"^/api/v1/knowledge/audit-logs/(?P<id>[^/]+)$", knowledge.handle_get_review_logs, True),
 ]
 
 class ApiRouter:

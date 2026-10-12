@@ -1,6 +1,6 @@
 """REST API Route handlers."""
 
-from apps.api.routes import health, auth, tenancy, admin, audit, capabilities, patients, encounters, formulations, prescriptions, unani_assessment, organ_axis, care_plans, modern_assessment, clinical_rules
+from apps.api.routes import health, auth, tenancy, admin, audit, capabilities, patients, encounters, formulations, prescriptions, unani_assessment, organ_axis, care_plans, modern_assessment, clinical_rules, knowledge
 
 __all__ = [
     "health",
@@ -17,6 +17,7 @@ __all__ = [
     "organ_axis",
     "care_plans",
     "modern_assessment",
-    "clinical_rules"
+    "clinical_rules",
+    "knowledge",
 ]
 

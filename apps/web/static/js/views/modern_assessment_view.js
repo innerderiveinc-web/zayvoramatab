@@ -377,6 +377,21 @@ function renderModernAssessmentUI(container, pane, patientId, encounterId, asses
                 No external referrals or transfers documented for this encounter.
               </div>
             `}
+        <!-- 7. Governed Evidence & Knowledge Reference Cards (Prompt 06) -->
+        <div class="card" style="margin-top: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--matab-color-border-subtle); padding-bottom: 0.4rem;">
+            <h3 style="font-size: 1rem; color: var(--matab-color-brand-primary); margin: 0;">
+              7. Governed Clinical References & Evidence
+            </h3>
+            <button id="btn-fetch-context-evidence" class="btn btn-secondary btn-sm" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;">
+              🔍 Retrieve Contextual Evidence
+            </button>
+          </div>
+
+          <div id="mca-evidence-cards-container">
+            <div style="font-size: 0.82rem; color: var(--matab-color-text-muted); font-style: italic;">
+              Click "Retrieve Contextual Evidence" above to inspect approved Unani compendia, NICE/WHO guidelines, and safety notes mapped to this patient's clinical presentation.
+            </div>
           </div>
         </div>
 
@@ -576,6 +591,86 @@ function setupModernAssessmentEvents(container, pane, patientId, encounterId, as
   if (btnShowAddReferral) {
     btnShowAddReferral.addEventListener("click", () => {
       openAddReferralModal(container, pane, patientId, encounterId, assess);
+    });
+  }
+
+  // 11. Fetch Contextual Evidence & Knowledge References (Prompt 06)
+  const btnFetchEvidence = pane.querySelector("#btn-fetch-context-evidence");
+  if (btnFetchEvidence) {
+    btnFetchEvidence.addEventListener("click", async () => {
+      const containerEl = pane.querySelector("#mca-evidence-cards-container");
+      if (!containerEl) return;
+      containerEl.innerHTML = `<div style="font-size: 0.85rem; color: var(--matab-color-brand-primary);">Retrieving governed clinical references...</div>`;
+
+      try {
+        const symptoms = [];
+        const chief = pane.querySelector("#mca-chief-complaint")?.value.trim();
+        if (chief) symptoms.push(chief);
+        (assess.problems || []).forEach(p => symptoms.push(p.problem_title));
+
+        const res = await apiClient.post("/api/v1/knowledge/retrieve", {
+          encounter_context: {
+            symptoms: symptoms.length > 0 ? symptoms : ["Dyspepsia"],
+            mizaj_primary: "Balghami",
+            medicines: [],
+            allergies: []
+          }
+        });
+
+        const unaniCards = (res.unani_references || []).map(u => `
+          <div style="padding: 0.5rem 0.75rem; background: rgba(59, 130, 246, 0.05); border: 1px solid var(--matab-color-brand-primary); border-radius: 4px; margin-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>🏛️ ${escapeHtml(u.canonical_name)}</strong>
+              <span class="badge badge-brand" style="font-size: 0.7rem;">Unani Reference</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--matab-color-text-secondary); margin-top: 0.2rem;">
+              ${escapeHtml(u.description)}
+            </div>
+          </div>
+        `).join("");
+
+        const modernCards = (res.modern_references || []).map(m => `
+          <div style="padding: 0.5rem 0.75rem; background: var(--matab-color-bg-secondary); border-left: 3px solid #10b981; border-radius: 4px; margin-bottom: 0.4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>🔬 ${escapeHtml(m.canonical_name)}</strong>
+              <span class="badge badge-success" style="font-size: 0.7rem;">${escapeHtml(m.evidence_level)}</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--matab-color-text-secondary); margin-top: 0.2rem;">
+              ${escapeHtml(m.description)}
+            </div>
+          </div>
+        `).join("");
+
+        const safetyCards = (res.safety_precautions || []).map(s => `
+          <div style="padding: 0.5rem 0.75rem; background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; border-radius: 4px; margin-bottom: 0.4rem;">
+            <strong style="color: #b45309;">⚠️ ${escapeHtml(s.substance)}:</strong>
+            <span style="font-size: 0.8rem; color: var(--matab-color-text-secondary);"> ${escapeHtml(s.precaution_text)}</span>
+          </div>
+        `).join("");
+
+        const citationsHtml = (res.citations || []).map(c => `
+          <li style="font-size: 0.75rem; color: var(--matab-color-text-muted);">
+            <strong>${escapeHtml(c.source_title)}</strong> (${escapeHtml(c.source_type)}) - ${escapeHtml(c.location_in_source || "General")}
+          </li>
+        `).join("");
+
+        containerEl.innerHTML = `
+          ${safetyCards}
+          ${unaniCards}
+          ${modernCards}
+          ${citationsHtml ? `
+            <div style="margin-top: 0.5rem; padding-top: 0.4rem; border-top: 1px solid var(--matab-color-border-subtle);">
+              <div style="font-size: 0.78rem; font-weight: 600; color: var(--matab-color-text-secondary);">Verified Citations:</div>
+              <ul style="padding-left: 1.2rem; margin: 0.2rem 0;">${citationsHtml}</ul>
+            </div>
+          ` : ""}
+          <div style="font-size: 0.72rem; color: var(--matab-color-text-muted); margin-top: 0.4rem; font-style: italic;">
+            ${escapeHtml(res.prescribing_disclaimer)}
+          </div>
+        `;
+      } catch (err) {
+        containerEl.innerHTML = `<div style="color: red; font-size: 0.8rem;">Retrieval error: ${escapeHtml(err.message)}</div>`;
+      }
     });
   }
 }

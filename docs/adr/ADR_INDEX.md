@@ -190,3 +190,19 @@
 - **Context:** Decision support must not trigger unauthorized diagnostic orders, and completed clinical assessments must resist retroactive tampering.
 - **Decision:** Investigation considerations enforce a strict non-ordering contract (`is_order: false`); governed referral records with urgency tiers; clinician PIN electronic signing generating SHA-256 canonical snapshot digests; formal amendment lifecycle.
 
+---
+
+## ADR-018: Governed Clinical Knowledge Sources, Atomic Claims, and Traceable Citations
+- **Status:** Accepted
+- **File:** [ADR-018-governed-knowledge-sources-and-claims.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-018-governed-knowledge-sources-and-claims.md)
+- **Context:** AI hallucination of citations and ungrounded traditional claims undermines clinical validity.
+- **Decision:** Governed sources registry with SHA-256 document hashing; atomic claims and structured evidence records; strict epistemological separation of classical monographs from modern RCT trials; zero ungrounded citations.
+
+---
+
+## ADR-019: Hybrid Retrieval, Transliteration Normalization, and Clinical Context Boundaries
+- **Status:** Accepted
+- **File:** [ADR-019-hybrid-retrieval-and-transliteration.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-019-hybrid-retrieval-and-transliteration.md)
+- **Context:** Multi-dialect clinical workflows in Unani and modern medicine require robust transliteration without overstepping into autonomous prescribing.
+- **Decision:** Hybrid search combining canonical match, alias index, transliteration synonym dictionaries, and relevance scoring; encounter context retrieval with non-prescribing boundary; reviewer-only approval lifecycle.
+

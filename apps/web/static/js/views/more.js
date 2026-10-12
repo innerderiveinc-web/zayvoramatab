@@ -65,11 +65,16 @@ export async function renderMore(container) {
     `).join("");
 
     container.innerHTML = `
-      <div style="margin-bottom: 1.25rem;">
-        <h1 style="font-size: 1.4rem; color: var(--matab-color-brand-primary);">Administration & System Governance</h1>
-        <p style="color: var(--matab-color-text-secondary); font-size: 0.9rem;">
-          Tenancy configuration, facility scopes, audit trail, and engine capability statuses.
-        </p>
+      <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+          <h1 style="font-size: 1.4rem; color: var(--matab-color-brand-primary);">Administration & System Governance</h1>
+          <p style="color: var(--matab-color-text-secondary); font-size: 0.9rem;">
+            Tenancy configuration, facility scopes, audit trail, capability registry, and clinical knowledge.
+          </p>
+        </div>
+        <div>
+          <button id="btnOpenKnowledgeAdmin" class="btn btn-primary">Open Clinical Knowledge Admin</button>
+        </div>
       </div>
 
       <!-- Facilities Card -->
@@ -135,6 +140,12 @@ export async function renderMore(container) {
         </div>
       ` : ''}
     `;
+
+    document.getElementById("btnOpenKnowledgeAdmin")?.addEventListener("click", () => {
+      import("./knowledge_admin.js").then(mod => {
+        mod.renderKnowledgeAdmin(container);
+      });
+    });
 
   } catch (err) {
     container.innerHTML = `<div class="card"><p style="color: red;">Failed to load hub: ${err.message}</p></div>`;

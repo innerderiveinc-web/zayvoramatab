@@ -118,7 +118,9 @@ def seed_development_data(db_path: str = None) -> None:
             ('perm-mod-assess-amend', 'modern_assessment:amend', 'Amend Signed Modern Clinical Assessment', 'CLINICAL'),
             ('perm-mod-assess-cancel', 'modern_assessment:cancel', 'Cancel Modern Clinical Assessment', 'CLINICAL'),
             ('perm-clin-rules-read', 'clinical_rules:read', 'Read Governed Clinical Rules & Decision Support', 'CLINICAL'),
-            ('perm-clin-rules-manage', 'clinical_rules:manage', 'Manage Clinical Decision Rules & Sources', 'GOVERNANCE')
+            ('perm-clin-rules-manage', 'clinical_rules:manage', 'Manage Clinical Decision Rules & Sources', 'GOVERNANCE'),
+            ('perm-knowledge-read', 'knowledge:read', 'Search and Read Clinical Knowledge & Citations', 'CLINICAL'),
+            ('perm-knowledge-manage', 'knowledge:manage', 'Author, Review, and Approve Clinical Knowledge & Sources', 'GOVERNANCE')
         ]
         for p_id, code, name, cat in permissions_data:
             conn.execute("""
@@ -131,7 +133,7 @@ def seed_development_data(db_path: str = None) -> None:
         for p_id, _, _, _ in permissions_data:
             conn.execute("INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES ('role-org-admin', ?);", (p_id,))
         
-        # CLINIC_ADMIN gets all formulary, prescription, assessment, care plan, and modern assessment permissions
+        # CLINIC_ADMIN gets all formulary, prescription, assessment, care plan, modern assessment, and knowledge management permissions
         for p_code in [
             'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics',
             'encounters:read', 'encounters:write', 'encounter:read', 'encounter:create', 'encounter:update_draft', 'encounter:cancel',
@@ -143,14 +145,15 @@ def seed_development_data(db_path: str = None) -> None:
             'template:read', 'template:manage', 'organ_axis:read', 'organ_axis:manage', 'usul_e_ilaj:read', 'usul_e_ilaj:manage',
             'care_plan:read', 'care_plan:create', 'care_plan:update', 'care_plan:finalise',
             'modern_assessment:read', 'modern_assessment:create_draft', 'modern_assessment:update_draft',
-            'modern_assessment:cancel', 'clinical_rules:read', 'clinical_rules:manage'
+            'modern_assessment:cancel', 'clinical_rules:read', 'clinical_rules:manage',
+            'knowledge:read', 'knowledge:manage'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-clinic-admin', id FROM permissions WHERE code = ?;
             """, (p_code,))
 
-        # PRACTITIONER gets full clinical assessment, prescribing, care planning, and modern assessment
+        # PRACTITIONER gets full clinical assessment, prescribing, care planning, modern assessment, and knowledge read
         for p_code in [
             'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics',
             'encounters:read', 'encounters:write', 'encounter:read', 'encounter:create', 'encounter:update_draft', 'encounter:cancel',
@@ -163,7 +166,7 @@ def seed_development_data(db_path: str = None) -> None:
             'care_plan:read', 'care_plan:create', 'care_plan:update', 'care_plan:finalise',
             'modern_assessment:read', 'modern_assessment:create_draft', 'modern_assessment:update_draft',
             'modern_assessment:sign', 'modern_assessment:amend', 'modern_assessment:cancel',
-            'clinical_rules:read'
+            'clinical_rules:read', 'knowledge:read'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
@@ -966,7 +969,197 @@ def seed_development_data(db_path: str = None) -> None:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
             """, (r_id, code, ver, rtype, title, scope, src_id, sev, req_in, logic, rat, act, gov, owner, rev))
 
-        # 23. Capability Registry (Updated with Prompt 03, 04, and 05 Engines)
+        # 23. Governed Knowledge Sources Registry (Prompt 06)
+        knowledge_sources_seed = [
+            (
+                'src-qanun-synth',
+                'Al-Qanun fi al-Tibb (The Canon of Medicine) [Synthetic Classical Monograph]',
+                'Ibn Sina (Avicenna)', 'CCRUM & Classical Archives', 'CLASSICAL_TEXT', 'Book I & II',
+                '1025', 'URN:NBS:UNANI:CANON:001', 'ar', 'GLOBAL', 'APPROVED_STANDARD',
+                'CLASSICAL_COMPENDIUM_GRADE_D', 'a1b2c3d4e5canonhash', 'Dr. Hakim Tariq Jamil', 'APPROVED',
+                'Authoritative classical reference on Mizaj, Humors, and Simple Drugs.', 1
+            ),
+            (
+                'src-upi-synth',
+                'Unani Pharmacopoeia of India (UPI) [Synthetic Pharmacopoeial Standard]',
+                'Pharmacopoeia Commission for Indian Medicine & Homoeopathy (PCIM&H)',
+                'Ministry of AYUSH, Govt of India', 'PHARMACOPOEIA', 'Vol I & II',
+                '2016', 'ISBN:978-81-901151-2-1', 'en', 'IN', 'APPROVED_STANDARD',
+                'SYSTEMATIC_REVIEW_GRADE_A', 'f6e5d4c3b2upihash', 'Pharmacopoeia Committee', 'APPROVED',
+                'Official statutory monograph standard for identity, purity, posology, and Tadbeer.', 1
+            ),
+            (
+                'src-nice-dyspepsia-synth',
+                'Gastro-oesophageal reflux disease and dyspepsia in adults (NG1) [Synthetic Clinical Guideline]',
+                'National Institute for Health and Care Excellence (NICE)',
+                'NICE Guidelines', 'CLINICAL_GUIDELINE', 'Guideline NG1',
+                '2019', 'https://www.nice.org.uk/guidance/ng1', 'en', 'NICE_UK', 'APPROVED_STANDARD',
+                'SYSTEMATIC_REVIEW_GRADE_A', 'c3d4e5f6g7nicehash', 'NICE Guideline Development Group', 'APPROVED',
+                'Evidence-based clinical guideline for investigation, red flags, and management of adult dyspepsia.', 1
+            ),
+            (
+                'src-who-cough-synth',
+                'WHO Clinical Practice Handbook for Respiratory Symptoms [Synthetic Guideline]',
+                'World Health Organization (WHO)', 'WHO Press', 'CLINICAL_GUIDELINE', '2nd Edition',
+                '2021', 'https://who.int/publications/cough-stg', 'en', 'WHO', 'APPROVED_STANDARD',
+                'SYSTEMATIC_REVIEW_GRADE_A', 'e7f8g9h0i1whohash', 'WHO Clinical Review Panel', 'APPROVED',
+                'Standard clinical algorithms for evaluating acute and subacute cough in primary care.', 1
+            )
+        ]
+        for s_id, title, auth, pub, stype, ed, pdate, uid, lang, jur, reg, ev_lvl, dhash, rev, rstat, notes, is_syn in knowledge_sources_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO knowledge_sources (
+                    id, title, authors_or_org, publisher, source_type, edition,
+                    publication_date, url_or_identifier, language, jurisdiction,
+                    regulatory_status, evidence_level, document_hash, ingestion_date,
+                    verification_date, reviewer_name, review_status, notes, is_synthetic
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?, ?);
+            """, (s_id, title, auth, pub, stype, ed, pdate, uid, lang, jur, reg, ev_lvl, dhash, rev, rstat, notes, is_syn))
+
+        # 24. Governed Knowledge Items (Concepts, Herbs, Formulations, Principles)
+        knowledge_items_seed = [
+            (
+                'ki-senna-synth', 'UNANI', 'SINGLE_DRUG', 'Senna (Cassia angustifolia / Sana Makki)',
+                json.dumps(['Sana Makki', 'Cassia senna', 'Senna alexandrina', 'Sana']), 'en',
+                'Classical Unani purgative botanical used for Tanqia-e-Mawad (evacuation of morbid humors).',
+                json.dumps({'temperament': 'Hot 1, Dry 2', 'primary_action': 'Mushil-e-Safra wa Balgham', 'dose_range': '3-7 g'}),
+                'PRIMARY_CARE', 'pharmacopoeial_specification', 'CLASSICAL_COMPENDIUM_GRADE_D',
+                'approved', '1.0', 'usr-hakeem-1', 'usr-admin-1', 2, 1
+            ),
+            (
+                'ki-filfil-siah-synth', 'UNANI', 'SINGLE_DRUG', 'Filfil Siah (Piper nigrum / Black Pepper)',
+                json.dumps(['Black Pepper', 'Kali Mirch', 'Piper nigrum']), 'en',
+                'Kasir-e-Riyah (carminative) and Muqawwi-e-Meda (stomachic) drug used in digestive and cold dystemperaments.',
+                json.dumps({'temperament': 'Hot 3, Dry 3', 'primary_action': 'Hazim, Kasir-e-Riyah', 'dose_range': '0.5-1 g'}),
+                'PRIMARY_CARE', 'traditional_use', 'CLASSICAL_COMPENDIUM_GRADE_D',
+                'approved', '1.0', 'usr-hakeem-1', 'usr-admin-1', 1, 1
+            ),
+            (
+                'ki-balghami-mizaj-synth', 'UNANI', 'MIZAJ', 'Mizaj Balghami (Phlegmatic Temperament)',
+                json.dumps(['Phlegmatic Temperament', 'Cold and Moist Temperament', 'Mizaj Barid Ratab', 'balgham']), 'en',
+                'Primary temperamental state characterized by coldness and moisture, slow digestion, and pale complexion.',
+                json.dumps({'quality': 'Barid Ratab (Cold & Moist)', 'predominant_humor': 'Balgham', 'pulse_quality': 'Bati, Layyin'}),
+                'OUTPATIENT', 'classical_description', 'CLASSICAL_COMPENDIUM_GRADE_D',
+                'approved', '1.0', 'usr-hakeem-1', 'usr-admin-1', 1, 1
+            ),
+            (
+                'ki-dyspepsia-synth', 'MODERN_CLINICAL', 'DISEASE', 'Dyspepsia (Functional & Organic)',
+                json.dumps(['Indigestion', 'Su-e-Hazm', 'Gastric discomfort', 'IBS']), 'en',
+                'Symptom complex of epigastric pain, early satiety, and postprandial fullness.',
+                json.dumps({'icd10': 'K30', 'guideline': 'NICE NG1', 'red_flags': ['Dysphagia', 'Weight loss', 'GI bleeding']}),
+                'PRIMARY_CARE', 'clinical_guideline', 'SYSTEMATIC_REVIEW_GRADE_A',
+                'approved', '1.0', 'usr-admin-1', 'usr-admin-1', 2, 1
+            ),
+            (
+                'ki-cough-synth', 'MODERN_CLINICAL', 'SYMPTOM', 'Acute Cough (Su\'al)',
+                json.dumps(['Khansi', 'Respiratory cough', 'Sual', 'Bronchitis']), 'en',
+                'Sudden onset reflex clearing of respiratory airway lasting under 3 weeks.',
+                json.dumps({'icd10': 'R05', 'guideline': 'WHO STG', 'red_flags': ['Hemoptysis', 'Stridor', 'High fever']}),
+                'OUTPATIENT', 'clinical_guideline', 'SYSTEMATIC_REVIEW_GRADE_A',
+                'approved', '1.0', 'usr-admin-1', 'usr-admin-1', 2, 1
+            )
+        ]
+        for ki_id, dom, etype, cname, aliases, lang, desc, attr, scope, ctype, ev_lvl, stat, ver, cr_by, rev_by, scount, is_syn in knowledge_items_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO knowledge_items (
+                    id, domain, entity_type, canonical_name, aliases_json, language,
+                    description, structured_attributes_json, clinical_scope, claim_type,
+                    evidence_level, status, version, created_by, reviewed_by, approved_at,
+                    source_count, is_synthetic
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?);
+            """, (ki_id, dom, etype, cname, aliases, lang, desc, attr, scope, ctype, ev_lvl, stat, ver, cr_by, rev_by, scount, is_syn))
+
+        # 25. Atomic Claims Seed (Granular assertions)
+        claims_seed = [
+            (
+                'clm-senna-01', 'ki-senna-synth',
+                'Senna leaves contain sennosides A and B which stimulate colon motility for evacuation of humors.',
+                'pharmacopoeial_specification', json.dumps(['Constipation', 'Tanqia-e-Mawad']),
+                'HIGH', 'approved', 'usr-admin-1', 'APPROVED',
+                'Contraindicated in mechanical bowel obstruction, inflammatory bowel disease, and severe dehydration.', 1
+            ),
+            (
+                'clm-senna-02', 'ki-senna-synth',
+                'Traditional Unani formulation practice specifies corrective processing (Tadbeer/Musleh) with Gulqand or Roghan Badam to prevent griping.',
+                'traditional_use', json.dumps(['Tadbeer', 'Musleh', 'Griping']),
+                'MODERATE', 'approved', 'usr-admin-1', 'APPROVED',
+                'Classical practice consensus; supported by centuries of empirical clinical records.', 1
+            ),
+            (
+                'clm-dyspepsia-01', 'ki-dyspepsia-synth',
+                'Routine endoscopy is not recommended in uninvestigated dyspepsia under age 55 without alarm signs (NICE NG1).',
+                'clinical_guideline', json.dumps(['Dyspepsia', 'Endoscopy', 'Red Flags']),
+                'HIGH', 'approved', 'usr-admin-1', 'APPROVED',
+                'Patients over 55 with persistent symptoms or alarm symptoms require urgent referral.', 1
+            ),
+            (
+                'clm-balgham-01', 'ki-balghami-mizaj-synth',
+                'Individuals of Balghami temperament are prone to slow gastrointestinal transit, mucoid stool, and sluggish metabolic functions.',
+                'classical_description', json.dumps(['Balgham', 'Dyspepsia', 'Bowel motility']),
+                'MODERATE', 'approved', 'usr-admin-1', 'APPROVED',
+                'Qualitative constitutional assessment; clinical correlation required with physical signs.', 1
+            )
+        ]
+        for c_id, it_id, ctext, ctype, lconcepts, estrength, stat, rev_id, app_state, limits, is_syn in claims_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO knowledge_claims (
+                    id, item_id, claim_text, claim_type, linked_concepts_json,
+                    evidence_strength, status, reviewer_id, reviewed_at, approval_state,
+                    clinical_limitations, is_synthetic
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?);
+            """, (c_id, it_id, ctext, ctype, lconcepts, estrength, stat, rev_id, app_state, limits, is_syn))
+
+        # 26. Evidence Appraisals & Citations Seed
+        evidence_seed = [
+            (
+                'evd-senna-01', 'clm-senna-01', 'src-upi-synth', 'SYSTEMATIC_REVIEW',
+                'Adult ambulatory patients with acute constipation', 'Oral standardized sennoside extract',
+                'Placebo', 'Demonstrated laxative response within 6 to 12 hours', 120,
+                'Significant reduction in colonic transit time and softened stool consistency.',
+                'Chronic unsupervised use exceeding 7 days may result in electrolyte depletion.',
+                'LOW', 'GRADE_A', 'evidence_exists', '2016', 'UPI Vol II, Monograph Senna'
+            ),
+            (
+                'evd-dyspepsia-01', 'clm-dyspepsia-01', 'src-nice-dyspepsia-synth', 'SYSTEMATIC_REVIEW',
+                'Adult primary care dyspepsia cohort', 'H. pylori test-and-treat vs empiric PPI',
+                'Direct endoscopy', 'Equivalent symptom resolution with 78% reduction in invasive procedures', 1450,
+                'Empiric non-invasive strategy is safe and cost-effective in the absence of alarm signs.',
+                'Applicable only when red flag indicators (dysphagia, bleeding, persistent vomiting) are absent.',
+                'LOW', 'GRADE_A', 'evidence_exists', '2019', 'NICE NG1 Section 1.3'
+            )
+        ]
+        for e_id, c_id, s_id, stype, pop, intv, comp, outc, ss, rsum, lim, rbias, egrd, estat, pdate, page in evidence_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO knowledge_evidence (
+                    id, claim_id, source_id, study_type, population, intervention_or_exposure,
+                    comparator, outcome, sample_size, result_summary, limitations,
+                    risk_of_bias, evidence_grade, evidence_status, publication_date,
+                    page_or_section, reviewer_id, review_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'usr-admin-1', 'APPROVED');
+            """, (e_id, c_id, s_id, stype, pop, intv, comp, outc, ss, rsum, lim, rbias, egrd, estat, pdate, page))
+
+            # Matching citation
+            conn.execute("""
+                INSERT OR REPLACE INTO knowledge_citations (
+                    id, claim_id, source_id, citation_type, location_in_source, quote_or_excerpt
+                ) VALUES (?, ?, ?, 'SUPPORTING', ?, ?);
+            """, (f"cit-{e_id}", c_id, s_id, page, rsum))
+
+        # 27. Graph-Compatible Relationships Seed
+        relationships_seed = [
+            ('rel-001', 'ki-dyspepsia-synth', 'HAS_SYMPTOM', 'ki-cough-synth', 'DIRECTED', 'PROVISIONAL', 'GERD-induced chronic cough axis', 'src-nice-dyspepsia-synth'),
+            ('rel-002', 'ki-balghami-mizaj-synth', 'ASSOCIATED_WITH', 'ki-dyspepsia-synth', 'DIRECTED', 'DEFINITIVE', 'Classical Su-e-Mizaj Barid predisposition to slow gastric emptying', 'src-qanun-synth'),
+            ('rel-003', 'ki-senna-synth', 'HAS_PRECAUTION', 'ki-dyspepsia-synth', 'DIRECTED', 'DEFINITIVE', 'Avoid high dose Senna in inflammatory abdominal distress without Musleh', 'src-upi-synth')
+        ]
+        for r_id, s_item, r_type, t_item, direct, strn, cnotes, s_id in relationships_seed:
+            conn.execute("""
+                INSERT OR REPLACE INTO knowledge_relationships (
+                    id, source_item_id, relationship_type, target_item_id,
+                    directionality, strength, context_notes, source_id, review_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED');
+            """, (r_id, s_item, r_type, t_item, direct, strn, cnotes, s_id))
+
+        # 28. Capability Registry (Updated with Prompt 03, 04, 05, and 06 Engines)
         capabilities_seed = [
             ('core.identity', 'Identity and Tenancy Engine', '1.1.0', 'FUNCTIONALLY_TESTED', 1, None, 'users:manage'),
             ('core.tenancy', 'Organization/Facility Scope Filter', '1.1.0', 'FUNCTIONALLY_TESTED', 1, None, 'facility:manage'),
@@ -991,6 +1184,10 @@ def seed_development_data(db_path: str = None) -> None:
             # Prompt 05: Modern Clinical Assessment & Decision Support
             ('clinical.modern_assessment', 'Modern Clinical Assessment & Problem List Engine', '1.5.0', 'FUNCTIONALLY_TESTED', 1, None, 'modern_assessment:read'),
             ('clinical.decision_support_rules', 'Governed Red-Flag and Differential Decision Rules Catalog', '1.5.0', 'FUNCTIONALLY_TESTED', 1, None, 'clinical_rules:read'),
+
+            # Prompt 06: Clinical Knowledge Base & Evidence Retrieval Engine
+            ('clinical.knowledge_base', 'Governed Clinical Knowledge & Sources Registry', '1.6.0', 'FUNCTIONALLY_TESTED', 1, None, 'knowledge:read'),
+            ('clinical.evidence_retrieval', 'Hybrid Evidence Retrieval & Contextual Citation Engine', '1.6.0', 'FUNCTIONALLY_TESTED', 1, None, 'knowledge:read'),
 
             # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1
             ('clinical.consultation', 'Single 3-Zone Consultation Canvas', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Prescribing vertical complete; full 3-zone canvas scheduled for Phase 3', 'encounters:write'),
