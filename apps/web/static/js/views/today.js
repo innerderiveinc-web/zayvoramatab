@@ -1,81 +1,129 @@
 /**
- * Today View — Phase 1 Foundation Readiness & Honest Empty State
+ * Today Operational Dashboard View — Phase 10 Clinic Operations OS
+ * Displays live actionable metrics backed by authorized database records.
  */
 
 import { state } from "../state.js";
 import { apiClient } from "../../../../packages/api-client/client.js";
 
 export async function renderToday(container) {
-  container.innerHTML = `
-    <div class="card" style="margin-bottom: 1.25rem;">
-      <h2 style="font-size: 1.3rem; color: var(--matab-color-brand-primary); margin-bottom: 0.25rem;">
-        Welcome, ${state.user?.full_name || 'Practitioner'}
-      </h2>
-      <p style="color: var(--matab-color-text-secondary); font-size: 0.9rem;">
-        Phase 1 Independent Platform Foundation — Technical readiness and session status.
-      </p>
-    </div>
+  container.innerHTML = `<div class="card"><p>Loading Today Operational Dashboard...</p></div>`;
 
-    <!-- Honest Empty Queue State (Strict Rule: Do not invent fake patient queues in Phase 1) -->
-    <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
-      <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
-      <h3 style="color: var(--matab-color-text-secondary); margin-bottom: 0.5rem;">No Clinical OPD Queue Active</h3>
-      <p style="color: var(--matab-color-text-muted); font-size: 0.9rem; max-width: 500px; margin: 0 auto 1.25rem auto;">
-        You are operating in the Phase 1 Foundation environment. Clinical patient encounters, queue tokens, and active charting will connect in Phase 2.
-      </p>
-      <div style="display: flex; gap: 0.75rem; justify-content: center;">
-        <button id="inspectCapabilitiesBtn" class="btn btn-secondary">
-          Inspect Capability Registry ➔
-        </button>
-      </div>
-    </div>
+  try {
+    const [todayRes, healthRes] = await Promise.all([
+      apiClient.get("/api/v1/operations/today"),
+      apiClient.get("/api/v1/health/ready")
+    ]);
 
-    <!-- System Readiness Status Card -->
-    <div class="card" id="readinessCard">
-      <div class="card-header">
-        <h3 class="card-title">System Liveness & Readiness</h3>
-        <button id="refreshHealthBtn" class="btn btn-secondary btn-sm">Refresh Check</button>
-      </div>
-      <div id="readinessContent">
-        <p style="font-size: 0.85rem; color: var(--matab-color-text-muted);">Probing /api/v1/health/ready...</p>
-      </div>
-    </div>
-  `;
+    const today = todayRes.today || { metrics: {}, inventory_warnings: {}, active_queue_tokens: [] };
+    const m = today.metrics || {};
+    const inv = today.inventory_warnings || {};
+    const tokens = today.active_queue_tokens || [];
 
-  // Attach button handlers
-  container.querySelector("#inspectCapabilitiesBtn").addEventListener("click", () => {
-    state.setActiveTab("more");
-  });
+    const queueRowsHtml = tokens.map(t => `
+      <tr>
+        <td><strong><code>${t.token_code}</code></strong></td>
+        <td>${t.patient_name} <small style="color: var(--matab-color-text-muted);">(${t.patient_mrn})</small></td>
+        <td><span class="badge badge-info">${t.visit_type}</span></td>
+        <td><strong>${t.status}</strong></td>
+        <td>
+          ${t.encounter_id ? `<button class="btn btn-primary btn-sm btn-open-enc" data-enc="${t.encounter_id}" data-pat="${t.patient_id}">Open Consultation ➔</button>` : '—'}
+        </td>
+      </tr>
+    `).join("");
 
-  const readinessContent = container.querySelector("#readinessContent");
-  async function checkReadiness() {
-    try {
-      const data = await apiClient.get("/api/v1/health/ready");
-      readinessContent.innerHTML = `
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
-          <div style="background: var(--matab-color-bg-muted); padding: 0.75rem; border-radius: var(--matab-radius-md);">
-            <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Database Connection</div>
-            <strong style="color: var(--matab-color-status-success);">Connected (ACID Transactions)</strong>
-          </div>
-          <div style="background: var(--matab-color-bg-muted); padding: 0.75rem; border-radius: var(--matab-radius-md);">
-            <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Schema Migrations</div>
-            <strong>${data.migrations_applied} Applied</strong>
-          </div>
-          <div style="background: var(--matab-color-bg-muted); padding: 0.75rem; border-radius: var(--matab-radius-md);">
-            <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Multi-Tenant Isolation</div>
-            <strong style="color: var(--matab-color-brand-accent);">Server-Enforced</strong>
-          </div>
+    container.innerHTML = `
+      <div class="card" style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="font-size: 1.3rem; color: var(--matab-color-brand-primary); margin-bottom: 0.2rem;">
+            Today's Clinic Operations — ${state.user?.full_name || 'Staff'} (${today.role_view || 'USER'})
+          </h2>
+          <p style="color: var(--matab-color-text-secondary); font-size: 0.85rem;">
+            Data as of <code>${today.data_as_of || 'now'}</code> • Migrations Applied: <strong>${healthRes.migrations_applied}</strong>
+          </p>
         </div>
-      `;
-    } catch (err) {
-      readinessContent.innerHTML = `
-        <div style="background: var(--matab-color-status-danger-bg); color: var(--matab-color-status-danger); padding: 0.75rem; border-radius: var(--matab-radius-md); font-size: 0.85rem;">
-          ⚠️ Health check failed: ${err.message} (Request ID: ${err.requestId || 'N/A'})
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="goQueueBtn" class="btn btn-primary btn-sm">Appointments & Queue ➔</button>
+          <button id="goBillingBtn" class="btn btn-secondary btn-sm">Billing ➔</button>
         </div>
-      `;
-    }
+      </div>
+
+      <!-- Actionable Today Metrics -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div class="card" style="padding: 0.9rem;">
+          <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Today's Appointments</div>
+          <div style="font-size: 1.45rem; font-weight: 700;">${m.todays_appointments_count ?? 0}</div>
+        </div>
+        <div class="card" style="padding: 0.9rem;">
+          <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Walk-Ins Waiting</div>
+          <div style="font-size: 1.45rem; font-weight: 700; color: var(--matab-color-brand-accent);">${m.walk_ins_waiting_count ?? 0}</div>
+        </div>
+        <div class="card" style="padding: 0.9rem;">
+          <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">In Consultation</div>
+          <div style="font-size: 1.45rem; font-weight: 700; color: var(--matab-color-brand-primary);">${m.currently_in_consultation_count ?? 0}</div>
+        </div>
+        <div class="card" style="padding: 0.9rem;">
+          <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Completed Visits</div>
+          <div style="font-size: 1.45rem; font-weight: 700; color: var(--matab-color-status-success);">${m.completed_visits_count ?? 0}</div>
+        </div>
+        <div class="card" style="padding: 0.9rem;">
+          <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Payment Tasks Pending</div>
+          <div style="font-size: 1.45rem; font-weight: 700;">${m.payment_tasks_awaiting_action_count ?? 0}</div>
+        </div>
+        <div class="card" style="padding: 0.9rem;">
+          <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Follow-ups Due</div>
+          <div style="font-size: 1.45rem; font-weight: 700;">${m.follow_ups_due_count ?? 0}</div>
+        </div>
+        ${inv.enabled ? `
+          <div class="card" style="padding: 0.9rem;">
+            <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Low Stock / Near Expiry</div>
+            <div style="font-size: 1.45rem; font-weight: 700;">${inv.low_stock_count ?? 0} / ${inv.near_expiry_count ?? 0}</div>
+          </div>
+        ` : ''}
+        <div class="card" style="padding: 0.9rem;">
+          <div style="font-size: 0.75rem; color: var(--matab-color-text-muted);">Operational Errors</div>
+          <div style="font-size: 1.45rem; font-weight: 700; color: ${(m.operational_errors_count || 0) > 0 ? 'var(--matab-color-status-danger)' : 'inherit'};">${m.operational_errors_count ?? 0}</div>
+        </div>
+      </div>
+
+      <!-- Active OPD Queue -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Active OPD Queue & Consultation Handoff</h3>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Patient</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Clinical Handoff</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${queueRowsHtml || '<tr><td colspan="5" style="text-align:center;">No active OPD queue tokens for today yet.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.querySelector("#goQueueBtn")?.addEventListener("click", () => {
+      state.setActiveTab("appointments_queue");
+    });
+    container.querySelector("#goBillingBtn")?.addEventListener("click", () => {
+      state.setActiveTab("billing");
+    });
+
+    container.querySelectorAll(".btn-open-enc").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.activeEncounterId = btn.dataset.enc;
+        state.activePatientId = btn.dataset.pat;
+        state.setActiveTab("consultation");
+      });
+    });
+
+  } catch (err) {
+    container.innerHTML = `<div class="card"><p style="color:red;">Error loading Today Dashboard: ${err.message}</p></div>`;
   }
-
-  container.querySelector("#refreshHealthBtn").addEventListener("click", checkReadiness);
-  checkReadiness();
 }

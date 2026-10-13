@@ -11,6 +11,7 @@ import { renderPatients } from "./views/patients.js";
 import { renderConsultation } from "./views/consultation.js";
 import { renderPrescriptions } from "./views/prescriptions.js";
 import { renderFollowups } from "./views/followups.js";
+import { renderAppointmentsQueue, renderBillingView, renderInventoryView } from "./views/operations.js";
 import { renderMore } from "./views/more.js";
 
 async function init() {
@@ -51,7 +52,6 @@ function renderAppShell(root) {
   renderCurrentTab(state.activeTab);
 
   state.subscribe(() => {
-    // Re-render current view when state changes
     renderCurrentTab(state.activeTab);
   });
 }
@@ -67,6 +67,9 @@ function renderCurrentTab(tab) {
     case "patients":
       renderPatients(content);
       break;
+    case "appointments_queue":
+      renderAppointmentsQueue(content);
+      break;
     case "consultation":
       renderConsultation(content);
       break;
@@ -75,6 +78,12 @@ function renderCurrentTab(tab) {
       break;
     case "followups":
       renderFollowups(content);
+      break;
+    case "billing":
+      renderBillingView(content);
+      break;
+    case "inventory":
+      renderInventoryView(content);
       break;
     case "more":
       renderMore(content);

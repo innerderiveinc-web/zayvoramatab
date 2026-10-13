@@ -48,6 +48,8 @@ def seed_development_data(db_path: str = None) -> None:
             ('role-practitioner', 'PRACTITIONER', 'Licensed Practitioner (Hakeem)', 'Clinical consultation and prescription signing'),
             ('role-receptionist', 'RECEPTIONIST', 'Front Desk Receptionist', 'Patient registration, appointment queuing and tokens'),
             ('role-pharmacist', 'PHARMACIST', 'Dispensary Pharmacist', 'Medication dispensing and stock verification'),
+            ('role-cashier', 'CASHIER', 'Billing & Cashier Officer', 'Invoices, payments, receipts and daily collections'),
+            ('role-inventory-manager', 'INVENTORY_MANAGER', 'Inventory & Stock Manager', 'Stock receipts, batches, stocktakes and adjustments'),
             ('role-nurse', 'NURSE', 'Clinic Nurse / Attendant', 'Vitals recording and patient prep'),
             ('role-auditor', 'READ_ONLY_AUDITOR', 'Read-Only Compliance Auditor', 'Audit log review and compliance inspections')
         ]
@@ -135,7 +137,25 @@ def seed_development_data(db_path: str = None) -> None:
             ('perm-out-read', 'outcomes:read', 'View Longitudinal Clinical Outcomes & Trends', 'CLINICAL'),
             ('perm-out-rec', 'outcomes:record', 'Record Clinical and Patient-Reported Outcomes', 'CLINICAL'),
             ('perm-adr-report', 'adverse_effects:report', 'Report Suspected Adverse Medication Effects', 'CLINICAL'),
-            ('perm-adr-review', 'adverse_effects:review', 'Clinically Review and Escalate Adverse Effect Reports', 'CLINICAL')
+            ('perm-adr-review', 'adverse_effects:review', 'Clinically Review and Escalate Adverse Effect Reports', 'CLINICAL'),
+            # Prompt 10 Clinic Operations OS (Appointments, Queue, Billing, Inventory & Dispensing)
+            ('perm-ops-read', 'operations:read', 'View Clinic Today Dashboard & Operational Status', 'OPERATIONS'),
+            ('perm-sched-manage', 'scheduling:manage', 'Configure Practitioner Schedules & Leave Blocks', 'OPERATIONS'),
+            ('perm-appt-read', 'appointments:read', 'View Clinic Appointments & Availability', 'OPERATIONS'),
+            ('perm-appt-write', 'appointments:write', 'Book, Check-in, Reschedule & Cancel Appointments', 'OPERATIONS'),
+            ('perm-queue-read', 'queue:read', 'View OPD Waiting Queue', 'OPERATIONS'),
+            ('perm-queue-write', 'queue:write', 'Issue Queue Tokens & Transition Queue States', 'OPERATIONS'),
+            ('perm-queue-prio', 'queue:priority_override', 'Authorize Urgent Clinical Queue Priority', 'OPERATIONS'),
+            ('perm-bill-read', 'billing:read', 'View Invoices, Receipts & Collections', 'BILLING'),
+            ('perm-bill-write', 'billing:write', 'Create Invoices & Record Payments', 'BILLING'),
+            ('perm-bill-cat', 'billing:manage_catalog', 'Configure Clinic Service & Fee Catalog', 'BILLING'),
+            ('perm-bill-refund', 'billing:refund_void', 'Authorize Payment Refunds & Invoice Voids', 'BILLING'),
+            ('perm-inv-read', 'inventory:read', 'View Dispensary Inventory, Stock & Batches', 'INVENTORY'),
+            ('perm-inv-write', 'inventory:write', 'Manage Inventory Items & Receive Stock', 'INVENTORY'),
+            ('perm-inv-adj', 'inventory:adjust', 'Record Inventory Adjustments, Quarantine & Stocktakes', 'INVENTORY'),
+            ('perm-disp-read', 'dispensing:read', 'View Prescription Dispensing Records', 'INVENTORY'),
+            ('perm-disp-write', 'dispensing:write', 'Dispense Signed Prescriptions', 'INVENTORY'),
+            ('perm-rep-read', 'reports:read', 'View Clinic Operational Reports', 'OPERATIONS')
         ]
 
         for p_id, code, name, cat in permissions_data:
@@ -149,9 +169,9 @@ def seed_development_data(db_path: str = None) -> None:
         for p_id, _, _, _ in permissions_data:
             conn.execute("INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES ('role-org-admin', ?);", (p_id,))
         
-        # CLINIC_ADMIN gets all formulary, prescription, assessment, care plan, modern assessment, and knowledge management permissions
+        # CLINIC_ADMIN gets all clinical, governance, and clinic operations permissions
         for p_code in [
-            'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics',
+            'facility:manage', 'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics',
             'encounters:read', 'encounters:write', 'encounter:read', 'encounter:create', 'encounter:update_draft', 'encounter:cancel',
             'consent:read', 'consent:record', 'prescriptions:sign', 'capabilities:read',
             'formulary:read', 'formulary:draft_create', 'formulary:draft_update', 'formulary:submit_review', 'formulary:approve',
@@ -166,14 +186,18 @@ def seed_development_data(db_path: str = None) -> None:
             'encounter:finalize', 'encounter:sign', 'encounter:manage_sections',
             'followup:read', 'followup:write', 'followup:assign',
             'communications:manage_preferences', 'communications:send', 'communications:approve_templates',
-            'outcomes:read', 'outcomes:record', 'adverse_effects:report', 'adverse_effects:review'
+            'outcomes:read', 'outcomes:record', 'adverse_effects:report', 'adverse_effects:review',
+            'operations:read', 'scheduling:manage', 'appointments:read', 'appointments:write',
+            'queue:read', 'queue:write', 'queue:priority_override',
+            'billing:read', 'billing:write', 'billing:manage_catalog', 'billing:refund_void',
+            'inventory:read', 'inventory:write', 'inventory:adjust', 'dispensing:read', 'dispensing:write', 'reports:read'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-clinic-admin', id FROM permissions WHERE code = ?;
             """, (p_code,))
 
-        # PRACTITIONER gets full clinical assessment, prescribing, care planning, modern assessment, and knowledge read
+        # PRACTITIONER gets full clinical assessment, prescribing, care planning, modern assessment, and clinical queue/appointment operations
         for p_code in [
             'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics',
             'encounters:read', 'encounters:write', 'encounter:read', 'encounter:create', 'encounter:update_draft', 'encounter:cancel',
@@ -190,34 +214,68 @@ def seed_development_data(db_path: str = None) -> None:
             'encounter:finalize', 'encounter:sign', 'encounter:manage_sections',
             'followup:read', 'followup:write', 'followup:assign',
             'communications:manage_preferences', 'communications:send', 'communications:approve_templates',
-            'outcomes:read', 'outcomes:record', 'adverse_effects:report', 'adverse_effects:review'
+            'outcomes:read', 'outcomes:record', 'adverse_effects:report', 'adverse_effects:review',
+            'operations:read', 'scheduling:manage', 'appointments:read', 'appointments:write',
+            'queue:read', 'queue:write', 'queue:priority_override',
+            'billing:read', 'inventory:read', 'dispensing:read', 'reports:read'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-practitioner', id FROM permissions WHERE code = ?;
             """, (p_code,))
 
-        # RECEPTIONIST gets patient read/create/update/duplicate, encounter read/create/cancel, consent read/record, prescription read/export, and operational followup/communications
+        # RECEPTIONIST gets front-desk registration, appointments, queue tokens, basic invoice/payment recording, and follow-up scheduling (NO clinical notes or refund/void authority)
         for p_code in [
             'patients:read', 'patients:write', 'patient:read', 'patient:create', 'patient:update_demographics', 'patient:resolve_duplicate',
             'encounters:read', 'encounter:read', 'encounter:create', 'encounter:cancel',
             'consent:read', 'consent:record', 'capabilities:read', 'prescription:read', 'prescription:export',
-            'care_plan:read', 'followup:read', 'followup:write', 'communications:manage_preferences', 'communications:send'
+            'care_plan:read', 'followup:read', 'followup:write', 'communications:manage_preferences', 'communications:send',
+            'operations:read', 'appointments:read', 'appointments:write', 'queue:read', 'queue:write',
+            'billing:read', 'billing:write'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-receptionist', id FROM permissions WHERE code = ?;
             """, (p_code,))
 
-        # PHARMACIST gets formulary read, prescription read, care_plan read, and export
-        for p_code in ['formulary:read', 'prescription:read', 'prescription:export', 'capabilities:read', 'care_plan:read']:
+        # PHARMACIST gets formulary read, prescription read, inventory read/adjust, and dispensing read/write (NO clinical assessment notes or prescribing)
+        for p_code in [
+            'patients:read', 'patient:read', 'formulary:read', 'prescription:read', 'prescription:export',
+            'capabilities:read', 'care_plan:read', 'operations:read',
+            'inventory:read', 'inventory:write', 'inventory:adjust', 'dispensing:read', 'dispensing:write'
+        ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-pharmacist', id FROM permissions WHERE code = ?;
             """, (p_code,))
 
-        # READ_ONLY_AUDITOR gets audit:read, patient:read, encounter:read, consent:read, formulary:read, prescription:read, assessment:read, care_plan:read, capabilities:read
-        for p_code in ['audit:read', 'patients:read', 'patient:read', 'encounters:read', 'encounter:read', 'consent:read', 'formulary:read', 'prescription:read', 'assessment:read', 'care_plan:read', 'organ_axis:read', 'usul_e_ilaj:read', 'capabilities:read']:
+        # CASHIER gets billing, invoicing, payment recording, refunds/voids, and collections report (NO clinical notes or prescription signing)
+        for p_code in [
+            'patients:read', 'patient:read', 'capabilities:read', 'operations:read',
+            'billing:read', 'billing:write', 'billing:refund_void', 'reports:read'
+        ]:
+            conn.execute("""
+                INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
+                SELECT 'role-cashier', id FROM permissions WHERE code = ?;
+            """, (p_code,))
+
+        # INVENTORY_MANAGER gets stock receipt, batch management, adjustments, and stocktakes (NO prescription signing or clinical amendments)
+        for p_code in [
+            'formulary:read', 'capabilities:read', 'operations:read',
+            'inventory:read', 'inventory:write', 'inventory:adjust', 'dispensing:read', 'reports:read'
+        ]:
+            conn.execute("""
+                INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
+                SELECT 'role-inventory-manager', id FROM permissions WHERE code = ?;
+            """, (p_code,))
+
+        # READ_ONLY_AUDITOR gets read-only access across clinical, operational, billing, and inventory domains
+        for p_code in [
+            'audit:read', 'patients:read', 'patient:read', 'encounters:read', 'encounter:read', 'consent:read',
+            'formulary:read', 'prescription:read', 'assessment:read', 'care_plan:read', 'organ_axis:read',
+            'usul_e_ilaj:read', 'capabilities:read', 'operations:read', 'appointments:read', 'queue:read',
+            'billing:read', 'inventory:read', 'dispensing:read', 'reports:read'
+        ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
                 SELECT 'role-auditor', id FROM permissions WHERE code = ?;
@@ -230,6 +288,8 @@ def seed_development_data(db_path: str = None) -> None:
             ('usr-hakeem-1', 'hakeem', 'hakeem.synthetic@zayvora.test', pw_hash, '[SYNTHETIC] Hakeem Tariq Ahmad', 'role-practitioner'),
             ('usr-recep-1', 'reception', 'reception.synthetic@zayvora.test', pw_hash, '[SYNTHETIC] Farhan Ali (Front Desk)', 'role-receptionist'),
             ('usr-pharm-1', 'pharmacy', 'pharmacy.synthetic@zayvora.test', pw_hash, '[SYNTHETIC] Bilal Siddiqui (Pharmacist)', 'role-pharmacist'),
+            ('usr-cashier-1', 'cashier', 'cashier.synthetic@zayvora.test', pw_hash, '[SYNTHETIC] Nadeem Khan (Cashier)', 'role-cashier'),
+            ('usr-inv-1', 'inventory', 'inventory.synthetic@zayvora.test', pw_hash, '[SYNTHETIC] Salman Mirza (Inventory Manager)', 'role-inventory-manager'),
             ('usr-auditor-1', 'auditor', 'auditor.synthetic@zayvora.test', pw_hash, '[SYNTHETIC] Compliance Auditor', 'role-auditor')
         ]
 
@@ -245,7 +305,7 @@ def seed_development_data(db_path: str = None) -> None:
                 VALUES (?, ?, 'org-matab-default', ?, 1);
             """, (f"uom-{u_id}", u_id, role_id))
 
-            # Facility Memberships (Hakeem and Reception belong to fac-central-opd)
+            # Facility Memberships (belong to fac-central-opd)
             conn.execute("""
                 INSERT OR REPLACE INTO user_facility_memberships (id, user_id, facility_id, role_id, is_active)
                 VALUES (?, ?, 'fac-central-opd', ?, 1);
@@ -1340,6 +1400,13 @@ def seed_development_data(db_path: str = None) -> None:
             ('operations.patient_communications', 'Consent-Governed Patient Reminder Outbox & Sandbox Adapters', '1.9.0', 'FUNCTIONALLY_TESTED', 1, None, 'communications:send'),
             ('clinical.outcome_tracking', 'Longitudinal Outcome Tracking & Non-Causal Trend Engine', '1.9.0', 'FUNCTIONALLY_TESTED', 1, None, 'outcomes:read'),
 
+            # Prompt 10: Clinic Operations OS (Appointments, Queue, Billing, Pharmacy Inventory & Dispensing)
+            ('operations.appointments_queue', 'Appointment Scheduling, Slot Availability & OPD Token Queue Engine', '1.10.0', 'FUNCTIONALLY_TESTED', 1, None, 'appointments:read'),
+            ('operations.billing_invoicing', 'Exact-Decimal Billing, Invoicing, Receipts & Reconciliation Engine', '1.10.0', 'FUNCTIONALLY_TESTED', 1, None, 'billing:read'),
+            ('operations.pharmacy_inventory_ledger', 'FEFO Batch Dispensary Inventory Ledger & Stocktake Engine', '1.10.0', 'FUNCTIONALLY_TESTED', 1, None, 'inventory:read'),
+            ('operations.prescription_dispensing', 'Signed-Prescription Verification & Dispensing Workflow Engine', '1.10.0', 'FUNCTIONALLY_TESTED', 1, None, 'dispensing:read'),
+            ('operations.clinic_reports', 'Clinic Operational Dashboards & Reconciliation Reports Engine', '1.10.0', 'FUNCTIONALLY_TESTED', 1, None, 'reports:read'),
+
             # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1
             ('clinical.consultation', 'Single 3-Zone Consultation Canvas', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Prescribing vertical complete; full 3-zone canvas scheduled for Phase 3', 'encounters:write'),
             ('operations.followups', 'Care Continuum Follow-up Queues', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 4 clinic operations', 'encounters:read'),
@@ -1426,6 +1493,78 @@ def seed_development_data(db_path: str = None) -> None:
                         directionality, collection_method, instrument_version, review_status
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """, (od_id, code, name, dom, rtype, unit, smin, smax, direc, cmeth, iver, rstat))
+
+        # 34. Prompt 10: Facility Settings, Practitioner Schedule, Fee Catalog & Dispensary Inventory (if migration 010 applied)
+        cur_check.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='facility_settings';")
+        if cur_check.fetchone():
+            conn.execute("""
+                INSERT OR REPLACE INTO facility_settings (
+                    facility_id, organization_id, timezone, currency, tax_enabled,
+                    default_tax_rate_bp, billing_enabled, billing_optional_for_consultation,
+                    inventory_enabled, public_queue_display_enabled, allow_negative_stock_override,
+                    near_expiry_warning_days, default_slot_duration_mins, buffer_time_mins,
+                    updated_by
+                ) VALUES ('fac-central-opd', 'org-matab-default', 'Asia/Kolkata', 'INR', 0, 0, 1, 1, 1, 1, 0, 90, 15, 0, 'usr-admin-1');
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO practitioner_schedules (
+                    id, organization_id, facility_id, practitioner_id, day_of_week,
+                    start_time, end_time, break_start_time, break_end_time,
+                    slot_duration_mins, buffer_time_mins, slot_capacity, room_resource,
+                    is_active, created_by
+                ) VALUES ('psched-hakeem-default', 'org-matab-default', 'fac-central-opd', 'usr-hakeem-1', 'ALL',
+                          '09:00', '17:00', '13:00', '14:00', 15, 0, 1, 'Room-1', 1, 'usr-admin-1');
+            """)
+
+            fee_seed = [
+                ('fee-consult-opd', 'org-matab-default', 'fac-central-opd', 'CONSULT-OPD', 'Initial Unani Consultation (Matab OPD)', 'CONSULTATION', 'INR', '300.00', 0),
+                ('fee-consult-fup', 'org-matab-default', 'fac-central-opd', 'CONSULT-FUP', 'Follow-up Clinical Review', 'FOLLOW_UP_CONSULTATION', 'INR', '150.00', 0),
+                ('fee-tadbir-hijama', 'org-matab-default', 'fac-central-opd', 'TADBIR-HIJAMA', 'Ilaj-bil-Tadbir: Hijama (Cupping Session)', 'PROCEDURE_TADBIR', 'INR', '600.00', 0)
+            ]
+            for fid_item, oid, fac_id, fcode, fname, fcat, curr, uprice, tbp in fee_seed:
+                conn.execute("""
+                    INSERT OR REPLACE INTO fee_catalog_items (
+                        id, organization_id, facility_id, code, name, category, currency, unit_price_decimal, tax_rate_bp, is_active, created_by
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'usr-admin-1');
+                """, (fid_item, oid, fac_id, fcode, fname, fcat, curr, uprice, tbp))
+
+            conn.execute("""
+                INSERT OR REPLACE INTO suppliers (id, organization_id, code, name, license_number, phone, is_active)
+                VALUES ('sup-dawakhana-1', 'org-matab-default', 'SUP-DAWA-01', 'National Unani Dawakhana Suppliers [Synthetic]', 'AYUSH-MFG-1092', '+91-11-23009900', 1);
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO inventory_locations (id, organization_id, facility_id, code, name, location_type, is_dispensable, is_active)
+                VALUES
+                ('loc-main-fac-central-opd', 'org-matab-default', 'fac-central-opd', 'MAIN-DISP', 'Main Dispensary Shelf', 'MAIN_DISPENSARY', 1, 1),
+                ('loc-quar-fac-central-opd', 'org-matab-default', 'fac-central-opd', 'QUAR-HOLD', 'Quarantine & Recall Hold', 'QUARANTINE_HOLD', 0, 1);
+            """)
+
+            inv_items_seed = [
+                ('iitem-bazoori', 'org-matab-default', 'fac-central-opd', 'SKU-SHARBAT-BAZOORI', 'Sharbat Bazoori Motadil (200ml)', 'form-sharbat-bazoori', 'SHARBAT', 'ml', '200.00', '85.00', '120.00'),
+                ('iitem-jawarish-jallinoos', 'org-matab-default', 'fac-central-opd', 'SKU-JAWARISH-JALLINOOS', 'Majoon Arad Khurma (125g)', 'form-majoon-arad', 'MAJOON', 'g', '250.00', '140.00', '210.00')
+            ]
+            for iid, oid, fac_id, sku, iname, form_id, dform, unit, rthresh, scost, sprice in inv_items_seed:
+                conn.execute("""
+                    INSERT OR REPLACE INTO inventory_items (
+                        id, organization_id, facility_id, sku, name, formulation_id, dosage_form, unit,
+                        reorder_threshold_decimal, standard_cost_decimal, selling_price_decimal, is_active, created_by
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'usr-admin-1');
+                """, (iid, oid, fac_id, sku, iname, form_id, dform, unit, rthresh, scost, sprice))
+
+            batches_seed = [
+                ('batch-bazoori-2027', 'org-matab-default', 'fac-central-opd', 'iitem-bazoori', 'loc-main-fac-central-opd', 'sup-dawakhana-1', 'BZM-2026-A', '2026-01-15', '2027-12-31', 'AVAILABLE', '1000.00', '85.00', '120.00'),
+                ('batch-jawarish-2027', 'org-matab-default', 'fac-central-opd', 'iitem-jawarish-jallinoos', 'loc-main-fac-central-opd', 'sup-dawakhana-1', 'JJL-2026-B', '2026-02-01', '2027-11-30', 'AVAILABLE', '1500.00', '140.00', '210.00')
+            ]
+            for bid, oid, fac_id, iid, lid, sid, bnum, mdate, edate, bstat, qty, ucost, sprice in batches_seed:
+                conn.execute("""
+                    INSERT OR REPLACE INTO inventory_batches (
+                        id, organization_id, facility_id, inventory_item_id, location_id, supplier_id,
+                        batch_number, manufactured_date, expiry_date, status,
+                        quantity_on_hand_decimal, unit_cost_decimal, selling_price_decimal
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """, (bid, oid, fac_id, iid, lid, sid, bnum, mdate, edate, bstat, qty, ucost, sprice))
 
         conn.execute("PRAGMA foreign_keys = ON;")
         conn.commit()

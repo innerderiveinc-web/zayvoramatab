@@ -12,7 +12,7 @@ from apps.api.routes import (
     health, auth, tenancy, admin, audit, capabilities, patients, encounters,
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
     modern_assessment, clinical_rules, knowledge, safety_firewall,
-    consultation_orchestrator, care_continuity
+    consultation_orchestrator, care_continuity, clinic_operations
 )
 
 
@@ -202,6 +202,52 @@ ROUTES = [
     ("POST", r"^/api/v1/adverse-effects$", care_continuity.handle_report_adverse_effect, True),
     ("POST", r"^/api/v1/adverse-effects/(?P<id>[^/]+)/review$", care_continuity.handle_review_adverse_effect, True),
     ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/follow-up-summary$", care_continuity.handle_get_patient_continuity_summary, True),
+
+    # Prompt 10: Clinic Operations OS (Appointments, Queue, Billing, Inventory & Dispensing)
+    ("GET", r"^/api/v1/operations/today$", clinic_operations.handle_get_today_dashboard, True),
+    ("GET", r"^/api/v1/operations/reports$", clinic_operations.handle_get_operational_reports, True),
+    ("GET", r"^/api/v1/operations/settings$", clinic_operations.handle_get_facility_settings, True),
+    ("PUT", r"^/api/v1/operations/settings$", clinic_operations.handle_update_facility_settings, True),
+    ("POST", r"^/api/v1/scheduling/practitioner-schedules$", clinic_operations.handle_upsert_practitioner_schedule, True),
+    ("POST", r"^/api/v1/scheduling/blocks$", clinic_operations.handle_create_schedule_block, True),
+    ("GET", r"^/api/v1/scheduling/availability$", clinic_operations.handle_get_scheduling_availability, True),
+
+    ("POST", r"^/api/v1/appointments$", clinic_operations.handle_create_appointment, True),
+    ("GET", r"^/api/v1/appointments$", clinic_operations.handle_list_appointments, True),
+    ("GET", r"^/api/v1/appointments/(?P<id>[^/]+)$", clinic_operations.handle_get_appointment, True),
+    ("PATCH", r"^/api/v1/appointments/(?P<id>[^/]+)$", clinic_operations.handle_update_appointment, True),
+    ("POST", r"^/api/v1/appointments/(?P<id>[^/]+)/confirm$", clinic_operations.handle_confirm_appointment, True),
+    ("POST", r"^/api/v1/appointments/(?P<id>[^/]+)/check-in$", clinic_operations.handle_check_in_appointment, True),
+    ("POST", r"^/api/v1/appointments/(?P<id>[^/]+)/cancel$", clinic_operations.handle_cancel_appointment, True),
+    ("POST", r"^/api/v1/appointments/(?P<id>[^/]+)/reschedule$", clinic_operations.handle_reschedule_appointment, True),
+
+    ("POST", r"^/api/v1/queue/tokens$", clinic_operations.handle_issue_queue_token, True),
+    ("GET", r"^/api/v1/queue$", clinic_operations.handle_list_queue, True),
+    ("POST", r"^/api/v1/queue/tokens/(?P<id>[^/]+)/call$", clinic_operations.handle_call_queue_token, True),
+    ("POST", r"^/api/v1/queue/tokens/(?P<id>[^/]+)/start$", clinic_operations.handle_start_queue_token, True),
+    ("POST", r"^/api/v1/queue/tokens/(?P<id>[^/]+)/complete$", clinic_operations.handle_complete_queue_token, True),
+    ("POST", r"^/api/v1/queue/tokens/(?P<id>[^/]+)/cancel$", clinic_operations.handle_cancel_queue_token, True),
+
+    ("GET", r"^/api/v1/billing/fee-catalog$", clinic_operations.handle_list_fee_catalog, True),
+    ("POST", r"^/api/v1/billing/fee-catalog$", clinic_operations.handle_upsert_fee_catalog, True),
+    ("POST", r"^/api/v1/billing/invoices$", clinic_operations.handle_create_invoice, True),
+    ("GET", r"^/api/v1/billing/invoices$", clinic_operations.handle_list_invoices, True),
+    ("GET", r"^/api/v1/billing/invoices/(?P<id>[^/]+)$", clinic_operations.handle_get_invoice, True),
+    ("POST", r"^/api/v1/billing/invoices/(?P<id>[^/]+)/finalize$", clinic_operations.handle_finalize_invoice, True),
+    ("POST", r"^/api/v1/billing/payments$", clinic_operations.handle_record_payment, True),
+    ("POST", r"^/api/v1/billing/payments/(?P<id>[^/]+)/refund$", clinic_operations.handle_refund_payment, True),
+    ("POST", r"^/api/v1/billing/invoices/(?P<id>[^/]+)/void$", clinic_operations.handle_void_invoice, True),
+    ("GET", r"^/api/v1/billing/reports/collections$", clinic_operations.handle_get_collections_report, True),
+
+    ("POST", r"^/api/v1/inventory/items$", clinic_operations.handle_create_inventory_item, True),
+    ("GET", r"^/api/v1/inventory/items$", clinic_operations.handle_list_inventory_items, True),
+    ("POST", r"^/api/v1/inventory/receipts$", clinic_operations.handle_receive_stock, True),
+    ("POST", r"^/api/v1/inventory/movements$", clinic_operations.handle_record_inventory_movement, True),
+    ("GET", r"^/api/v1/inventory/stock$", clinic_operations.handle_get_inventory_stock, True),
+    ("GET", r"^/api/v1/inventory/batches$", clinic_operations.handle_list_inventory_batches, True),
+    ("POST", r"^/api/v1/inventory/stocktakes$", clinic_operations.handle_create_stocktake, True),
+    ("POST", r"^/api/v1/dispensing$", clinic_operations.handle_dispense_prescription, True),
+    ("GET", r"^/api/v1/dispensing/(?P<id>[^/]+)$", clinic_operations.handle_get_dispense_record, True),
 ]
 
 class ApiRouter:

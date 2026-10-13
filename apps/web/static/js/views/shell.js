@@ -1,5 +1,5 @@
 /**
- * Role-Aware App Shell View
+ * Role-Aware App Shell View — Phase 10 Clinic Operations OS
  */
 
 import { state } from "../state.js";
@@ -7,11 +7,22 @@ import { apiClient } from "../../../../packages/api-client/client.js";
 
 export function renderShell(container, onNavigate, onLogout) {
   const user = state.user;
+  const perms = new Set(user?.permissions || []);
+  const roles = new Set(user?.roles || []);
+  const isAdmin = roles.has("ORG_ADMIN") || roles.has("CLINIC_ADMIN");
+
+  const showPatients = isAdmin || perms.has("patients:read") || perms.has("patient:read");
+  const showQueue = isAdmin || perms.has("appointments:read") || perms.has("queue:read");
+  const showConsultation = isAdmin || perms.has("encounters:write") || roles.has("PRACTITIONER");
+  const showPrescriptions = isAdmin || perms.has("prescription:read");
+  const showFollowups = isAdmin || perms.has("followup:read");
+  const showBilling = isAdmin || perms.has("billing:read");
+  const showInventory = isAdmin || perms.has("inventory:read") || perms.has("dispensing:read");
 
   container.innerHTML = `
     <div class="env-banner">
       <span>⚠️</span>
-      <span>Synthetic Development Environment (Phase 1 Foundation) — Real Backend Persistence & Audit Enabled</span>
+      <span>Synthetic Development Environment (Phase 10 Clinic Operations OS) — Real Backend Persistence & Audit Enabled</span>
     </div>
 
     <header class="app-header">
@@ -43,32 +54,50 @@ export function renderShell(container, onNavigate, onLogout) {
         <span>⏱️</span>
         <span>Today</span>
       </button>
+      ${showPatients ? `
       <button class="nav-tab ${state.activeTab === "patients" ? "active" : ""}" data-tab="patients">
         <span>👥</span>
         <span>Patients</span>
-      </button>
+      </button>` : ''}
+      ${showQueue ? `
+      <button class="nav-tab ${state.activeTab === "appointments_queue" ? "active" : ""}" data-tab="appointments_queue">
+        <span>🎫</span>
+        <span>Appointments & Queue</span>
+      </button>` : ''}
+      ${showConsultation ? `
       <button class="nav-tab ${state.activeTab === "consultation" ? "active" : ""}" data-tab="consultation">
         <span>🩺</span>
         <span>Consultation</span>
-      </button>
+      </button>` : ''}
+      ${showPrescriptions ? `
       <button class="nav-tab ${state.activeTab === "prescriptions" ? "active" : ""}" data-tab="prescriptions">
         <span>📜</span>
         <span>Prescriptions</span>
-      </button>
+      </button>` : ''}
+      ${showFollowups ? `
       <button class="nav-tab ${state.activeTab === "followups" ? "active" : ""}" data-tab="followups">
         <span>📅</span>
         <span>Follow-ups</span>
-      </button>
+      </button>` : ''}
+      ${showBilling ? `
+      <button class="nav-tab ${state.activeTab === "billing" ? "active" : ""}" data-tab="billing">
+        <span>💳</span>
+        <span>Billing</span>
+      </button>` : ''}
+      ${showInventory ? `
+      <button class="nav-tab ${state.activeTab === "inventory" ? "active" : ""}" data-tab="inventory">
+        <span>📦</span>
+        <span>Inventory</span>
+      </button>` : ''}
       <button class="nav-tab ${state.activeTab === "more" ? "active" : ""}" data-tab="more">
         <span>⚙️</span>
-        <span>More</span>
+        <span>Reports & Settings</span>
       </button>
     </nav>
 
     <main id="pageContent" class="main-content"></main>
   `;
 
-  // Attach tab navigation
   container.querySelectorAll(".nav-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       const target = tab.getAttribute("data-tab");
@@ -77,7 +106,6 @@ export function renderShell(container, onNavigate, onLogout) {
     });
   });
 
-  // Attach logout handler
   container.querySelector("#logoutBtn").addEventListener("click", async () => {
     try {
       await apiClient.post("/api/v1/auth/logout");

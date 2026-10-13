@@ -253,3 +253,20 @@
 - **File:** [ADR-025-non-causal-outcome-trends-and-adverse-effect-escalation.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-025-non-causal-outcome-trends-and-adverse-effect-escalation.md)
 - **Context:** Longitudinal outcome tracking must avoid scientifically invalid causal efficacy claims, prevent mixed-unit/method trend distortions, isolate unverified AI drafts, and escalate severe adverse events immediately.
 - **Decision:** Enforce non-causal longitudinal disclaimers (`claims_causal_efficacy: false`); halt trend comparison with `cannot_compare_reliably` when units or measurement methods diverge; exclude `AI_DRAFT_UNVERIFIED` records from verified clinical trends; automatically escalate severe or life-threatening adverse effect reports into urgent clinical review tasks.
+
+---
+
+## ADR-026: Clinic Operations Scheduling, OPD Queue Governance, and Exact-Decimal Billing
+- **Status:** Accepted
+- **File:** [ADR-026-clinic-operations-scheduling-queue-and-exact-decimal-billing.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-026-clinic-operations-scheduling-queue-and-exact-decimal-billing.md)
+- **Context:** Front-desk scheduling, waiting-room token queues, and patient billing require deterministic conflict prevention, public privacy protection, and exact monetary arithmetic.
+- **Decision:** Unique `slot_lock_key` double-booking prevention with automatic slot release on cancellation and conflict detection on schedule/leave changes; duplicate active queue token prevention (`active_patient_queue_lock`), clinical role gating for urgent queue priority, and `PUBLIC_SAFE_TOKEN_ONLY` waiting-room display; `Decimal`-only billing rejecting floats and CVV/PAN data, immutable finalized invoice snapshots, honest failed/unknown payment tracking, and idempotent payment/refund reconciliation.
+
+---
+
+## ADR-027: FEFO Pharmacy Inventory Ledger and Signed-Prescription Dispensing
+- **Status:** Accepted
+- **File:** [ADR-027-fefo-inventory-ledger-and-signed-prescription-dispensing.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-027-fefo-inventory-ledger-and-signed-prescription-dispensing.md)
+- **Context:** Dispensary stock management and prescription fulfillment must preserve batch traceability, prevent expired/quarantined dispensing, and respect clinician signing authority.
+- **Decision:** Append-only `inventory_movements` ledger with FEFO batch ordering and optimistic concurrency; hard block on dispensing unsigned/draft prescriptions (`UNSIGNED_PRESCRIPTION_CANNOT_DISPENSE`), expired/quarantined batches (`BATCH_EXPIRED_OR_QUARANTINED`), or unauthorized substitutions (`UNAUTHORIZED_SUBSTITUTION_PROHIBITED`); preserve signed prescription cryptographic immutability upon dispensing.
+
