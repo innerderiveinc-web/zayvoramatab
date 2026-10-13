@@ -270,3 +270,55 @@
 - **Context:** Dispensary stock management and prescription fulfillment must preserve batch traceability, prevent expired/quarantined dispensing, and respect clinician signing authority.
 - **Decision:** Append-only `inventory_movements` ledger with FEFO batch ordering and optimistic concurrency; hard block on dispensing unsigned/draft prescriptions (`UNSIGNED_PRESCRIPTION_CANNOT_DISPENSE`), expired/quarantined batches (`BATCH_EXPIRED_OR_QUARANTINED`), or unauthorized substitutions (`UNAUTHORIZED_SUBSTITUTION_PROHIBITED`); preserve signed prescription cryptographic immutability upon dispensing.
 
+---
+
+## ADR-028: Multi-Branch Organization Hierarchy and Scope-Aware RBAC/ABAC
+- **Status:** Accepted
+- **File:** [ADR-028-multi-branch-hierarchy-and-scoped-rbac-abac.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-028-multi-branch-hierarchy-and-scoped-rbac-abac.md)
+- **Context:** Multi-branch clinics and hospital networks require organization hierarchy management, per-branch staff role assignments, strict tenant/facility isolation, and immediate revocation.
+- **Decision:** Cycle-safe organization hierarchy (`_detect_org_hierarchy_cycle`); per-facility role/permission resolution via `staff_assignments` and `require_scoped_permission`; immediate next-request revocation without altering historical clinical attribution; facility activation health checks and lifecycle suspension enforcement.
+
+---
+
+## ADR-029: Inter-Facility Transfers, Layered Configuration Inheritance, and Single-Clinic Migration
+- **Status:** Accepted
+- **File:** [ADR-029-inter-facility-transfers-config-inheritance-and-single-clinic-migration.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-029-inter-facility-transfers-config-inheritance-and-single-clinic-migration.md)
+- **Context:** Multi-branch operations require controlled patient transfers, cross-facility continuity governance, layered configuration with security floors, module prerequisite validation, and zero-data-loss migration from single-clinic deployments.
+- **Decision:** Two-step inter-facility transfer workflow (`requested` -> `accepted` -> `completed`) preserving source encounters; policy-driven cross-facility continuity and human-reviewed patient merges; 4-tier configuration inheritance with version rollback and plaintext secret prohibition; module prerequisite DAG validation; repeatable `DRY_RUN`/`EXECUTE` single-clinic migration engine.
+
+---
+
+## ADR-030: Inpatient ADT State Machine, Bed Concurrency Locking & Discharge Fingerprints
+- **Status:** Accepted
+- **File:** [ADR-030-inpatient-adt-bed-concurrency-and-discharge-fingerprints.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-030-inpatient-adt-bed-concurrency-and-discharge-fingerprints.md)
+- **Context:** Inpatient hospital wards and Regimenal Therapy units require deterministic bed allocation, location transfer history, and legally binding discharge summaries.
+- **Decision:** Database-level `active_stay_lock TEXT UNIQUE` in `ipd_beds` preventing concurrent bed double-allocation; strict 8-state ADT state machine; inter-ward clinical handovers recorded in `ipd_handover_records`; mandatory discharge section checklist (`course_in_hospital`, `follow_up_plan_summary`, `return_precautions`); and clinician PIN digital signing generating immutable SHA-256 fingerprints in `ipd_discharge_summary_versions`.
+
+---
+
+## ADR-031: HL7 FHIR R4 Bundles, ABDM Interoperability & Purpose-Aware Consent Ledger
+- **Status:** Accepted
+- **File:** [ADR-031-fhir-r4-abdm-interoperability-and-consent-ledger.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-031-fhir-r4-abdm-interoperability-and-consent-ledger.md)
+- **Context:** Interoperability with ABDM national digital health infrastructure and external hospitals requires compliant FHIR R4 bundles, patient consent validation, and preservation of Unani medical concepts without lossy degradation.
+- **Decision:** Provider-independent FHIR R4 validator and Document Bundle exporter (`OPConsultation`, `DischargeSummary`, `DiagnosticReport`) across 14 supported resources; terminology mappings with explicit equivalence levels (`INEXACT_LOSSY`) and custom Unani extensions preserving classical provenance; purpose-aware consent verification (`data_sharing_consents`) blocking unauthorized data exchange; and transparent readiness state machine (`CONTRACT_TESTED_HARNESS`, `EXTERNAL_SANDBOX_VALIDATED`, `PRODUCTION_APPROVED`) with contract-accurate ABDM test harness.
+
+---
+
+## ADR-032: Production Readiness Gate, Security & Privacy Audit, and Clinical Safety Sign-Off
+- **Status:** Accepted
+- **File:** [ADR-032-production-readiness-gate-security-privacy-clinical-safety.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-032-production-readiness-gate-security-privacy-clinical-safety.md)
+- **Context:** Following completion of Prompts 01 through 12, an empirical audit and quality gate was required to verify real implementation fidelity, fail-closed safety preflight, zero runtime dependency on legacy code, database backup resilience, and operational runbook readiness.
+- **Decision:** Establish an evidence-based production readiness gate: verify 100% of the 188+ automated tests, enforce fail-closed safety preflight with zero autonomous AI signing, mandate SQLite WAL `VACUUM INTO` online hot backups with `PRAGMA integrity_check`, strictly demarcate external interoperability maturity states, produce 12 comprehensive audit artifacts in `docs/production-readiness/`, and require multi-stakeholder clinical and technical go-live sign-offs.
+
+---
+
+## ADR-033: Controlled Pilot Launch, 13-Stage Clinic Onboarding & Clinical Safety Governance
+- **Status:** Accepted
+- **File:** [ADR-033-controlled-pilot-launch-clinic-onboarding-and-safety-governance.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-033-controlled-pilot-launch-clinic-onboarding-and-safety-governance.md)
+- **Context:** Transitioning to real-patient clinic pilots requires server-side scope enforcement, readiness gates, 13-stage facility onboarding, role-based training, governed data migration, support triage, and independent clinical safety escalation.
+- **Decision:** Enforce versioned pilot scope server-side (`enforce_pilot_scope`); evaluate eligibility gates on backend (`evaluate_pilot_eligibility`); require 13-stage onboarding progression; provide zero-mutation `DRY_RUN` data migration; track role-based training with synthetic scenarios; separate routine tickets from emergency `clinical_safety_incident_queue`; support non-destructive P0 pause/stop conditions; and generate formal review packs with continue/pause/stop recommendations.
+
+
+
+
+

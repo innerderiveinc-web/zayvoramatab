@@ -12,7 +12,8 @@ from apps.api.routes import (
     health, auth, tenancy, admin, audit, capabilities, patients, encounters,
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
     modern_assessment, clinical_rules, knowledge, safety_firewall,
-    consultation_orchestrator, care_continuity, clinic_operations
+    consultation_orchestrator, care_continuity, clinic_operations, enterprise_admin,
+    hospital_interop, pilot_launch
 )
 
 
@@ -29,9 +30,35 @@ ROUTES = [
     
     # Tenancy & Facilities
     ("GET", r"^/api/v1/organizations$", tenancy.handle_organizations_list, True),
+    ("POST", r"^/api/v1/organizations$", enterprise_admin.handle_organization_create, True),
+    ("GET", r"^/api/v1/organizations/(?P<organization_id>[^/]+)$", enterprise_admin.handle_organization_get, True),
+    ("PATCH", r"^/api/v1/organizations/(?P<organization_id>[^/]+)$", enterprise_admin.handle_organization_update, True),
+    ("POST", r"^/api/v1/organizations/(?P<organization_id>[^/]+)/suspend$", enterprise_admin.handle_organization_suspend, True),
+    ("POST", r"^/api/v1/organizations/(?P<organization_id>[^/]+)/reactivate$", enterprise_admin.handle_organization_reactivate, True),
+    ("POST", r"^/api/v1/organizations/(?P<organization_id>[^/]+)/memberships$", enterprise_admin.handle_organization_membership_create, True),
+    ("GET", r"^/api/v1/organizations/(?P<organization_id>[^/]+)/configuration$", enterprise_admin.handle_organization_config_get, True),
+    ("PATCH", r"^/api/v1/organizations/(?P<organization_id>[^/]+)/configuration$", enterprise_admin.handle_organization_config_update, True),
+
     ("GET", r"^/api/v1/facilities$", tenancy.handle_facilities_list, True),
     ("POST", r"^/api/v1/facilities$", tenancy.handle_facilities_create, True),
     ("GET", r"^/api/v1/facilities/(?P<id>[^/]+)$", tenancy.handle_facility_get, True),
+    ("PATCH", r"^/api/v1/facilities/(?P<facility_id>[^/]+)$", enterprise_admin.handle_facility_update, True),
+    ("GET", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/activation-check$", enterprise_admin.handle_facility_activation_check, True),
+    ("POST", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/suspend$", enterprise_admin.handle_facility_suspend, True),
+    ("POST", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/reactivate$", enterprise_admin.handle_facility_reactivate, True),
+    ("POST", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/departments$", enterprise_admin.handle_department_create, True),
+    ("GET", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/departments$", enterprise_admin.handle_departments_list, True),
+    ("POST", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/assignments$", enterprise_admin.handle_staff_assignment_create, True),
+    ("GET", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/assignments$", enterprise_admin.handle_staff_assignments_list, True),
+    ("GET", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/configuration$", enterprise_admin.handle_facility_config_get, True),
+    ("PATCH", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/configuration$", enterprise_admin.handle_facility_config_update, True),
+    ("POST", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/configuration/rollback$", enterprise_admin.handle_facility_config_rollback, True),
+    ("GET", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/modules$", enterprise_admin.handle_facility_modules_list, True),
+    ("POST", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/modules/(?P<module_key>[^/]+)/enable$", enterprise_admin.handle_facility_module_enable, True),
+    ("POST", r"^/api/v1/facilities/(?P<facility_id>[^/]+)/modules/(?P<module_key>[^/]+)/disable$", enterprise_admin.handle_facility_module_disable, True),
+
+    ("GET", r"^/api/v1/assignments$", enterprise_admin.handle_staff_assignments_list, True),
+    ("POST", r"^/api/v1/assignments/(?P<assignment_id>[^/]+)/revoke$", enterprise_admin.handle_staff_assignment_revoke, True),
     
     # Administration (Users, Roles, Permissions)
     ("GET", r"^/api/v1/users$", admin.handle_users_list, True),
@@ -41,13 +68,19 @@ ROUTES = [
     
     # Audit & Governance
     ("GET", r"^/api/v1/audit$", audit.handle_audit_list, True),
+    ("GET", r"^/api/v1/admin/audit-events$", enterprise_admin.handle_enterprise_audit_events, True),
+    ("POST", r"^/api/v1/admin/single-clinic-migration$", enterprise_admin.handle_single_clinic_migration, True),
     ("GET", r"^/api/v1/system/capabilities$", capabilities.handle_capabilities_list, True),
 
     # Patients Domain (Master Patient Index, Identifiers, Consents, Duplicates, Timeline)
     ("POST", r"^/api/v1/patients$", patients.handle_patients_create, True),
     ("GET", r"^/api/v1/patients$", patients.handle_patients_search, True),
+    ("POST", r"^/api/v1/patients/merge-requests$", enterprise_admin.handle_patient_merge_request_create, True),
+    ("POST", r"^/api/v1/patients/merge-requests/(?P<merge_request_id>[^/]+)/review$", enterprise_admin.handle_patient_merge_request_review, True),
     ("GET", r"^/api/v1/patients/(?P<id>[^/]+)$", patients.handle_patient_get_360, True),
     ("PATCH", r"^/api/v1/patients/(?P<id>[^/]+)$", patients.handle_patient_update_demographics, True),
+    ("POST", r"^/api/v1/patients/(?P<patient_id>[^/]+)/facility-links$", enterprise_admin.handle_patient_facility_link_create, True),
+    ("GET", r"^/api/v1/patients/(?P<patient_id>[^/]+)/cross-facility-continuity$", enterprise_admin.handle_patient_cross_facility_continuity_get, True),
     ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/identifiers$", patients.handle_patient_identifiers_list, True),
     ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/identifiers$", patients.handle_patient_identifier_add, True),
     ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/identifiers/(?P<identifier_id>[^/]+)/retire$", patients.handle_patient_identifier_retire, True),
@@ -58,6 +91,17 @@ ROUTES = [
     ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/duplicate-resolutions/(?P<candidate_id>[^/]+)$", patients.handle_patient_duplicate_resolution, True),
     ("GET", r"^/api/v1/patients/(?P<id>[^/]+)/timeline$", patients.handle_patient_timeline, True),
     ("POST", r"^/api/v1/patients/(?P<id>[^/]+)/encounters$", encounters.handle_encounter_create_for_patient, True),
+
+    # Prompt 11: Inter-Facility Transfers & Hospital Integrations
+    ("POST", r"^/api/v1/transfers$", enterprise_admin.handle_transfer_create, True),
+    ("GET", r"^/api/v1/transfers$", enterprise_admin.handle_transfers_list, True),
+    ("GET", r"^/api/v1/transfers/(?P<transfer_id>[^/]+)$", enterprise_admin.handle_transfer_get, True),
+    ("POST", r"^/api/v1/transfers/(?P<transfer_id>[^/]+)/accept$", enterprise_admin.handle_transfer_accept, True),
+    ("POST", r"^/api/v1/transfers/(?P<transfer_id>[^/]+)/decline$", enterprise_admin.handle_transfer_decline, True),
+    ("POST", r"^/api/v1/transfers/(?P<transfer_id>[^/]+)/complete$", enterprise_admin.handle_transfer_complete, True),
+    ("POST", r"^/api/v1/integrations/connectors$", enterprise_admin.handle_integration_connector_create, True),
+    ("GET", r"^/api/v1/integrations/connectors$", enterprise_admin.handle_integration_connectors_list, True),
+    ("POST", r"^/api/v1/integrations/connectors/(?P<connector_id>[^/]+)/verify$", enterprise_admin.handle_integration_connector_verify, True),
 
     # Encounters Domain (Lifecycle, Transitions)
     ("GET", r"^/api/v1/encounters/(?P<id>[^/]+)$", encounters.handle_encounter_get, True),
@@ -248,6 +292,70 @@ ROUTES = [
     ("POST", r"^/api/v1/inventory/stocktakes$", clinic_operations.handle_create_stocktake, True),
     ("POST", r"^/api/v1/dispensing$", clinic_operations.handle_dispense_prescription, True),
     ("GET", r"^/api/v1/dispensing/(?P<id>[^/]+)$", clinic_operations.handle_get_dispense_record, True),
+
+    # Prompt 12: Hospital Workflows (IPD/ADT, Wards/Beds, Laboratory, Referrals, FHIR R4 & ABDM)
+    ("POST", r"^/api/v1/ipd/wards$", hospital_interop.handle_create_ward, True),
+    ("GET", r"^/api/v1/ipd/wards$", hospital_interop.handle_list_wards, True),
+    ("POST", r"^/api/v1/ipd/beds$", hospital_interop.handle_create_bed, True),
+    ("GET", r"^/api/v1/ipd/beds$", hospital_interop.handle_list_beds, True),
+    ("GET", r"^/api/v1/ipd/occupancy-dashboard$", hospital_interop.handle_get_occupancy_dashboard, True),
+
+    ("POST", r"^/api/v1/ipd/admissions$", hospital_interop.handle_create_admission_request, True),
+    ("GET", r"^/api/v1/ipd/admissions$", hospital_interop.handle_list_admissions, True),
+    ("GET", r"^/api/v1/ipd/admissions/(?P<id>[^/]+)$", hospital_interop.handle_get_admission, True),
+    ("POST", r"^/api/v1/ipd/admissions/(?P<id>[^/]+)/accept$", hospital_interop.handle_accept_admission, True),
+    ("POST", r"^/api/v1/ipd/admissions/(?P<id>[^/]+)/admit$", hospital_interop.handle_admit_patient, True),
+    ("POST", r"^/api/v1/ipd/admissions/(?P<id>[^/]+)/transfer$", hospital_interop.handle_transfer_inpatient, True),
+    ("POST", r"^/api/v1/ipd/admissions/(?P<id>[^/]+)/discharge$", hospital_interop.handle_discharge_patient, True),
+    ("POST", r"^/api/v1/ipd/admissions/(?P<id>[^/]+)/discharge-summary$", hospital_interop.handle_create_or_update_discharge_summary, True),
+    ("GET", r"^/api/v1/ipd/admissions/(?P<id>[^/]+)/discharge-summary$", hospital_interop.handle_get_discharge_summary, True),
+    ("POST", r"^/api/v1/ipd/admissions/(?P<id>[^/]+)/discharge-summary/sign$", hospital_interop.handle_sign_discharge_summary, True),
+
+    ("POST", r"^/api/v1/lab/catalog$", hospital_interop.handle_create_lab_catalog_item, True),
+    ("GET", r"^/api/v1/lab/catalog$", hospital_interop.handle_list_lab_catalog, True),
+    ("POST", r"^/api/v1/lab/orders$", hospital_interop.handle_create_lab_order, True),
+    ("GET", r"^/api/v1/lab/orders$", hospital_interop.handle_list_lab_orders, True),
+    ("GET", r"^/api/v1/lab/orders/(?P<id>[^/]+)$", hospital_interop.handle_get_lab_order, True),
+    ("POST", r"^/api/v1/lab/orders/(?P<id>[^/]+)/collect$", hospital_interop.handle_collect_specimen, True),
+    ("POST", r"^/api/v1/lab/results$", hospital_interop.handle_record_lab_result, True),
+    ("GET", r"^/api/v1/lab/results/(?P<id>[^/]+)$", hospital_interop.handle_get_lab_result, True),
+
+    ("POST", r"^/api/v1/hospital-referrals$", hospital_interop.handle_create_referral, True),
+    ("GET", r"^/api/v1/hospital-referrals$", hospital_interop.handle_list_referrals, True),
+    ("GET", r"^/api/v1/hospital-referrals/(?P<id>[^/]+)$", hospital_interop.handle_get_referral, True),
+    ("POST", r"^/api/v1/hospital-referrals/(?P<id>[^/]+)/accept$", hospital_interop.handle_accept_referral, True),
+    ("POST", r"^/api/v1/hospital-referrals/(?P<id>[^/]+)/decline$", hospital_interop.handle_decline_referral, True),
+    ("POST", r"^/api/v1/hospital-referrals/(?P<id>[^/]+)/close$", hospital_interop.handle_close_referral, True),
+
+    ("POST", r"^/api/v1/interop/consents$", hospital_interop.handle_record_consent, True),
+    ("POST", r"^/api/v1/interop/fhir/validate$", hospital_interop.handle_validate_fhir_resource, True),
+    ("POST", r"^/api/v1/interop/fhir/export$", hospital_interop.handle_export_fhir_bundle, True),
+    ("POST", r"^/api/v1/interop/abdm/harness-request$", hospital_interop.handle_abdm_harness_request, True),
+
+    # Phase 14: Controlled Pilot Launch & Clinic Onboarding
+    ("GET", r"^/api/v1/pilot/programs$", pilot_launch.handle_list_pilot_programs, True),
+    ("POST", r"^/api/v1/pilot/programs$", pilot_launch.handle_create_pilot_program, True),
+    ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)$", pilot_launch.handle_get_pilot_program, True),
+    ("POST", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/scope$", pilot_launch.handle_declare_scope, True),
+    ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/eligibility$", pilot_launch.handle_evaluate_eligibility, True),
+    ("POST", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/activate$", pilot_launch.handle_activate_pilot, True),
+    ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/facilities/(?P<facility_id>[^/]+)/checklist$", pilot_launch.handle_get_facility_checklist, True),
+    ("POST", r"^/api/v1/pilot/checklists/(?P<id>[^/]+)/update$", pilot_launch.handle_update_checklist_stage, True),
+    ("POST", r"^/api/v1/pilot/migrations/run$", pilot_launch.handle_run_data_migration, True),
+    ("GET", r"^/api/v1/pilot/training/modules$", pilot_launch.handle_list_training_modules, True),
+    ("POST", r"^/api/v1/pilot/training/enroll$", pilot_launch.handle_enroll_staff_training, True),
+    ("POST", r"^/api/v1/pilot/training/enrollments/(?P<id>[^/]+)/complete$", pilot_launch.handle_complete_training, True),
+    ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/facilities/(?P<facility_id>[^/]+)/training-matrix$", pilot_launch.handle_get_training_matrix, True),
+    ("POST", r"^/api/v1/pilot/tickets$", pilot_launch.handle_create_support_ticket, True),
+    ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/tickets$", pilot_launch.handle_list_support_tickets, True),
+    ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/safety-queue$", pilot_launch.handle_list_safety_queue, True),
+    ("POST", r"^/api/v1/pilot/safety-queue/(?P<id>[^/]+)/resolve$", pilot_launch.handle_resolve_safety_incident, True),
+    ("POST", r"^/api/v1/pilot/feedback$", pilot_launch.handle_submit_feedback, True),
+    ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/feedback$", pilot_launch.handle_list_feedback, True),
+    ("POST", r"^/api/v1/pilot/stop-events/trigger$", pilot_launch.handle_trigger_stop_condition, True),
+    ("POST", r"^/api/v1/pilot/stop-events/(?P<id>[^/]+)/resolve$", pilot_launch.handle_resolve_stop_condition, True),
+    ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/metrics$", pilot_launch.handle_get_pilot_metrics, True),
+    ("POST", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/review-packs$", pilot_launch.handle_generate_review_pack, True),
 ]
 
 class ApiRouter:
@@ -310,7 +418,8 @@ class ApiRouter:
                         # Enforce Session Authentication
                         if requires_auth:
                             try:
-                                req["user"] = validate_session(conn, token)
+                                req_fac_id = headers.get("x-facility-id") or headers.get("X-Facility-Id") or req["path_params"].get("facility_id")
+                                req["user"] = validate_session(conn, token, requested_facility_id=req_fac_id)
                             except AuthenticationError as e:
                                 e.request_id = request_id
                                 return e.status_code, {"Content-Type": "application/json", "X-Request-Id": request_id}, json.dumps(e.to_dict()).encode("utf-8")

@@ -1,0 +1,65 @@
+Domain,Capability,ImplementationStatus,ImplementationFile,EndpointOrModule,TestCoverage,SafetyTier
+Foundation,Multi-Tenant Isolation,IMPLEMENTED,apps/api/core/permissions.py,enforce_tenant_isolation,test_tenancy_isolation.py,Tier 1
+Foundation,Session Security & RBAC,IMPLEMENTED,apps/api/core/security.py,/api/v1/auth/login,test_auth_tenancy.py,Tier 1
+Foundation,Tamper-Evident Audit Logging,IMPLEMENTED,apps/api/core/audit.py,/api/v1/audit,test_audit_tamper_evidence.py,Tier 1
+Foundation,Liveness & Readiness Health Probes,IMPLEMENTED,apps/api/routes/health.py,/api/v1/health/live,test_health_readiness.py,Tier 2
+Patient Registry,Master Patient Index (MPI),IMPLEMENTED,apps/api/domains/patients.py,/api/v1/patients,test_patient_registry_api.py,Tier 1
+Patient Registry,Duplicate Patient Detection,IMPLEMENTED,apps/api/domains/patients.py,/api/v1/patients/{id}/duplicate-candidates,test_patient_duplicates.py,Tier 2
+Patient Registry,Patient 360 Timeline & History,IMPLEMENTED,apps/api/domains/patients.py,/api/v1/patients/{id}/timeline,test_patient_registry_api.py,Tier 2
+Prescriptions,Classical Unani Formulary Catalog,IMPLEMENTED,apps/api/domains/formulations.py,/api/v1/formulations,test_formulations_catalog_api.py,Tier 2
+Prescriptions,Polyherbal Nuskha Builder,IMPLEMENTED,apps/api/domains/prescriptions.py,/api/v1/prescriptions,test_prescription_lifecycle_api.py,Tier 1
+Prescriptions,Clinician Digital PIN Signing,IMPLEMENTED,apps/api/domains/prescriptions.py,/api/v1/prescriptions/{id}/sign,test_prescription_signing.py,Tier 1
+Prescriptions,Immutable Cryptographic Hash Versions,IMPLEMENTED,apps/api/domains/prescriptions.py,calculate_prescription_hash,test_prescription_lifecycle_api.py,Tier 1
+Unani Assessment,Mizaj & Akhlat Assessment Templates,IMPLEMENTED,apps/api/domains/unani_assessment.py,/api/v1/unani/templates,test_unani_assessment_api.py,Tier 2
+Unani Assessment,Organ-Axis Contextual Mappings,IMPLEMENTED,apps/api/domains/organ_axis.py,/api/v1/organ-axis/mappings,test_organ_axis_api.py,Tier 2
+Unani Assessment,Usul-e-Ilaj Care Planning,IMPLEMENTED,apps/api/domains/care_plans.py,/api/v1/care-plans,test_care_plans_api.py,Tier 2
+Modern Assessment,SOAP Problem List & Vitals,IMPLEMENTED,apps/api/domains/modern_assessment.py,/api/v1/encounters/{id}/modern-assessments,test_modern_assessment_lifecycle_api.py,Tier 1
+Modern Assessment,Clinical Red Flag Alerts,IMPLEMENTED,apps/api/domains/modern_assessment.py,/api/v1/modern-assessments/{id}/run-safety-checks,test_modern_assessment_lifecycle_api.py,Tier 1
+Modern Assessment,Differential Diagnosis Decision Support,IMPLEMENTED,apps/api/domains/modern_assessment.py,/api/v1/modern-assessments/{id}/differential-support,test_modern_assessment_lifecycle_api.py,Tier 2
+Knowledge Base,Governed Classical Source Registry,IMPLEMENTED,apps/api/domains/knowledge.py,/api/v1/knowledge/sources,test_knowledge_engine.py,Tier 2
+Knowledge Base,Peer-Reviewed Claims & Citations,IMPLEMENTED,apps/api/domains/knowledge.py,/api/v1/knowledge/claims,test_knowledge_api_integration.py,Tier 2
+Knowledge Base,Contextual Evidence Retrieval,IMPLEMENTED,apps/api/domains/knowledge.py,/api/v1/knowledge/retrieve,test_knowledge_engine.py,Tier 2
+Safety Firewall,Ingredient Duplication Detection,IMPLEMENTED,apps/api/domains/safety_firewall.py,/api/v1/safety/preflight,test_safety_firewall_engine.py,Tier 1
+Safety Firewall,Dosage Limit Enforcement,IMPLEMENTED,apps/api/domains/safety_firewall.py,check_max_dose,test_safety_preflight.py,Tier 1
+Safety Firewall,Schedule E(1) & Tadbeer Requirements,IMPLEMENTED,apps/api/domains/safety_firewall.py,check_toxic_herbs,test_safety_firewall_engine.py,Tier 1
+Safety Firewall,Herb-Drug Interaction Matrix,IMPLEMENTED,apps/api/domains/safety_firewall.py,check_interactions,test_safety_firewall_engine.py,Tier 1
+Consultation,Single 3-Zone Workspace Orchestrator,IMPLEMENTED,apps/api/domains/consultation_orchestrator.py,/api/v1/consultations/{id},test_consultation_orchestrator.py,Tier 1
+Consultation,Multi-Step Workflow State Machine,IMPLEMENTED,apps/api/domains/consultation_orchestrator.py,/api/v1/consultations/{id}/advance,test_consultation_workspace_api.py,Tier 1
+Care Continuity,Longitudinal Follow-up Tasks,IMPLEMENTED,apps/api/domains/care_continuity.py,/api/v1/follow-up-plans,test_care_continuity_engine.py,Tier 2
+Care Continuity,Patient Communication Queue & Opt-Out,IMPLEMENTED,apps/api/domains/care_continuity.py,/api/v1/patient-communications,test_care_continuity_api.py,Tier 2
+Care Continuity,Pharmacovigilance & Adverse Effects,IMPLEMENTED,apps/api/domains/care_continuity.py,/api/v1/adverse-effects,test_care_continuity_engine.py,Tier 1
+Clinic Operations,Practitioner Scheduling & Leave Blocks,IMPLEMENTED,apps/api/domains/clinic_operations.py,/api/v1/scheduling/availability,test_clinic_operations_engine.py,Tier 2
+Clinic Operations,Appointments & Double-Booking Prevention,IMPLEMENTED,apps/api/domains/clinic_operations.py,/api/v1/appointments,test_clinic_operations_api.py,Tier 2
+Clinic Operations,Queue Token Issue & Public-Safe Display,IMPLEMENTED,apps/api/domains/clinic_operations.py,/api/v1/queue,test_clinic_operations_engine.py,Tier 2
+Clinic Operations,Exact-Decimal Billing & Payment Ledger,IMPLEMENTED,apps/api/domains/clinic_operations.py,/api/v1/billing/invoices,test_clinic_operations_api.py,Tier 1
+Clinic Operations,FEFO Dispensary Stock Ledger,IMPLEMENTED,apps/api/domains/clinic_operations.py,/api/v1/inventory/movements,test_clinic_operations_engine.py,Tier 1
+Clinic Operations,Signed Prescription Dispensing Enforcement,IMPLEMENTED,apps/api/domains/clinic_operations.py,/api/v1/dispensing,test_clinic_operations_api.py,Tier 1
+Enterprise Admin,Cycle-Safe Organization Hierarchy,IMPLEMENTED,apps/api/domains/enterprise_admin.py,/api/v1/organizations,test_enterprise_admin_engine.py,Tier 1
+Enterprise Admin,Branch Scoped Staff Assignments,IMPLEMENTED,apps/api/domains/enterprise_admin.py,/api/v1/facilities/{id}/assignments,test_enterprise_multi_branch_api.py,Tier 1
+Enterprise Admin,Layered Configuration Inheritance,IMPLEMENTED,apps/api/domains/enterprise_admin.py,/api/v1/facilities/{id}/configuration,test_enterprise_admin_engine.py,Tier 1
+Enterprise Admin,Inter-Facility Patient Transfers,IMPLEMENTED,apps/api/domains/enterprise_admin.py,/api/v1/transfers,test_enterprise_multi_branch_api.py,Tier 1
+Enterprise Admin,Single-Clinic Migration Engine,IMPLEMENTED,apps/api/domains/enterprise_admin.py,/api/v1/admin/single-clinic-migration,test_enterprise_admin_engine.py,Tier 1
+Hospital Workflows,Inpatient ADT State Machine,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/ipd/admissions,test_hospital_interop_engine.py,Tier 1
+Hospital Workflows,Bed Concurrency Unique Lock,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/ipd/beds,test_hospital_interop_api.py,Tier 1
+Hospital Workflows,Ward Occupancy & Privacy-Safe Board,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/ipd/occupancy-dashboard,test_hospital_interop_api.py,Tier 2
+Hospital Workflows,Discharge Summary Mandatory Checklist,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/ipd/admissions/{id}/discharge-summary,test_hospital_interop_engine.py,Tier 1
+Hospital Workflows,Discharge Cryptographic Fingerprinting,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/ipd/admissions/{id}/discharge-summary/sign,test_hospital_interop_api.py,Tier 1
+Hospital Workflows,Laboratory Catalog & Critical Alerts,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/lab/results,test_hospital_interop_engine.py,Tier 1
+Hospital Workflows,Structured Referrals & Close-the-Loop,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/hospital-referrals,test_hospital_interop_api.py,Tier 1
+Interoperability,FHIR R4 Resource Validator,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/interop/fhir/validate,test_hospital_interop_engine.py,Tier 2
+Interoperability,FHIR R4 Document Bundle Exporter,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/interop/fhir/export,test_hospital_interop_api.py,Tier 1
+Interoperability,Unani Provenance Extensions,IMPLEMENTED,apps/api/domains/hospital_interop.py,terminology_mappings,test_hospital_interop_engine.py,Tier 2
+Interoperability,Purpose-Aware Consent Ledger,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/interop/consents,test_hospital_interop_engine.py,Tier 1
+Interoperability,ABDM Contract Test Harness,IMPLEMENTED,apps/api/domains/hospital_interop.py,/api/v1/interop/abdm/harness-request,test_hospital_interop_api.py,Tier 1
+Interoperability,ABDM Live External Gateway,BLOCKED_BY_EXTERNAL_DEPENDENCY,docs/interoperability/ABDM_AND_FHIR_STANDARDS_DISCOVERY.md,NHA Production Gateway,test_hospital_interop_api.py,Tier 1
+Pilot Operations,Controlled Pilot Scope Versioning,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/programs/{id}/scope,test_pilot_launch_engine.py,Tier 1
+Pilot Operations,Server-Side Scope Enforcement,IMPLEMENTED,apps/api/domains/pilot_launch.py,enforce_pilot_scope,test_pilot_launch_engine.py,Tier 1
+Pilot Operations,Recomputed Eligibility Gate,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/programs/{id}/eligibility,test_pilot_launch_api.py,Tier 1
+Pilot Operations,13-Stage Facility Onboarding Checklist,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/checklists/{id}/update,test_pilot_launch_engine.py,Tier 2
+Pilot Operations,Governed Data Migration DRY_RUN Reconciliation,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/migrations/run,test_pilot_launch_api.py,Tier 1
+Pilot Operations,Role-Based Training Curricula & Exam Scores,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/training/enrollments/{id}/complete,test_pilot_launch_engine.py,Tier 2
+Pilot Operations,Support Ticket Logging & Auto-Escalation,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/tickets,test_pilot_launch_api.py,Tier 1
+Pilot Operations,Dedicated Clinical Safety Governance Queue,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/safety-queue,test_pilot_launch_engine.py,Tier 1
+Pilot Operations,P0 Stop Conditions & Non-Destructive Containment,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/stop-events/trigger,test_pilot_launch_engine.py,Tier 1
+Pilot Operations,Operational Metrics & Formal Review Packs,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/programs/{id}/review-packs,test_pilot_launch_api.py,Tier 2
+

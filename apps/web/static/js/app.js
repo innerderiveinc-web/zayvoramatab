@@ -12,6 +12,9 @@ import { renderConsultation } from "./views/consultation.js";
 import { renderPrescriptions } from "./views/prescriptions.js";
 import { renderFollowups } from "./views/followups.js";
 import { renderAppointmentsQueue, renderBillingView, renderInventoryView } from "./views/operations.js";
+import { renderEnterpriseAdmin } from "./views/enterprise_admin.js";
+import { renderHospitalInterop } from "./views/hospital_interop.js";
+import { renderPilotLaunch } from "./views/pilot_launch.js";
 import { renderMore } from "./views/more.js";
 
 async function init() {
@@ -84,6 +87,15 @@ function renderCurrentTab(tab) {
       break;
     case "inventory":
       renderInventoryView(content);
+      break;
+    case "hospital_interop":
+      renderHospitalInterop(content);
+      break;
+    case "enterprise_admin":
+      renderEnterpriseAdmin(content);
+      break;
+    case "pilot_launch":
+      renderPilotLaunch(content);
       break;
     case "more":
       renderMore(content);

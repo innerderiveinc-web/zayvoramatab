@@ -18,11 +18,14 @@ export function renderShell(container, onNavigate, onLogout) {
   const showFollowups = isAdmin || perms.has("followup:read");
   const showBilling = isAdmin || perms.has("billing:read");
   const showInventory = isAdmin || perms.has("inventory:read") || perms.has("dispensing:read");
+  const showHospitalInterop = isAdmin || roles.has("PRACTITIONER") || roles.has("NURSE") || perms.has("ipd:admission_read") || perms.has("lab:order_read");
+  const showEnterpriseAdmin = isAdmin || roles.has("READ_ONLY_AUDITOR") || perms.has("enterprise:org_manage") || perms.has("enterprise:facility_manage");
+  const showPilotLaunch = isAdmin || roles.has("PRACTITIONER") || perms.has("org:manage") || perms.has("org:view");
 
   container.innerHTML = `
     <div class="env-banner">
       <span>⚠️</span>
-      <span>Synthetic Development Environment (Phase 10 Clinic Operations OS) — Real Backend Persistence & Audit Enabled</span>
+      <span>Synthetic Development Environment (Phase 12 Hospital Workflows, FHIR R4 & ABDM Interop) — Real Backend Persistence & Audit Enabled</span>
     </div>
 
     <header class="app-header">
@@ -88,6 +91,21 @@ export function renderShell(container, onNavigate, onLogout) {
       <button class="nav-tab ${state.activeTab === "inventory" ? "active" : ""}" data-tab="inventory">
         <span>📦</span>
         <span>Inventory</span>
+      </button>` : ''}
+      ${showHospitalInterop ? `
+      <button class="nav-tab ${state.activeTab === "hospital_interop" ? "active" : ""}" data-tab="hospital_interop">
+        <span>🏥</span>
+        <span>Hospital & Interop</span>
+      </button>` : ''}
+      ${showEnterpriseAdmin ? `
+      <button class="nav-tab ${state.activeTab === "enterprise_admin" ? "active" : ""}" data-tab="enterprise_admin">
+        <span>🏛️</span>
+        <span>Enterprise Admin</span>
+      </button>` : ''}
+      ${showPilotLaunch ? `
+      <button class="nav-tab ${state.activeTab === "pilot_launch" ? "active" : ""}" data-tab="pilot_launch">
+        <span>🚀</span>
+        <span>Pilot Launch</span>
       </button>` : ''}
       <button class="nav-tab ${state.activeTab === "more" ? "active" : ""}" data-tab="more">
         <span>⚙️</span>

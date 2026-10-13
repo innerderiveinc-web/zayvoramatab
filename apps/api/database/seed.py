@@ -155,7 +155,19 @@ def seed_development_data(db_path: str = None) -> None:
             ('perm-inv-adj', 'inventory:adjust', 'Record Inventory Adjustments, Quarantine & Stocktakes', 'INVENTORY'),
             ('perm-disp-read', 'dispensing:read', 'View Prescription Dispensing Records', 'INVENTORY'),
             ('perm-disp-write', 'dispensing:write', 'Dispense Signed Prescriptions', 'INVENTORY'),
-            ('perm-rep-read', 'reports:read', 'View Clinic Operational Reports', 'OPERATIONS')
+            ('perm-rep-read', 'reports:read', 'View Clinic Operational Reports', 'OPERATIONS'),
+            # Prompt 11 Multi-Doctor, Multi-Branch & Hospital Administration Foundation
+            ('perm-ent-org', 'enterprise:org_manage', 'Manage Enterprise Organization Hierarchy & Lifecycle', 'ENTERPRISE'),
+            ('perm-ent-fac', 'enterprise:facility_manage', 'Manage Branch Facilities & Activation Lifecycle', 'ENTERPRISE'),
+            ('perm-ent-dept', 'enterprise:department_manage', 'Manage Facility Departments, Units & Rooms', 'ENTERPRISE'),
+            ('perm-ent-assign', 'enterprise:assignment_manage', 'Manage Scoped Staff & Practitioner Assignments', 'ENTERPRISE'),
+            ('perm-ent-cfg', 'enterprise:config_manage', 'Manage Layered Configuration & Overrides', 'ENTERPRISE'),
+            ('perm-ent-mod', 'enterprise:module_manage', 'Manage Facility Module Entitlements', 'ENTERPRISE'),
+            ('perm-ent-trf-r', 'enterprise:transfer_read', 'View Inter-Facility Transfers & Referrals', 'ENTERPRISE'),
+            ('perm-ent-trf-w', 'enterprise:transfer_write', 'Initiate, Accept & Complete Inter-Facility Transfers', 'ENTERPRISE'),
+            ('perm-ent-merge', 'enterprise:patient_merge', 'Review & Approve Governed Patient Merges', 'ENTERPRISE'),
+            ('perm-ent-intg', 'enterprise:integration_manage', 'Manage Hospital Integration Connectors', 'ENTERPRISE'),
+            ('perm-ent-aud', 'enterprise:audit_read', 'Search Enterprise Administrative Audit Events', 'ENTERPRISE')
         ]
 
         for p_id, code, name, cat in permissions_data:
@@ -190,7 +202,9 @@ def seed_development_data(db_path: str = None) -> None:
             'operations:read', 'scheduling:manage', 'appointments:read', 'appointments:write',
             'queue:read', 'queue:write', 'queue:priority_override',
             'billing:read', 'billing:write', 'billing:manage_catalog', 'billing:refund_void',
-            'inventory:read', 'inventory:write', 'inventory:adjust', 'dispensing:read', 'dispensing:write', 'reports:read'
+            'inventory:read', 'inventory:write', 'inventory:adjust', 'dispensing:read', 'dispensing:write', 'reports:read',
+            'enterprise:facility_manage', 'enterprise:department_manage', 'enterprise:assignment_manage',
+            'enterprise:config_manage', 'enterprise:module_manage', 'enterprise:transfer_read', 'enterprise:transfer_write'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
@@ -217,7 +231,8 @@ def seed_development_data(db_path: str = None) -> None:
             'outcomes:read', 'outcomes:record', 'adverse_effects:report', 'adverse_effects:review',
             'operations:read', 'scheduling:manage', 'appointments:read', 'appointments:write',
             'queue:read', 'queue:write', 'queue:priority_override',
-            'billing:read', 'inventory:read', 'dispensing:read', 'reports:read'
+            'billing:read', 'inventory:read', 'dispensing:read', 'reports:read',
+            'enterprise:transfer_read', 'enterprise:transfer_write'
         ]:
             conn.execute("""
                 INSERT OR IGNORE INTO role_permissions (role_id, permission_id) 
@@ -1407,6 +1422,13 @@ def seed_development_data(db_path: str = None) -> None:
             ('operations.prescription_dispensing', 'Signed-Prescription Verification & Dispensing Workflow Engine', '1.10.0', 'FUNCTIONALLY_TESTED', 1, None, 'dispensing:read'),
             ('operations.clinic_reports', 'Clinic Operational Dashboards & Reconciliation Reports Engine', '1.10.0', 'FUNCTIONALLY_TESTED', 1, None, 'reports:read'),
 
+            # Prompt 11: Multi-Doctor, Multi-Branch & Hospital Administration Foundation
+            ('enterprise.multi_branch_hierarchy', 'Multi-Branch Organization, Facility & Department Hierarchy Engine', '1.11.0', 'FUNCTIONALLY_TESTED', 1, None, 'enterprise:org_manage'),
+            ('enterprise.scoped_assignments_rbac', 'Scoped Staff Assignments & Facility/Department RBAC/ABAC Engine', '1.11.0', 'FUNCTIONALLY_TESTED', 1, None, 'enterprise:assignment_manage'),
+            ('enterprise.inter_facility_transfers', 'Controlled Inter-Facility Transfers, Referrals & Continuity Engine', '1.11.0', 'FUNCTIONALLY_TESTED', 1, None, 'enterprise:transfer_read'),
+            ('enterprise.config_inheritance_modules', 'Layered Configuration Inheritance & Module Entitlement Engine', '1.11.0', 'FUNCTIONALLY_TESTED', 1, None, 'enterprise:config_manage'),
+            ('enterprise.integration_governance', 'Hospital Integration Connector & Secret Reference Registry', '1.11.0', 'FUNCTIONALLY_TESTED', 1, None, 'enterprise:integration_manage'),
+
             # Future clinical engines: STRICTLY NOT_IMPLEMENTED in Phase 1
             ('clinical.consultation', 'Single 3-Zone Consultation Canvas', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Prescribing vertical complete; full 3-zone canvas scheduled for Phase 3', 'encounters:write'),
             ('operations.followups', 'Care Continuum Follow-up Queues', '1.1.0', 'NOT_IMPLEMENTED', 0, 'Scheduled for Phase 4 clinic operations', 'encounters:read'),
@@ -1565,6 +1587,165 @@ def seed_development_data(db_path: str = None) -> None:
                         quantity_on_hand_decimal, unit_cost_decimal, selling_price_decimal
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """, (bid, oid, fac_id, iid, lid, sid, bnum, mdate, edate, bstat, qty, ucost, sprice))
+
+        # 35. Prompt 11: Organization Profiles, Facility Profiles, Departments & Integration Registry (if migration 011 applied)
+        cur_check.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='organization_profiles';")
+        if cur_check.fetchone():
+            conn.execute("""
+                INSERT OR REPLACE INTO organization_profiles (
+                    organization_id, parent_organization_id, lifecycle_status, legal_name,
+                    timezone, default_language, deployment_mode, cross_facility_continuity_policy,
+                    org_admin_clinical_note_access, updated_by
+                ) VALUES (
+                    'org-matab-default', NULL, 'active', 'ZAYVORA Matab Dawakhana Foundation [Synthetic]',
+                    'Asia/Kolkata', 'en', 'SHARED_MULTITENANT', 'SAME_ORG_TREATMENT_TEAM', 0, 'usr-admin-1'
+                );
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO facility_profiles (
+                    facility_id, organization_id, facility_type, lifecycle_status, timezone, city, state_province, country, updated_by
+                ) VALUES
+                ('fac-central-opd', 'org-matab-default', 'MULTI_DOCTOR_CLINIC', 'active', 'Asia/Kolkata', 'Delhi', 'DL', 'IN', 'usr-admin-1'),
+                ('fac-south-branch', 'org-matab-default', 'BRANCH_CLINIC', 'active', 'Asia/Kolkata', 'Delhi', 'DL', 'IN', 'usr-admin-1');
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO facility_departments (
+                    id, organization_id, facility_id, code, name, department_type, head_practitioner_id,
+                    required_module_key, status, is_operational, created_by
+                ) VALUES
+                ('dept-central-unani-opd', 'org-matab-default', 'fac-central-opd', 'UNANI-OPD', 'Unani General & Moalejat OPD', 'UNANI_OPD', 'usr-hakeem-1', 'unani_assessment', 'active', 1, 'usr-admin-1'),
+                ('dept-central-dispensary', 'org-matab-default', 'fac-central-opd', 'DAWAKHANA', 'Central Unani Dispensary', 'PHARMACY_DISPENSARY', NULL, 'pharmacy_inventory', 'active', 1, 'usr-admin-1'),
+                ('dept-south-unani-opd', 'org-matab-default', 'fac-south-branch', 'SOUTH-OPD', 'South Branch Unani OPD', 'UNANI_OPD', 'usr-hakeem-1', 'unani_assessment', 'active', 1, 'usr-admin-1');
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO integration_connectors (
+                    id, organization_id, facility_id, connector_type, name, environment,
+                    lifecycle_state, endpoint_url, api_version, secret_ref_uri,
+                    data_sharing_policy_ref, last_health_status, updated_by
+                ) VALUES (
+                    'intg-abdm-sandbox', 'org-matab-default', 'fac-central-opd', 'ABDM_ABHA',
+                    'ABDM Health ID Sandbox Bridge [Synthetic]', 'SANDBOX',
+                    'CONFIGURED_NOT_CONNECTED', 'https://dev.abdm.gov.in/gateway', 'v0.5',
+                    'vault://matab-secrets/org-matab-default/abdm-sandbox',
+                    'POL-ABDM-CONSENT-2026', 'UNVERIFIED', 'usr-admin-1'
+                );
+            """)
+
+        # 36. Prompt 12: Hospital Wards, Beds, Laboratory Catalog & Terminology Mappings (if migration 012 applied)
+        cur_check.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ipd_wards';")
+        if cur_check.fetchone():
+            conn.execute("""
+                INSERT OR REPLACE INTO ipd_wards (
+                    id, organization_id, facility_id, department_id, code, name, ward_type, gender_policy, status, created_by
+                ) VALUES
+                ('wrd-unani-moalejat-1', 'org-matab-default', 'fac-central-opd', 'dept-central-unani-opd', 'MOA-W1', 'Moalejat & Ilaj-bil-Tadbeer Inpatient Ward [Synthetic]', 'REGIMENAL_THERAPY_WARD', 'MIXED', 'active', 'usr-admin-1'),
+                ('wrd-acute-obs-1', 'org-matab-default', 'fac-central-opd', 'dept-central-unani-opd', 'OBS-W1', 'Short-Stay Observation & HDU Ward [Synthetic]', 'HIGH_DEPENDENCY_UNIT', 'MIXED', 'active', 'usr-admin-1');
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO ipd_beds (
+                    id, organization_id, facility_id, ward_id, room_number, bed_code, bed_category,
+                    operational_status, active_admission_id, active_patient_id, active_stay_lock
+                ) VALUES
+                ('bed-moa-101a', 'org-matab-default', 'fac-central-opd', 'wrd-unani-moalejat-1', '101', 'MOA-101A', 'STANDARD', 'available', NULL, NULL, NULL),
+                ('bed-moa-101b', 'org-matab-default', 'fac-central-opd', 'wrd-unani-moalejat-1', '101', 'MOA-101B', 'STANDARD', 'available', NULL, NULL, NULL),
+                ('bed-obs-201a', 'org-matab-default', 'fac-central-opd', 'wrd-acute-obs-1', '201', 'OBS-201A', 'HDU', 'available', NULL, NULL, NULL);
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO lab_catalog_items (
+                    id, organization_id, code, name, loinc_code, category, specimen_type,
+                    default_unit, reference_range_text, critical_low, critical_high, collection_instructions, is_active
+                ) VALUES
+                ('lcat-serum-k', 'org-matab-default', 'LAB-K', 'Serum Potassium (K+)', '2823-3', 'BIOCHEMISTRY', 'VENOUS_BLOOD', 'mmol/L', '3.5 - 5.1 mmol/L', 2.8, 6.2, 'Avoid hemolysis; serum separator tube.', 1),
+                ('lcat-hba1c', 'org-matab-default', 'LAB-HBA1C', 'Glycated Hemoglobin (HbA1c)', '4548-4', 'BIOCHEMISTRY', 'WHOLE_BLOOD_EDTA', '%', '4.0 - 5.6 %', NULL, 12.0, 'EDTA lavender top; no fasting required.', 1),
+                ('lcat-sgpt', 'org-matab-default', 'LAB-ALT', 'Alanine Aminotransferase (ALT/SGPT)', '1742-6', 'HEPATIC_PANEL', 'VENOUS_BLOOD', 'U/L', '7.0 - 56.0 U/L', NULL, 500.0, 'Serum separator tube.', 1);
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO terminology_mappings (
+                    id, organization_id, concept_domain, local_code, local_display,
+                    target_system_uri, target_version, target_code, target_display, equivalence_level, lossiness_note
+                ) VALUES
+                ('tmap-mizaj-hd', 'org-matab-default', 'UNANI_CONCEPT', 'HAR_YABIS', 'Har Yabis (Hot & Dry Temperament)',
+                 'http://snomed.info/sct', '2026.1', 'UNANI-EXT-MIZAJ-HY', 'Unani Constitutional Assessment: Har Yabis', 'INEXACT_LOSSY',
+                 'Classical Unani qualitative Mizaj grading has no exact 1:1 SNOMED CT pre-coordinated equivalent; exported with Unani provenance extension.');
+            """)
+
+            # 23. Controlled Pilot Launch & Clinic Onboarding Seeds (Prompt 14)
+            conn.execute("""
+                INSERT OR REPLACE INTO pilot_programs (
+                    id, code, name, description, status, organization_id, target_start_date, target_end_date,
+                    audit_report_ref, audit_verdict, created_by
+                ) VALUES (
+                    'plt-prog-2026-q4', 'PILOT-MATAB-2026-Q4', 'ZAYVORA Matab Phase 1 Limited Clinic Pilot',
+                    'Governed outpatient clinic pilot covering patient registration, consultation, Unani assessment, nuskha prescribing, safety firewall, and dispensary.',
+                    'ELIGIBILITY_VERIFIED', 'org-matab-default', '2026-10-15', '2026-12-15',
+                    'AUDIT-PROMPT13-REPORT-2026-10-13', 'CONDITIONAL_GO_FOR_LIMITED_PILOT', 'usr-admin-1'
+                );
+            """)
+
+            conn.execute("""
+                INSERT OR REPLACE INTO pilot_scope_versions (
+                    id, pilot_program_id, version_number, status,
+                    enabled_modules_json, disabled_modules_json, permitted_roles_json, permitted_facilities_json,
+                    supported_languages_json, supported_devices_json, known_limitations,
+                    approved_by_clinical_lead, approved_by_security_lead, approved_by_product_lead
+                ) VALUES (
+                    'psc-ver-2026-1', 'plt-prog-2026-q4', 1, 'ACTIVE',
+                    '["PATIENT_REGISTRY", "UNIFIED_CONSULTATION", "UNANI_ASSESSMENT", "PRESCRIPTION_ENGINE", "CLINICAL_SAFETY_FIREWALL", "DISPENSARY_QUEUE", "BILLING"]',
+                    '["ABDM_LIVE_SYNC", "CARRIER_SMS_LIVE", "PAYMENT_GATEWAY_WEBHOOK"]',
+                    '["CHIEF_TABIB", "TABIB", "DISPENSER", "CASHIER", "STAFF", "HOSPITAL_ADMIN", "ORG_ADMIN", "CLINIC_ADMIN", "PRACTITIONER", "RECEPTIONIST", "PHARMACIST"]',
+                    '["fac-central-opd"]',
+                    '["en", "ur", "hi"]', '["DESKTOP_WEB", "TABLET_WEB"]',
+                    'External live ABDM gateway push is disabled; operates via contract-tested outbox harness.',
+                    'usr-hakeem-1', 'usr-admin-1', 'usr-admin-1'
+                );
+            """)
+
+            training_modules_seed = [
+                ('trn-mod-tabib-1', 'TRN-TABIB-01', 'TABIB', 'Unani Consultation & Safety Preflight Workflow',
+                 'Guided training on patient 360, Mizaj assessment, nuskha builder, fail-closed safety preflight, and PIN digital signing.', '1.0', 85),
+                ('trn-mod-recept-1', 'TRN-RECEPT-01', 'RECEPTIONIST', 'Front-Desk Patient Registration, Duplicate Check & Queue',
+                 'Patient registration, duplicate resolution, appointment token generation, and privacy-safe queue management.', '1.0', 80),
+                ('trn-mod-disp-1', 'TRN-DISP-01', 'DISPENSER', 'Dispensary Queue, FEFO Batch Dispensing & Stock Movements',
+                 'Opening finalized prescriptions, batch expiry verification, stock subtraction, and prohibited substitution rules.', '1.0', 85),
+                ('trn-mod-admin-1', 'TRN-ADMIN-01', 'ADMIN', 'Facility Onboarding, Role Setup & Incident Escalation',
+                 '13-stage facility onboarding checklist, staff credentialing, and SEV-1 emergency escalation.', '1.0', 90)
+            ]
+            for m_id, code, role, title, desc, ver, score in training_modules_seed:
+                conn.execute("""
+                    INSERT OR REPLACE INTO training_modules (
+                        id, code, target_role, title, description, curriculum_version, min_pass_score, is_mandatory
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 1);
+                """, (m_id, code, role, title, desc, ver, score))
+
+            # Initial 13-stage onboarding checklist for fac-central-opd
+            stages = [
+                ('1_ELIGIBILITY_CONFIRMED', 'Prompt 13 Audit Eligibility & Pilot Scope Confirmed', 1, 'COMPLETED'),
+                ('2_FACILITY_DETAILS_VALIDATED', 'Organization & Facility Regulatory Details Validated', 2, 'COMPLETED'),
+                ('3_STAFF_ROLES_CONFIGURED', 'Practitioner & Staff Scope-Aware Roles Configured', 3, 'COMPLETED'),
+                ('4_SCHEDULES_FEES_CONFIGURED', 'Consultation Schedules, Rooms & Fee Catalog Configured', 4, 'COMPLETED'),
+                ('5_TEMPLATES_CHECKED', 'Print Templates & Approved Communication Templates Checked', 5, 'COMPLETED'),
+                ('6_CLINICAL_CONTENT_REVIEWED', 'Unani Monographs & Clinical Safety Datasets Reviewed', 6, 'COMPLETED'),
+                ('7_DEVICES_NETWORK_CHECKED', 'Clinic Devices, Barcode Scanners & Local Network Checked', 7, 'COMPLETED'),
+                ('8_DATA_MIGRATION_DECISION', 'Data Migration Decision Approved (Controlled Registration Mode)', 8, 'COMPLETED'),
+                ('9_ROLE_TRAINING_COMPLETED', 'Role-Based Staff Training & Scenario Practice Completed', 9, 'IN_PROGRESS'),
+                ('10_ACCEPTANCE_TESTS_PASSED', 'User Acceptance Testing & Synthetic Scenario Verification Passed', 10, 'PENDING'),
+                ('11_SITE_OWNER_APPROVAL', 'Site Medical Director & Facility Owner Approval Recorded', 11, 'PENDING'),
+                ('12_FACILITY_ACTIVATED', 'Facility Activated for Controlled Pilot Live Traffic', 12, 'PENDING'),
+                ('13_FIRST_WEEK_REVIEW', 'First-Week Operational Review & Quality Check Completed', 13, 'PENDING')
+            ]
+            for s_code, s_title, s_order, s_status in stages:
+                s_id = f"fob-chk-{s_order}"
+                conn.execute("""
+                    INSERT OR REPLACE INTO facility_onboarding_checklists (
+                        id, pilot_program_id, facility_id, stage_code, stage_title, stage_order, status, owner_user_id
+                    ) VALUES (?, 'plt-prog-2026-q4', 'fac-central-opd', ?, ?, ?, ?, 'usr-admin-1');
+                """, (s_id, s_code, s_title, s_order, s_status))
 
         conn.execute("PRAGMA foreign_keys = ON;")
         conn.commit()
