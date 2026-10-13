@@ -1,0 +1,62 @@
+{
+  "release_candidate": "v1.0.0-rc1",
+  "product_name": "ZAYVORA MATAB OS",
+  "build_timestamp": "2026-10-13T14:25:00Z",
+  "git_commit": "b215aba",
+  "git_branch": "main",
+  "repository_mode": "STANDALONE_INDEPENDENT",
+  "legacy_health_os_dependency": false,
+  "database": {
+    "engine": "SQLite 3",
+    "journal_mode": "WAL",
+    "busy_timeout_ms": 5000,
+    "foreign_keys_enforced": true,
+    "migrations_applied": 14,
+    "total_tables": 186
+  },
+  "runtime_environment": {
+    "python_version": "3.11+",
+    "os_tested": ["macOS", "Linux (Ubuntu 22.04 LTS / Debian 12)"],
+    "dependencies": "Standard Library + minimal runtime deps (zero heavy C-extensions required)"
+  },
+  "qa_verification": {
+    "total_test_suites": 40,
+    "total_tests_executed": 224,
+    "tests_passed": 224,
+    "tests_failed": 0,
+    "tests_errored": 0,
+    "tests_skipped": 0,
+    "pass_rate_percentage": 100.0,
+    "execution_time_seconds": 18.2
+  },
+  "enabled_modules": [
+    "auth_and_rbac",
+    "tenant_and_facility_isolation",
+    "master_patient_index_and_patient_360",
+    "encounter_lifecycle_and_daily_tokens",
+    "unani_clinical_assessment_eightfold_and_mizaj",
+    "modern_clinical_assessment_and_red_flags",
+    "clinical_knowledge_governed_retrieval",
+    "nuskha_formulation_catalog_and_versioning",
+    "prescription_engine_pin_signing_sha256",
+    "safety_firewall_schedule_e1_and_interactions",
+    "unified_consultation_workspace_orchestrator",
+    "care_continuity_and_descriptive_outcomes",
+    "clinic_operations_queue_billing_and_inventory",
+    "enterprise_multi_branch_administration",
+    "controlled_pilot_onboarding_and_containment",
+    "post_pilot_evaluation_and_scorecard_decision"
+  ],
+  "disabled_or_harness_only_modules": [
+    "abdm_live_national_gateway_transmission",
+    "external_cellular_sms_dispatcher",
+    "whatsapp_cloud_api_dispatcher",
+    "online_payment_gateway_webhooks"
+  ],
+  "security_and_compliance": {
+    "tamper_evident_audit_trail": "ACTIVE",
+    "pin_pbkdf2_digital_signatures": "ACTIVE",
+    "fail_closed_clinical_safety": "ACTIVE",
+    "zero_mock_success_in_production": "VERIFIED"
+  }
+}
