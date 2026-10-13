@@ -1,0 +1,75 @@
+{
+  "manifest_version": "1.0.0",
+  "product": "ZAYVORA MATAB OS",
+  "evaluation_id": "EVAL-PILOT-2026-POST01",
+  "pilot_program_id": "PLT-PILOT-OPD-001",
+  "timestamp": "2026-10-13T14:15:00Z",
+  "evaluation_classification": "POST_PILOT_OPERATIONAL_REVIEW",
+  "repository": {
+    "name": "zayvora-matab-os",
+    "mode": "STANDALONE_INDEPENDENT",
+    "legacy_health_os_dependency": false,
+    "build_commit": "git:81f9fba",
+    "database_engine": "SQLite 3 (WAL mode)",
+    "migrations_applied": 14,
+    "total_tables": 71
+  },
+  "review_window": {
+    "start_date": "2026-10-01",
+    "end_date": "2026-10-13",
+    "duration_days": 13
+  },
+  "scorecard_summary": {
+    "total_metrics_evaluated": 14,
+    "metrics_passed": 13,
+    "metrics_failed": 0,
+    "metrics_unavailable": 0,
+    "descriptive_outcomes_monitored": 1,
+    "pass_rate_percentage": 100.0
+  },
+  "incident_summary": {
+    "open_p0_critical": 0,
+    "open_p1_high": 0,
+    "clinical_safety_incidents_pending": 0,
+    "active_stop_conditions": 0,
+    "near_misses_contained": 1
+  },
+  "tri_party_sign_off": {
+    "clinical_governance": "APPROVED",
+    "product_operations": "APPROVED",
+    "security_privacy": "APPROVED",
+    "verdict": "EXPAND_WITHIN_APPROVED_SCOPE"
+  },
+  "allowed_scope": {
+    "facility": "Central Matab OPD (fac-central-opd)",
+    "users": [
+      "usr-lead-tabib",
+      "usr-ops-lead",
+      "usr-sec-officer"
+    ],
+    "enabled_features": [
+      "OPD_CONSULTATION",
+      "PRESCRIPTION_ENGINE",
+      "UNANI_ASSESSMENT",
+      "MODERN_ASSESSMENT",
+      "CLINICAL_SAFETY_FIREWALL",
+      "CLINIC_QUEUE",
+      "BILLING_LEDGER"
+    ],
+    "disabled_features": [
+      "EXTERNAL_LIVE_ABDM_GATEWAY",
+      "PUBLIC_SMS_WHATSAPP_GATEWAY",
+      "INPATIENT_IPD_LIVE"
+    ]
+  },
+  "artifacts": [
+    "docs/post-pilot-evaluation/POST_PILOT_EXECUTIVE_SUMMARY.md",
+    "docs/post-pilot-evaluation/PILOT_METRIC_SCORECARD.csv",
+    "docs/post-pilot-evaluation/FEEDBACK_THEME_REVIEW.md",
+    "docs/post-pilot-evaluation/INCIDENT_AND_RISK_REVIEW.md",
+    "docs/post-pilot-evaluation/EXPANSION_GATE_MATRIX.csv",
+    "docs/post-pilot-evaluation/DECISION_AND_APPROVALS.md",
+    "docs/post-pilot-evaluation/REMEDIATION_AND_ACTIONS.csv",
+    "docs/post-pilot-evaluation/EVIDENCE_MANIFEST.json"
+  ]
+}

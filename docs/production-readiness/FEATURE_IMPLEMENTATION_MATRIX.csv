@@ -62,4 +62,12 @@ Pilot Operations,Support Ticket Logging & Auto-Escalation,IMPLEMENTED,apps/api/d
 Pilot Operations,Dedicated Clinical Safety Governance Queue,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/safety-queue,test_pilot_launch_engine.py,Tier 1
 Pilot Operations,P0 Stop Conditions & Non-Destructive Containment,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/stop-events/trigger,test_pilot_launch_engine.py,Tier 1
 Pilot Operations,Operational Metrics & Formal Review Packs,IMPLEMENTED,apps/api/domains/pilot_launch.py,/api/v1/pilot/programs/{id}/review-packs,test_pilot_launch_api.py,Tier 2
+Post-Pilot Evaluation,Evaluation Lifecycle & Evidence Inventory,IMPLEMENTED,apps/api/domains/post_pilot_evaluation.py,/api/v1/pilot-evaluations,test_post_pilot_evaluation_engine.py,Tier 1
+Post-Pilot Evaluation,14-Metric Scorecard & Telemetry Transparency,IMPLEMENTED,apps/api/domains/post_pilot_evaluation.py,/api/v1/pilot-evaluations/{id}/scorecard,test_post_pilot_evaluation_engine.py,Tier 1
+Post-Pilot Evaluation,PII-Sanitized Feedback Review Ledger,IMPLEMENTED,apps/api/domains/post_pilot_evaluation.py,/api/v1/pilot-evaluations/{id}/feedback-reviews,test_post_pilot_evaluation_api.py,Tier 2
+Post-Pilot Evaluation,Pre-Expansion Incident & Safety Review,IMPLEMENTED,apps/api/domains/post_pilot_evaluation.py,/api/v1/pilot-evaluations/{id}/incident-reviews,test_post_pilot_evaluation_api.py,Tier 1
+Post-Pilot Evaluation,11-Gate Independent Proposal Evaluation,IMPLEMENTED,apps/api/domains/post_pilot_evaluation.py,/api/v1/pilot-evaluations/{id}/proposals/{id}/gates,test_post_pilot_evaluation_engine.py,Tier 1
+Post-Pilot Evaluation,Tripartite Multi-Role Scale Sign-Off,IMPLEMENTED,apps/api/domains/post_pilot_evaluation.py,/api/v1/pilot-evaluations/{id}/decisions/{id}/approve,test_post_pilot_evaluation_api.py,Tier 1
+Post-Pilot Evaluation,Retest-Enforced Remediation Action Tracker,IMPLEMENTED,apps/api/domains/post_pilot_evaluation.py,/api/v1/pilot-evaluations/{id}/remediations/{id}/close,test_post_pilot_evaluation_engine.py,Tier 1
+Post-Pilot Evaluation,Audit-Grade Versioned Evaluation Reports,IMPLEMENTED,apps/api/domains/post_pilot_evaluation.py,/api/v1/pilot-evaluations/{id}/reports,test_post_pilot_evaluation_api.py,Tier 1
 

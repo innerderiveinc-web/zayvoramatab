@@ -13,7 +13,7 @@ from apps.api.routes import (
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
     modern_assessment, clinical_rules, knowledge, safety_firewall,
     consultation_orchestrator, care_continuity, clinic_operations, enterprise_admin,
-    hospital_interop, pilot_launch
+    hospital_interop, pilot_launch, post_pilot_evaluation
 )
 
 
@@ -356,6 +356,43 @@ ROUTES = [
     ("POST", r"^/api/v1/pilot/stop-events/(?P<id>[^/]+)/resolve$", pilot_launch.handle_resolve_stop_condition, True),
     ("GET", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/metrics$", pilot_launch.handle_get_pilot_metrics, True),
     ("POST", r"^/api/v1/pilot/programs/(?P<id>[^/]+)/review-packs$", pilot_launch.handle_generate_review_pack, True),
+
+    # Prompt 15: Post-Pilot Evaluation, Adoption Scorecard & Scale Decision
+    ("GET", r"^/api/v1/pilot-evaluations$", post_pilot_evaluation.handle_list_evaluations, True),
+    ("POST", r"^/api/v1/pilot-evaluations$", post_pilot_evaluation.handle_create_evaluation, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)$", post_pilot_evaluation.handle_get_evaluation, True),
+    ("PATCH", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/status$", post_pilot_evaluation.handle_update_evaluation_status, True),
+    ("POST", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/collect-evidence$", post_pilot_evaluation.handle_collect_evidence, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/evidence$", post_pilot_evaluation.handle_list_evidence, True),
+    ("POST", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/calculate-scorecard$", post_pilot_evaluation.handle_calculate_scorecard, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/scorecard$", post_pilot_evaluation.handle_list_scorecard, True),
+    ("POST", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/review-feedback$", post_pilot_evaluation.handle_review_feedback, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/feedback-themes$", post_pilot_evaluation.handle_list_feedback_themes, True),
+    ("POST", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/review-risks$", post_pilot_evaluation.handle_review_risks, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/incident-risks$", post_pilot_evaluation.handle_list_incident_risks, True),
+    ("POST", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/expansion-proposals$", post_pilot_evaluation.handle_create_expansion_proposal, True),
+    ("POST", r"^/api/v1/pilot-evaluations/expansion-proposals/(?P<proposal_id>[^/]+)/gates$", post_pilot_evaluation.handle_evaluate_expansion_gate, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/expansion-proposals$", post_pilot_evaluation.handle_list_expansion_proposals, True),
+    ("POST", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/record-decision$", post_pilot_evaluation.handle_record_decision, True),
+    ("POST", r"^/api/v1/pilot-evaluations/decision-approvals$", post_pilot_evaluation.handle_approve_decision, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/decision$", post_pilot_evaluation.handle_get_decision, True),
+    ("POST", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/actions$", post_pilot_evaluation.handle_create_remediation_action, True),
+    ("POST", r"^/api/v1/pilot-evaluations/actions/(?P<action_id>[^/]+)/close$", post_pilot_evaluation.handle_close_remediation_action, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/actions$", post_pilot_evaluation.handle_list_remediation_actions, True),
+    ("POST", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/report$", post_pilot_evaluation.handle_generate_report, True),
+    ("GET", r"^/api/v1/pilot-evaluations/(?P<id>[^/]+)/report$", post_pilot_evaluation.handle_generate_report, True),
+    # Aliased routes for admin prefix
+    ("GET", r"^/api/v1/admin/pilot-evaluations$", post_pilot_evaluation.handle_list_evaluations, True),
+    ("POST", r"^/api/v1/admin/pilot-evaluations$", post_pilot_evaluation.handle_create_evaluation, True),
+    ("GET", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)$", post_pilot_evaluation.handle_get_evaluation, True),
+    ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/collect-evidence$", post_pilot_evaluation.handle_collect_evidence, True),
+    ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/calculate-scorecard$", post_pilot_evaluation.handle_calculate_scorecard, True),
+    ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/review-risks$", post_pilot_evaluation.handle_review_risks, True),
+    ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/evaluate-expansion$", post_pilot_evaluation.handle_create_expansion_proposal, True),
+    ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/record-decision$", post_pilot_evaluation.handle_record_decision, True),
+    ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/approve$", post_pilot_evaluation.handle_approve_decision, True),
+    ("GET", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/report$", post_pilot_evaluation.handle_generate_report, True),
+    ("GET", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/actions$", post_pilot_evaluation.handle_list_remediation_actions, True),
 ]
 
 class ApiRouter:

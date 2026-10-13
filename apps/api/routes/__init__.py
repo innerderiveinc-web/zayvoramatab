@@ -5,7 +5,7 @@ from apps.api.routes import (
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
     modern_assessment, clinical_rules, knowledge, safety_firewall,
     consultation_orchestrator, care_continuity, clinic_operations, enterprise_admin,
-    hospital_interop, pilot_launch
+    hospital_interop, pilot_launch, post_pilot_evaluation
 )
 
 __all__ = [
@@ -32,4 +32,5 @@ __all__ = [
     "enterprise_admin",
     "hospital_interop",
     "pilot_launch",
+    "post_pilot_evaluation",
 ]

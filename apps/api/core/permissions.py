@@ -70,6 +70,10 @@ PERMISSION_ALIASES: Dict[str, List[str]] = {
     "referral:read": ["encounters:read", "patients:read", "referral:read"],
     "interop:manage": ["org:manage", "enterprise:integration_manage", "interop:manage"],
     "interop:exchange": ["encounters:read", "patients:read", "interop:exchange"],
+    # Prompt 15 Post-Pilot Evaluation & Scale Decision Permissions
+    "pilot:evaluate": ["pilot:manage", "pilot:evaluate", "enterprise:org_manage", "org:manage"],
+    "pilot:approve_decision": ["pilot:approve_decision", "enterprise:org_manage", "governance:manage"],
+    "pilot:remediation": ["pilot:manage", "pilot:remediation", "enterprise:org_manage", "org:manage"],
 }
 
 CLINICAL_NOTE_PERMISSIONS = {

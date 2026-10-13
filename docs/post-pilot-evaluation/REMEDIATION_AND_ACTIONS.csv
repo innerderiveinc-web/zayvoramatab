@@ -1,0 +1,7 @@
+ActionId,Title,Category,Priority,OwnerRole,RetestRequirement,Status,RetestEvidenceRef,DueDate
+ACT-01,Formulary Catalog Debounce Tuning,USABILITY,P2,PRODUCT_OPERATIONS,Frontend typing lag < 100ms on 200+ formulation list,VERIFIED_CLOSED,PERF-DEBOUNCE-PASS-20261013,2026-10-20
+ACT-02,Urdu Nastaliq Thermal Print Typography,USABILITY,P2,PRODUCT_OPERATIONS,Visual inspection of 80mm thermal receipt with 12pt Nastaliq font,VERIFIED_CLOSED,PRINT-NASTALIQ-PASS-20261013,2026-10-22
+ACT-03,Early Walk-In Queue Check-In Micro-Training,TRAINING,P3,PRODUCT_OPERATIONS,Front-desk staff scenario retest pass >= 80%,VERIFIED_CLOSED,TRAIN-QUEUE-PASS-20261013,2026-10-25
+ACT-04,Dispensary Barcode Lot Matching Audio Cue,USABILITY,P3,PRODUCT_OPERATIONS,Audio tone toggle verification in dispensary unit tests,OPEN,None,2026-11-05
+ACT-05,Nabz Template v1.1 Clinical RFC Submission,CLINICAL,P2,CLINICAL_GOVERNANCE,Formal sign-off by Clinical Governance Review Committee,OPEN,None,2026-11-10
+ACT-06,Branch B Facility Staff Training Enrollment,TRAINING,P1,PRODUCT_OPERATIONS,All Branch B practitioners and staff pass onboarding modules with >=80%,OPEN,None,2026-11-12

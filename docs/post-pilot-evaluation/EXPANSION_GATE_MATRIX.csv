@@ -1,0 +1,18 @@
+ProposalType,TargetScope,GateName,GateStatus,EvidenceNotes,BlockerDetails,CheckedBy
+MORE_USERS_SAME_FACILITY,Central Matab OPD (Add 2 Tabib practitioners),DEPENDENCY_CHECK,PASS,Core OPD engine & prescription signing verified,None,Operations Lead
+MORE_USERS_SAME_FACILITY,Central Matab OPD (Add 2 Tabib practitioners),SCOPE_ACCESS_TESTS,PASS,Multi-role RBAC verified on practitioner accounts,None,Security Lead
+MORE_USERS_SAME_FACILITY,Central Matab OPD (Add 2 Tabib practitioners),TRAINING_ONBOARDING_CAPACITY,PASS,Both practitioners completed Tabib curriculum with >=90% score,None,Operations Lead
+MORE_USERS_SAME_FACILITY,Central Matab OPD (Add 2 Tabib practitioners),END_TO_END_TESTS,PASS,Full registration to prescription test suite passing 100%,None,Technical Lead
+MORE_USERS_SAME_FACILITY,Central Matab OPD (Add 2 Tabib practitioners),CLINICAL_CONTENT_APPROVAL,PASS,Formulary and Schedule E(1) monographs signed off,None,Clinical Lead
+MORE_USERS_SAME_FACILITY,Central Matab OPD (Add 2 Tabib practitioners),BACKUP_RESTORE_DRILL,PASS,Hot VACUUM INTO drill successful on edge server,None,Security Lead
+MORE_USERS_SAME_FACILITY,Central Matab OPD (Add 2 Tabib practitioners),INCIDENT_RESPONSE_READY,PASS,Support ticket escalation matrix and P0 triage configured,None,Operations Lead
+MORE_USERS_SAME_FACILITY,Central Matab OPD (Add 2 Tabib practitioners),MANDATORY_SAFETY_GATE,PASS,Safety firewall fail-closed preflight verified,None,Clinical Lead
+ANOTHER_BRANCH_FACILITY,Branch B Clinic (New location onboarding),DEPENDENCY_CHECK,PASS,Multi-branch organization hierarchy verified in database,None,Operations Lead
+ANOTHER_BRANCH_FACILITY,Branch B Clinic (New location onboarding),TRAINING_ONBOARDING_CAPACITY,BLOCKED,Branch B clinic staff have not completed curriculum modules,Staff training pending,Operations Lead
+ANOTHER_BRANCH_FACILITY,Branch B Clinic (New location onboarding),MANDATORY_SAFETY_GATE,PASS,Safety engine shared across branch facilities,None,Clinical Lead
+PHARMACY_INVENTORY_ENABLEMENT,Central Matab Dispensary (Live FEFO Stock),DEPENDENCY_CHECK,PASS,Dispensing and movements ledger implemented,None,Technical Lead
+PHARMACY_INVENTORY_ENABLEMENT,Central Matab Dispensary (Live FEFO Stock),TRAINING_ONBOARDING_CAPACITY,BLOCKED,Dispensary staff acceptance drill pending physical stock audit,Physical inventory count pending,Operations Lead
+PHARMACY_INVENTORY_ENABLEMENT,Central Matab Dispensary (Live FEFO Stock),MANDATORY_SAFETY_GATE,PASS,Signed prescription dispensing enforcement active,None,Clinical Lead
+EXTERNAL_COMMUNICATIONS,Public WhatsApp/SMS Gateway,DEPENDENCY_CHECK,BLOCKED,Requires verified third-party API keys (Twilio/Gupshup),Production credentials unconfigured,Technical Lead
+HOSPITAL_IPD_LAB_REFERRAL,Central Matab Inpatient Wards,DEPENDENCY_CHECK,BLOCKED,Scheduled for Phase 2 hospital rollout after OPD stability,Inpatient training scheduled Q1 2027,Operations Lead
+FHIR_ABDM_EXCHANGE,National Health Authority Production Gateway,DEPENDENCY_CHECK,BLOCKED,Internal harness passed; pending official NHA facility onboarding,Awaiting official ABDM client credentials,Security Lead

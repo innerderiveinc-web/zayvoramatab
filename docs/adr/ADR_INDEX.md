@@ -318,6 +318,14 @@
 - **Context:** Transitioning to real-patient clinic pilots requires server-side scope enforcement, readiness gates, 13-stage facility onboarding, role-based training, governed data migration, support triage, and independent clinical safety escalation.
 - **Decision:** Enforce versioned pilot scope server-side (`enforce_pilot_scope`); evaluate eligibility gates on backend (`evaluate_pilot_eligibility`); require 13-stage onboarding progression; provide zero-mutation `DRY_RUN` data migration; track role-based training with synthetic scenarios; separate routine tickets from emergency `clinical_safety_incident_queue`; support non-destructive P0 pause/stop conditions; and generate formal review packs with continue/pause/stop recommendations.
 
+---
+
+## ADR-034: Post-Pilot Evaluation, Adoption Scorecard & Scale Decision Framework
+- **Status:** Accepted
+- **File:** [ADR-034-post-pilot-evaluation-adoption-scorecard-and-expansion-decision-framework.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-034-post-pilot-evaluation-adoption-scorecard-and-expansion-decision-framework.md)
+- **Context:** Following the execution of controlled clinic pilots, an evidence-based mechanism is required to evaluate whether the system should continue its limited pilot, expand within scope, scale to additional clinics, enable specific modules, pause for remediation, or stop/roll back.
+- **Decision:** Implement versioned evaluation master records (`pilot_evaluations`), verified evidence source tracking, a 14-metric adoption and reliability scorecard across 8 domain categories with explicit `UNAVAILABLE` telemetry handling, descriptive clinical outcomes classification without efficacy inference, sanitized feedback triage without patient PHI, non-downgrade incident re-review blocking expansion on open P0s, 8 independent expansion proposals evaluated across 11 gates, tripartite sign-off (Clinical, Operations, Security) for scale approval, and mandatory retest evidence references before remediation actions can close.
+
 
 
 

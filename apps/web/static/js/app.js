@@ -15,6 +15,7 @@ import { renderAppointmentsQueue, renderBillingView, renderInventoryView } from 
 import { renderEnterpriseAdmin } from "./views/enterprise_admin.js";
 import { renderHospitalInterop } from "./views/hospital_interop.js";
 import { renderPilotLaunch } from "./views/pilot_launch.js";
+import { renderPostPilotEvaluation } from "./views/post_pilot_evaluation.js";
 import { renderMore } from "./views/more.js";
 
 async function init() {
@@ -96,6 +97,9 @@ function renderCurrentTab(tab) {
       break;
     case "pilot_launch":
       renderPilotLaunch(content);
+      break;
+    case "pilot_evaluation":
+      renderPostPilotEvaluation(content);
       break;
     case "more":
       renderMore(content);

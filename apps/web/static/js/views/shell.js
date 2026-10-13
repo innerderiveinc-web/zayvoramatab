@@ -106,6 +106,10 @@ export function renderShell(container, onNavigate, onLogout) {
       <button class="nav-tab ${state.activeTab === "pilot_launch" ? "active" : ""}" data-tab="pilot_launch">
         <span>🚀</span>
         <span>Pilot Launch</span>
+      </button>
+      <button class="nav-tab ${state.activeTab === "pilot_evaluation" ? "active" : ""}" data-tab="pilot_evaluation">
+        <span>⚖️</span>
+        <span>Post-Pilot Review</span>
       </button>` : ''}
       <button class="nav-tab ${state.activeTab === "more" ? "active" : ""}" data-tab="more">
         <span>⚙️</span>
