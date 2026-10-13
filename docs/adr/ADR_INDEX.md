@@ -326,6 +326,14 @@
 - **Context:** Following the execution of controlled clinic pilots, an evidence-based mechanism is required to evaluate whether the system should continue its limited pilot, expand within scope, scale to additional clinics, enable specific modules, pause for remediation, or stop/roll back.
 - **Decision:** Implement versioned evaluation master records (`pilot_evaluations`), verified evidence source tracking, a 14-metric adoption and reliability scorecard across 8 domain categories with explicit `UNAVAILABLE` telemetry handling, descriptive clinical outcomes classification without efficacy inference, sanitized feedback triage without patient PHI, non-downgrade incident re-review blocking expansion on open P0s, 8 independent expansion proposals evaluated across 11 gates, tripartite sign-off (Clinical, Operations, Security) for scale approval, and mandatory retest evidence references before remediation actions can close.
 
+---
+
+## ADR-035: Knowledge Authenticity, Verification & Clinical Safety Framework (KAVS)
+- **Status:** Accepted
+- **File:** [ADR-035-knowledge-authenticity-verification-and-clinical-safety-framework.md](file:///Users/irfanashraf/Downloads/zayvora%20matab%20os/docs/adr/ADR-035-knowledge-authenticity-verification-and-clinical-safety-framework.md)
+- **Context:** Autonomous AYUSH systems require genuine, auditable clinical evidence without probabilistic generative AI hallucinations or unverified automated claim publishing.
+- **Decision:** Implement KAVS with 5 independent verification dimensions (Source Authenticity, Extraction Fidelity, Evidence Characterization, Clinical Review State, Intended-Use Authorization); statutory rights reviews; page-anchored extraction segments with OCR confidence scoring; evidence contradiction graphs; immutable cryptographic releases (`manifest_hash`); change-impact dependency tracing; and consultation-time contextual retrieval with deterministic citation resolvability and honest `insufficient_information` caveats.
+
 
 
 

@@ -39,6 +39,7 @@ export async function renderKnowledgeAdmin(container) {
         <button class="tab-btn active" id="tabBtnSources">Sources Registry (${sources.length})</button>
         <button class="tab-btn" id="tabBtnItems">Knowledge Items (${itemsRes.total || items.length})</button>
         <button class="tab-btn" id="tabBtnQueue">Review Queue (${queue.length})</button>
+        <button class="tab-btn" id="tabBtnKavs">KAVS Verification & Releases</button>
       </div>
 
       <!-- Tab Content Area -->
@@ -191,6 +192,58 @@ export async function renderKnowledgeAdmin(container) {
       }
     }
 
+    function showKavs() {
+      tabContent.innerHTML = `
+        <div class="card" style="margin-bottom: 1rem;">
+          <h2 style="font-size: 1.1rem; color: var(--matab-color-brand-primary); margin-bottom: 0.5rem;">KAVS Verification & Governance Layer</h2>
+          <p style="font-size: 0.85rem; color: var(--matab-color-text-secondary); margin-bottom: 1rem;">
+            Five Independent Verification Dimensions (Source authenticity, extraction fidelity, evidence characterization, clinical review state, intended-use authorization). No AI hallucinated claims.
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div style="padding: 0.75rem; background: var(--matab-color-bg-subtle); border-radius: 4px; border: 1px solid var(--matab-color-border);">
+              <div style="font-size: 0.75rem; color: var(--matab-color-text-secondary); text-transform: uppercase;">Dimension A</div>
+              <strong style="font-size: 0.95rem;">Source Authenticity</strong>
+            </div>
+            <div style="padding: 0.75rem; background: var(--matab-color-bg-subtle); border-radius: 4px; border: 1px solid var(--matab-color-border);">
+              <div style="font-size: 0.75rem; color: var(--matab-color-text-secondary); text-transform: uppercase;">Dimension B</div>
+              <strong style="font-size: 0.95rem;">Extraction Fidelity</strong>
+            </div>
+            <div style="padding: 0.75rem; background: var(--matab-color-bg-subtle); border-radius: 4px; border: 1px solid var(--matab-color-border);">
+              <div style="font-size: 0.75rem; color: var(--matab-color-text-secondary); text-transform: uppercase;">Dimension C</div>
+              <strong style="font-size: 0.95rem;">Evidence Type</strong>
+            </div>
+            <div style="padding: 0.75rem; background: var(--matab-color-bg-subtle); border-radius: 4px; border: 1px solid var(--matab-color-border);">
+              <div style="font-size: 0.75rem; color: var(--matab-color-text-secondary); text-transform: uppercase;">Dimension D & E</div>
+              <strong style="font-size: 0.95rem;">Review & Intended Use</strong>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="btnKavsContextQuery" class="btn btn-primary">Test Verified Clinical Context Retrieval</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("btnKavsContextQuery")?.addEventListener("click", async () => {
+        const q = prompt("Enter clinical query to test KAVS verified retrieval (e.g. 'Senna', 'Filfil Siah'):", "Senna");
+        if (q) {
+          try {
+            const res = await apiClient.post("/api/v1/kavs/retrieve", {
+              query: q,
+              intended_use: "clinician_contextual_reference"
+            });
+            if (res.insufficient_information) {
+              alert(`KAVS RESPONSE: Insufficient Verified Information\n\n${res.caveat || res.reason}`);
+            } else {
+              const lines = res.results.map(r => `• ${r.item_name}: "${r.claim_text}"\n  [Source: ${r.source.title} (${r.source.locator})] [Authenticity: ${r.verification.source_authenticity}]`);
+              alert(`KAVS VERIFIED CONTEXT (${res.total} claims found):\n\n` + lines.join("\n\n"));
+            }
+          } catch (e) {
+            alert(`KAVS Query failed: ${e.message}`);
+          }
+        }
+      });
+    }
+
     // Default to sources
     showSources();
 
@@ -210,6 +263,12 @@ export async function renderKnowledgeAdmin(container) {
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
       e.target.classList.add("active");
       showQueue();
+    });
+
+    document.getElementById("tabBtnKavs").addEventListener("click", (e) => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      e.target.classList.add("active");
+      showKavs();
     });
 
     document.getElementById("btnOpenRetrievalTester").addEventListener("click", () => {

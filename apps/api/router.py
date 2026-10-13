@@ -13,7 +13,7 @@ from apps.api.routes import (
     formulations, prescriptions, unani_assessment, organ_axis, care_plans,
     modern_assessment, clinical_rules, knowledge, safety_firewall,
     consultation_orchestrator, care_continuity, clinic_operations, enterprise_admin,
-    hospital_interop, pilot_launch, post_pilot_evaluation
+    hospital_interop, pilot_launch, post_pilot_evaluation, kavs
 )
 
 
@@ -389,10 +389,23 @@ ROUTES = [
     ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/calculate-scorecard$", post_pilot_evaluation.handle_calculate_scorecard, True),
     ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/review-risks$", post_pilot_evaluation.handle_review_risks, True),
     ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/evaluate-expansion$", post_pilot_evaluation.handle_create_expansion_proposal, True),
-    ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/record-decision$", post_pilot_evaluation.handle_record_decision, True),
-    ("POST", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/approve$", post_pilot_evaluation.handle_approve_decision, True),
     ("GET", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/report$", post_pilot_evaluation.handle_generate_report, True),
     ("GET", r"^/api/v1/admin/pilot-evaluations/(?P<id>[^/]+)/actions$", post_pilot_evaluation.handle_list_remediation_actions, True),
+
+    # Knowledge Authenticity, Verification & Clinical Safety Framework (KAVS)
+    ("POST", r"^/api/v1/kavs/sources/versions$", kavs.handle_register_source_version, True),
+    ("GET", r"^/api/v1/kavs/sources/versions/(?P<id>[^/]+)$", kavs.handle_get_source_version, True),
+    ("POST", r"^/api/v1/kavs/sources/rights-reviews$", kavs.handle_record_rights_review, True),
+    ("POST", r"^/api/v1/kavs/ingestion/jobs$", kavs.handle_create_ingestion_job, True),
+    ("POST", r"^/api/v1/kavs/ingestion/jobs/(?P<id>[^/]+)/segments$", kavs.handle_add_extraction_segment, True),
+    ("POST", r"^/api/v1/kavs/ingestion/segments/(?P<id>[^/]+)/review$", kavs.handle_review_extraction_segment, True),
+    ("POST", r"^/api/v1/kavs/claims/(?P<id>[^/]+)/verifications$", kavs.handle_record_claim_verification, True),
+    ("GET", r"^/api/v1/kavs/verifications/(?P<id>[^/]+)$", kavs.handle_get_claim_verification, True),
+    ("POST", r"^/api/v1/kavs/claims/(?P<id>[^/]+)/conflicts$", kavs.handle_link_evidence_conflict, True),
+    ("POST", r"^/api/v1/kavs/releases$", kavs.handle_publish_knowledge_release, True),
+    ("POST", r"^/api/v1/kavs/releases/(?P<tag>[^/]+)/withdraw$", kavs.handle_withdraw_knowledge_release, True),
+    ("POST", r"^/api/v1/kavs/impact-events$", kavs.handle_record_change_impact, True),
+    ("POST", r"^/api/v1/kavs/retrieve$", kavs.handle_retrieve_verified_context, True),
 ]
 
 class ApiRouter:

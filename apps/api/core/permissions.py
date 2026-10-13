@@ -74,6 +74,12 @@ PERMISSION_ALIASES: Dict[str, List[str]] = {
     "pilot:evaluate": ["pilot:manage", "pilot:evaluate", "enterprise:org_manage", "org:manage"],
     "pilot:approve_decision": ["pilot:approve_decision", "enterprise:org_manage", "governance:manage"],
     "pilot:remediation": ["pilot:manage", "pilot:remediation", "enterprise:org_manage", "org:manage"],
+    # KAVS: Knowledge Authenticity, Verification & Clinical Safety Permissions
+    "kavs:read": ["kavs:read", "knowledge:read", "capabilities:read"],
+    "kavs:verify": ["kavs:verify", "knowledge:manage", "governance:manage"],
+    "kavs:approve": ["kavs:approve", "governance:manage", "enterprise:org_manage"],
+    "kavs:release": ["kavs:release", "governance:manage", "enterprise:org_manage"],
+    "kavs:manage": ["kavs:manage", "knowledge:manage", "governance:manage"],
 }
 
 CLINICAL_NOTE_PERMISSIONS = {
