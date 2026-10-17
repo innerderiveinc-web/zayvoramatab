@@ -6,6 +6,12 @@ import mimetypes
 from urllib.parse import urlparse, parse_qs
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
+
+# Ensure root workspace directory is always in sys.path
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from apps.api.config import config
 from apps.api.database.migrator import run_migrations
 from apps.api.router import ApiRouter
@@ -36,13 +42,35 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         self._handle_request("DELETE")
 
-    def _send_security_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+    def _send_security_headers(self, custom_headers=None):
+        custom_headers = custom_headers or {}
+        custom_lower = {k.lower(): v for k, v in custom_headers.items()}
+        req_origin = self.headers.get("Origin", "")
+        allowed = [o.strip() for o in getattr(config, "allowed_origins", "").split(",") if o.strip()]
+        
+        # Check against allowed list or standard local addresses
+        if req_origin and (req_origin in allowed or any(req_origin.startswith(h) for h in ["http://localhost:", "http://127.0.0.1:", "https://localhost:"])):
+            origin_to_send = req_origin
+            self.send_header("Access-Control-Allow-Credentials", "true")
+        elif not req_origin:
+            origin_to_send = allowed[0] if allowed else "http://127.0.0.1:8000"
+        else:
+            origin_to_send = allowed[0] if allowed else "http://127.0.0.1:8000"
+            
+        self.send_header("Access-Control-Allow-Origin", origin_to_send)
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Request-Id")
-        self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("X-Frame-Options", "DENY")
-        self.send_header("X-XSS-Protection", "1; mode=block")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Request-Id, Range")
+        self.send_header("Vary", "Origin")
+        if "x-content-type-options" not in custom_lower:
+            self.send_header("X-Content-Type-Options", "nosniff")
+        if "x-frame-options" not in custom_lower:
+            self.send_header("X-Frame-Options", "SAMEORIGIN")
+        if "x-xss-protection" not in custom_lower:
+            self.send_header("X-XSS-Protection", "1; mode=block")
+        if "cache-control" not in custom_lower:
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
 
     def _handle_request(self, method: str):
         parsed = urlparse(self.path)
@@ -65,9 +93,10 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
             )
 
             self.send_response(status_code)
-            self._send_security_headers()
+            self._send_security_headers(resp_headers)
             for h_name, h_val in resp_headers.items():
-                self.send_header(h_name, h_val)
+                safe_val = str(h_val).encode("latin-1", "replace").decode("latin-1")
+                self.send_header(h_name, safe_val)
             self.send_header("Content-Length", str(len(resp_bytes)))
             self.end_headers()
             self.wfile.write(resp_bytes)
@@ -89,6 +118,8 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
                 return
         elif not rel_path or rel_path == "index.html":
             target_file = WEB_DIR / "index.html"
+        elif rel_path in ("science", "research", "publications", "whitepapers", "science_and_research.html"):
+            target_file = WEB_DIR / "science_and_research.html"
         else:
             target_file = (WEB_DIR / rel_path).resolve()
             if not str(target_file).startswith(str(WEB_DIR)):
@@ -99,8 +130,22 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
         if not target_file.exists() or target_file.is_dir():
             target_file = WEB_DIR / "index.html"
 
-        mime_type, _ = mimetypes.guess_type(str(target_file))
-        mime_type = mime_type or "text/html"
+        ext = target_file.suffix.lower()
+        if ext == ".js":
+            mime_type = "application/javascript"
+        elif ext == ".css":
+            mime_type = "text/css"
+        elif ext in (".html", ".htm"):
+            mime_type = "text/html"
+        elif ext == ".svg":
+            mime_type = "image/svg+xml"
+        elif ext == ".json":
+            mime_type = "application/json"
+        elif ext in (".woff", ".woff2"):
+            mime_type = f"font/{ext.lstrip('.')}"
+        else:
+            mime_type, _ = mimetypes.guess_type(str(target_file))
+            mime_type = mime_type or "text/html"
 
         try:
             with open(target_file, "rb") as f:
@@ -116,9 +161,11 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"Internal asset read error")
 
+    def address_string(self):
+        return self.client_address[0]
+
     def log_message(self, format, *args):
-        if os.getenv("MATAB_DEBUG") == "1":
-            super().log_message(format, *args)
+        sys.stderr.write("%s - - [%s] %s\n" % (self.address_string(), self.log_date_time_string(), format % args))
 
 def start_server():
     print(f"=== ZAYVORA MATAB OS (Phase 1 Foundation) ===")
@@ -129,7 +176,19 @@ def start_server():
     run_migrations()
 
     print(f"Server listening on http://{config.host}:{config.port}")
-    server = ThreadingHTTPServer((config.host, config.port), MatabRequestHandler)
+    print(f"Local Access: http://127.0.0.1:{config.port} or http://localhost:{config.port}")
+    try:
+        ThreadingHTTPServer.allow_reuse_address = True
+        server = ThreadingHTTPServer((config.host, config.port), MatabRequestHandler)
+        server.timeout = 30
+    except OSError as e:
+        if e.errno == 48:
+            print(f"\n[!] Port {config.port} is already in use by another process.")
+            print(f"[!] To release the port, run: kill -9 $(lsof -ti :{config.port})")
+            print(f"[!] Or start with: ./start_matab.sh (which automatically frees the port).\n")
+            sys.exit(1)
+        raise
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:

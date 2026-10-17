@@ -7,6 +7,16 @@ from typing import List
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# Automatically load .env if present
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith('#') and '=' in line:
+            k, _, v = line.partition('=')
+            if v.strip():
+                os.environ[k.strip()] = v.strip()
+
 DEFAULT_INSECURE_KEYS = [
     "change-this-insecure-dev-key-before-production-use-2026",
     "matab-os-standalone-secure-dev-key-2026",
@@ -19,15 +29,16 @@ DEFAULT_INSECURE_KEYS = [
 class AppConfig:
     env: str = os.getenv("MATAB_ENV", "development").lower()
     profile: str = os.getenv("MATAB_PROFILE", "MATAB").upper()
-    host: str = os.getenv("MATAB_HOST", "127.0.0.1")
-    port: int = int(os.getenv("MATAB_PORT", "8000"))
+    host: str = os.getenv("MATAB_HOST", "0.0.0.0")
+    port: int = int(os.getenv("MATAB_PORT", "8080"))
     db_path: str = os.getenv("DATABASE_PATH", str(BASE_DIR / "matab.db"))
     database_url: str = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'matab.db'}")
     secret_key: str = os.getenv("MATAB_SECRET_KEY", "matab-os-standalone-secure-dev-key-2026")
     session_hours: int = int(os.getenv("MATAB_SESSION_HOURS", "12"))
     auth_rate_limit_per_min: int = int(os.getenv("MATAB_AUTH_RATE_LIMIT", "10"))
     fail_closed: bool = os.getenv("MATAB_FAIL_CLOSED", "true").lower() == "true"
-    allowed_origins: str = os.getenv("MATAB_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:8000")
+    allowed_origins: str = os.getenv("MATAB_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:8000,http://localhost:8000,http://127.0.0.1:8080,http://localhost:8080")
+    books_dir: str = os.getenv("MATAB_BOOKS_DIR", str(BASE_DIR / "data" / "medical_books"))
 
     def is_production(self) -> bool:
         return self.env == "production"

@@ -6,7 +6,7 @@
  */
 
 import { state } from "../state.js";
-import { apiClient } from "../../../../packages/api-client/client.js";
+import { apiClient } from "/packages/api-client/client.js";
 
 /**
  * 1. Appointments & OPD Waiting Queue Workspace
@@ -15,20 +15,22 @@ export async function renderAppointmentsQueue(container) {
   container.innerHTML = `<div class="card"><p>Loading Appointments & OPD Queue...</p></div>`;
   try {
     const todayStr = new Date().toISOString().slice(0, 10);
-    const [availRes, apptsRes, queueRes] = await Promise.all([
-      apiClient.get(`/api/v1/scheduling/availability?practitioner_id=usr-hakeem-1&date=${todayStr}`),
-      apiClient.get(`/api/v1/appointments?date=${todayStr}`),
-      apiClient.get(`/api/v1/queue?queue_date=${todayStr}`)
+    const [availRes, apptsRes, queueRes, patientsRes] = await Promise.all([
+      apiClient.get(`/api/v1/scheduling/availability?practitioner_id=usr-hakeem-1&date=${todayStr}`).catch(() => ({ availability: { slots: [] } })),
+      apiClient.get(`/api/v1/appointments?date=${todayStr}`).catch(() => ({ appointments: [] })),
+      apiClient.get(`/api/v1/queue?queue_date=${todayStr}`).catch(() => ({ queue: { tokens: [] } })),
+      apiClient.get('/api/v1/patients?limit=50').catch(() => ({ patients: [] }))
     ]);
 
     const avail = availRes.availability || { slots: [] };
     const appts = apptsRes.appointments || [];
     const queue = queueRes.queue || { tokens: [] };
+    const patients = patientsRes.patients || [];
 
     const tokenRowsHtml = (queue.tokens || []).map(t => `
       <tr>
         <td><strong><code>${t.token_code}</code></strong></td>
-        <td>${t.patient_name} <small style="color: var(--matab-color-text-muted);">(${t.patient_mrn})</small></td>
+        <td>${(t.patient_name || '').replace(/\s*\[Synthetic\]/gi, "")} <small style="color: var(--matab-color-text-muted);">(${t.patient_mrn})</small></td>
         <td><span class="badge badge-info">${t.visit_type}</span></td>
         <td><span class="badge ${t.priority === 'CLINICAL_URGENT' ? 'badge-danger' : 'badge-secondary'}">${t.priority}</span></td>
         <td><strong>${t.status}</strong></td>
@@ -46,7 +48,7 @@ export async function renderAppointmentsQueue(container) {
     const apptRowsHtml = appts.map(a => `
       <tr>
         <td><code>${a.start_at.slice(11, 16)} - ${a.end_at.slice(11, 16)}</code></td>
-        <td><strong>${a.patient_name}</strong> (${a.patient_mrn})</td>
+        <td><strong>${(a.patient_name || '').replace(/\s*\[Synthetic\]/gi, "")}</strong> (${a.patient_mrn})</td>
         <td>${a.appointment_type}</td>
         <td>${a.reason_category}</td>
         <td><span class="badge badge-info">${a.status}</span></td>
@@ -94,77 +96,220 @@ export async function renderAppointmentsQueue(container) {
           <h3 class="card-title">Live OPD Token Queue (${todayStr})</h3>
           <span class="badge badge-success">Privacy-Safe Public Display Supported</span>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Token</th>
-              <th>Patient</th>
-              <th>Visit Type</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tokenRowsHtml || '<tr><td colspan="6" style="text-align:center;">No active tokens in queue today.</td></tr>'}
-          </tbody>
-        </table>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Patient</th>
+                <th>Visit Type</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tokenRowsHtml || '<tr><td colspan="6" style="text-align:center;">No active tokens in queue today.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">Today's Scheduled Appointments (${appts.length})</h3>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Slot Time</th>
-              <th>Patient</th>
-              <th>Type</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${apptRowsHtml || '<tr><td colspan="6" style="text-align:center;">No appointments booked for today.</td></tr>'}
-          </tbody>
-        </table>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Slot Time</th>
+                <th>Patient</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${apptRowsHtml || '<tr><td colspan="6" style="text-align:center;">No appointments booked for today.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal: Issue Walk-In Token -->
+      <div id="modal-issue-token" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 500px; padding: 1.5rem; background: var(--matab-color-bg-card); border-radius: var(--matab-radius-lg); box-shadow: var(--matab-shadow-xl);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--matab-color-border-subtle); padding-bottom: 0.5rem;">
+            <h3 style="margin: 0; color: var(--matab-color-brand-primary); font-size: 1.15rem;">🎫 Issue OPD Walk-In Token</h3>
+            <button class="btn btn-secondary btn-sm" id="btnCloseIssueTokenModal">✕</button>
+          </div>
+
+          <div style="margin-bottom: 0.75rem;">
+            <label style="font-size: 0.8rem; font-weight: 600;">Select Patient *</label>
+            <select id="select-token-patient" class="form-control" style="font-size: 0.85rem;">
+              ${patients.map(p => `
+                <option value="${p.id}">${(p.display_name || p.full_name || 'Patient').replace(/\s*\[Synthetic\]/gi, "")} (${p.mrn}) — Age: ${p.estimated_age || p.age || '--'} / ${p.sex || 'U'}</option>
+              `).join("") || '<option value="pat-syn-001">Muhammad Irfan (MRN-2026-00001)</option>'}
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 600;">Practitioner</label>
+              <select id="select-token-practitioner" class="form-control" style="font-size: 0.85rem;">
+                <option value="usr-hakeem-1">Hakim Ajmal Khan (Senior Hakeem)</option>
+                <option value="usr-hakeem-2">Dr. Zayd Ansari (OPD Physician)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 600;">Visit Type</label>
+              <select id="select-token-visittype" class="form-control" style="font-size: 0.85rem;">
+                <option value="WALK_IN">Walk-In</option>
+                <option value="FOLLOW_UP">Follow-Up</option>
+                <option value="EMERGENCY">Emergency</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <label style="font-size: 0.8rem; font-weight: 600;">Triage Priority</label>
+            <select id="select-token-priority" class="form-control" style="font-size: 0.85rem;">
+              <option value="NORMAL">Standard / Routine</option>
+              <option value="CLINICAL_URGENT">Clinical Urgent (High Priority)</option>
+              <option value="EMERGENCY">Emergency (Immediate)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-sm" id="btnCancelIssueToken">Cancel</button>
+            <button class="btn btn-primary btn-sm" id="btnSubmitIssueToken">Issue & Queue Token</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Book Appointment -->
+      <div id="modal-book-appt" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 1rem;">
+        <div class="card" style="width: 100%; max-width: 520px; padding: 1.5rem; background: var(--matab-color-bg-card); border-radius: var(--matab-radius-lg); box-shadow: var(--matab-shadow-xl);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--matab-color-border-subtle); padding-bottom: 0.5rem;">
+            <h3 style="margin: 0; color: var(--matab-color-brand-primary); font-size: 1.15rem;">📅 Book OPD Appointment</h3>
+            <button class="btn btn-secondary btn-sm" id="btnCloseBookApptModal">✕</button>
+          </div>
+
+          <div style="margin-bottom: 0.75rem;">
+            <label style="font-size: 0.8rem; font-weight: 600;">Select Patient *</label>
+            <select id="select-appt-patient" class="form-control" style="font-size: 0.85rem;">
+              ${patients.map(p => `
+                <option value="${p.id}">${(p.display_name || p.full_name || 'Patient').replace(/\s*\[Synthetic\]/gi, "")} (${p.mrn})</option>
+              `).join("") || '<option value="pat-syn-001">Muhammad Irfan (MRN-2026-00001)</option>'}
+            </select>
+          </div>
+
+          <div style="margin-bottom: 0.75rem;">
+            <label style="font-size: 0.8rem; font-weight: 600;">Available Time Slot (Today) *</label>
+            <select id="select-appt-slot" class="form-control" style="font-size: 0.85rem;">
+              ${(avail.slots || []).filter(s => s.is_available).map(s => `
+                <option value="${s.start_at}|${s.end_at}">${s.start_at.slice(11, 16)} - ${s.end_at.slice(11, 16)} (${s.practitioner_name || 'Practitioner'})</option>
+              `).join("") || '<option value="">No open slots available today</option>'}
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 600;">Appointment Type</label>
+              <select id="select-appt-type" class="form-control" style="font-size: 0.85rem;">
+                <option value="INITIAL_CONSULTATION">Initial Consultation</option>
+                <option value="FOLLOW_UP">Follow-Up Review</option>
+                <option value="SPECIALIST_REGIMEN">Specialist Regimen / Tadbeer</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 0.8rem; font-weight: 600;">Reason Category</label>
+              <select id="select-appt-category" class="form-control" style="font-size: 0.85rem;">
+                <option value="GENERAL_CONSULTATION">General Consultation</option>
+                <option value="CHRONIC_CARE">Chronic Care (Muzmin)</option>
+                <option value="PAIN_MANAGEMENT">Pain Management (Waja)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+            <button class="btn btn-secondary btn-sm" id="btnCancelBookAppt">Cancel</button>
+            <button class="btn btn-primary btn-sm" id="btnSubmitBookAppt">Confirm & Book Slot</button>
+          </div>
+        </div>
       </div>
     `;
 
-    container.querySelector("#btnIssueWalkinToken")?.addEventListener("click", async () => {
+    // Modal Control: Issue Walk-In Token
+    const modalIssue = container.querySelector("#modal-issue-token");
+    container.querySelector("#btnIssueWalkinToken")?.addEventListener("click", () => {
+      if (modalIssue) modalIssue.style.display = "flex";
+    });
+    container.querySelector("#btnCloseIssueTokenModal")?.addEventListener("click", () => {
+      if (modalIssue) modalIssue.style.display = "none";
+    });
+    container.querySelector("#btnCancelIssueToken")?.addEventListener("click", () => {
+      if (modalIssue) modalIssue.style.display = "none";
+    });
+
+    container.querySelector("#btnSubmitIssueToken")?.addEventListener("click", async () => {
+      const patId = container.querySelector("#select-token-patient")?.value || "pat-syn-001";
+      const pracId = container.querySelector("#select-token-practitioner")?.value || "usr-hakeem-1";
+      const visType = container.querySelector("#select-token-visittype")?.value || "WALK_IN";
+      const prio = container.querySelector("#select-token-priority")?.value || "NORMAL";
+
       try {
         await apiClient.post("/api/v1/queue/tokens", {
-          patient_id: "pat-syn-001",
-          practitioner_id: "usr-hakeem-1",
-          visit_type: "WALK_IN",
-          priority: "NORMAL"
+          patient_id: patId,
+          practitioner_id: pracId,
+          visit_type: visType,
+          priority: prio
         });
+        if (modalIssue) modalIssue.style.display = "none";
         renderAppointmentsQueue(container);
       } catch (err) {
-        alert(err.message);
+        alert("Failed to issue token: " + err.message);
       }
     });
 
-    container.querySelector("#btnBookApptModal")?.addEventListener("click", async () => {
-      const firstAvail = (avail.slots || []).find(s => s.is_available);
-      if (!firstAvail) {
-        alert("No available slot found today.");
+    // Modal Control: Book Appointment
+    const modalBook = container.querySelector("#modal-book-appt");
+    container.querySelector("#btnBookApptModal")?.addEventListener("click", () => {
+      if (modalBook) modalBook.style.display = "flex";
+    });
+    container.querySelector("#btnCloseBookApptModal")?.addEventListener("click", () => {
+      if (modalBook) modalBook.style.display = "none";
+    });
+    container.querySelector("#btnCancelBookAppt")?.addEventListener("click", () => {
+      if (modalBook) modalBook.style.display = "none";
+    });
+
+    container.querySelector("#btnSubmitBookAppt")?.addEventListener("click", async () => {
+      const patId = container.querySelector("#select-appt-patient")?.value || "pat-syn-001";
+      const slotVal = container.querySelector("#select-appt-slot")?.value;
+      if (!slotVal) {
+        alert("Please select a valid appointment time slot.");
         return;
       }
+      const [startAt, endAt] = slotVal.split("|");
+      const apptType = container.querySelector("#select-appt-type")?.value || "INITIAL_CONSULTATION";
+      const reasonCat = container.querySelector("#select-appt-category")?.value || "GENERAL_CONSULTATION";
+
       try {
         await apiClient.post("/api/v1/appointments", {
-          patient_id: "pat-syn-003",
+          patient_id: patId,
           practitioner_id: "usr-hakeem-1",
-          start_at: firstAvail.start_at,
-          end_at: firstAvail.end_at,
-          appointment_type: "INITIAL_CONSULTATION",
-          reason_category: "GENERAL_CONSULTATION"
+          start_at: startAt,
+          end_at: endAt,
+          appointment_type: apptType,
+          reason_category: reasonCat
         });
+        if (modalBook) modalBook.style.display = "none";
         renderAppointmentsQueue(container);
       } catch (err) {
-        alert(err.message);
+        alert("Failed to book appointment: " + err.message);
       }
     });
 
@@ -188,13 +333,14 @@ export async function renderAppointmentsQueue(container) {
 
     container.querySelectorAll(".btn-start-tok").forEach(btn => {
       btn.addEventListener("click", async () => {
-        await apiClient.post(`/api/v1/queue/tokens/${btn.dataset.id}/start`, {});
-        if (btn.dataset.enc) {
-          state.activeEncounterId = btn.dataset.enc;
+        try {
+          const res = await apiClient.post(`/api/v1/queue/tokens/${btn.dataset.id}/start`, {});
+          const encId = res.token?.encounter_id || btn.dataset.enc;
+          state.activeEncounterId = encId;
           state.activePatientId = btn.dataset.pat;
           state.setActiveTab("consultation");
-        } else {
-          renderAppointmentsQueue(container);
+        } catch (err) {
+          alert(`Error starting consultation: ${err.message}`);
         }
       });
     });
@@ -226,9 +372,9 @@ export async function renderBillingView(container) {
   container.innerHTML = `<div class="card"><p>Loading Clinic Billing & Collections...</p></div>`;
   try {
     const [feesRes, invRes, repRes] = await Promise.all([
-      apiClient.get("/api/v1/billing/fee-catalog"),
-      apiClient.get("/api/v1/billing/invoices"),
-      apiClient.get("/api/v1/billing/reports/collections")
+      apiClient.get("/api/v1/billing/fee-catalog").catch(() => ({ fee_catalog: [] })),
+      apiClient.get("/api/v1/billing/invoices").catch(() => ({ invoices: [] })),
+      apiClient.get("/api/v1/billing/reports/collections").catch(() => ({ collections_report: {} }))
     ]);
 
     const fees = feesRes.fee_catalog || [];
@@ -238,7 +384,7 @@ export async function renderBillingView(container) {
     const invRowsHtml = invoices.map(i => `
       <tr>
         <td><strong><code>${i.invoice_number}</code></strong></td>
-        <td>${i.patient_name} (${i.patient_mrn})</td>
+        <td>${(i.patient_name || '').replace(/\s*\[Synthetic\]/gi, "")} (${i.patient_mrn})</td>
         <td>${i.currency} ${i.total_decimal}</td>
         <td>${i.currency} ${i.paid_decimal}</td>
         <td><strong>${i.currency} ${i.balance_due_decimal}</strong></td>
@@ -285,22 +431,24 @@ export async function renderBillingView(container) {
           <h3 class="card-title">Invoices (${invoices.length})</h3>
           <span class="badge badge-info">Fee Catalog Items: ${fees.length}</span>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Invoice #</th>
-              <th>Patient</th>
-              <th>Total</th>
-              <th>Paid</th>
-              <th>Balance Due</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${invRowsHtml || '<tr><td colspan="7" style="text-align:center;">No invoices created yet.</td></tr>'}
-          </tbody>
-        </table>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Patient</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Balance Due</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invRowsHtml || '<tr><td colspan="7" style="text-align:center;">No invoices created yet.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
 
@@ -354,8 +502,8 @@ export async function renderInventoryView(container) {
   container.innerHTML = `<div class="card"><p>Loading Dispensary Inventory & FEFO Batches...</p></div>`;
   try {
     const [stockRes, batchesRes] = await Promise.all([
-      apiClient.get("/api/v1/inventory/stock"),
-      apiClient.get("/api/v1/inventory/batches")
+      apiClient.get("/api/v1/inventory/stock").catch(() => ({ stock: { items: [] } })),
+      apiClient.get("/api/v1/inventory/batches").catch(() => ({ batches: [] }))
     ]);
 
     const stock = stockRes.stock || { items: [] };
@@ -372,15 +520,44 @@ export async function renderInventoryView(container) {
       </tr>
     `).join("");
 
-    const batchRowsHtml = batches.map(b => `
-      <tr>
-        <td><code>${b.batch_number}</code></td>
-        <td>${b.item_name}</td>
-        <td>${b.expiry_date}</td>
-        <td>${b.quantity_on_hand_decimal} ${b.item_unit}</td>
-        <td><span class="badge ${b.is_dispensable ? 'badge-success' : 'badge-danger'}">${b.status}${b.is_expired ? ' (EXPIRED)' : ''}</span></td>
-      </tr>
-    `).join("");
+    const now = new Date();
+    const batchRowsHtml = batches.map(b => {
+      let expiryBadge = "";
+      if (b.expiry_date) {
+        const expDate = new Date(b.expiry_date);
+        const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 0 || b.is_expired) {
+          expiryBadge = `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #f87171; font-weight:700;">⛔ EXPIRED (BLOCKED)</span>`;
+        } else if (diffDays <= 45) {
+          expiryBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; font-weight:700;">⚠️ NEAR EXPIRY (${diffDays}d left — FEFO Priority)</span>`;
+        } else {
+          expiryBadge = `<span class="badge" style="background:#dcfce7; color:#166534; border:1px solid #86efac; font-weight:600;">✓ VALID (${diffDays}d left)</span>`;
+        }
+      } else {
+        expiryBadge = `<span class="badge badge-secondary">STANDARD</span>`;
+      }
+
+      // Schedule E1 Mudabbar alert
+      const isE1 = b.is_schedule_e1 || (b.item_name && /azaraqi|kuchla|suranjan|afyoon|bhang|sammul|hilteet/i.test(b.item_name));
+      let mudabbarBadge = "";
+      if (isE1) {
+        if (b.mudabbar_cert) {
+          mudabbarBadge = `<div style="margin-top:0.25rem;"><span class="badge" style="background:#ede9fe; color:#5b21b6; border:1px solid #c4b5fd;">🧪 Mudabbar Cert: <code>${b.mudabbar_cert}</code></span></div>`;
+        } else {
+          mudabbarBadge = `<div style="margin-top:0.25rem;"><span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fca5a5; font-weight:700;">⚠️ Schedule E(1): Mudabbar Required</span></div>`;
+        }
+      }
+
+      return `
+        <tr>
+          <td><code>${b.batch_number}</code></td>
+          <td><strong>${b.item_name}</strong>${mudabbarBadge}</td>
+          <td>${b.expiry_date || '—'}</td>
+          <td>${b.quantity_on_hand_decimal} ${b.item_unit}</td>
+          <td>${expiryBadge}</td>
+        </tr>
+      `;
+    }).join("");
 
     container.innerHTML = `
       <div style="margin-bottom: 1rem;">
@@ -394,37 +571,41 @@ export async function renderInventoryView(container) {
         <div class="card-header">
           <h3 class="card-title">Stock on Hand & FEFO Suggestions</h3>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>SKU</th>
-              <th>Item Name</th>
-              <th>Form</th>
-              <th>Dispensable Qty</th>
-              <th>FEFO Suggested Batch</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>${itemRowsHtml}</tbody>
-        </table>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Item Name</th>
+                <th>Form</th>
+                <th>Dispensable Qty</th>
+                <th>FEFO Suggested Batch</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>${itemRowsHtml}</tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">Batch / Lot Traceability (${batches.length})</h3>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Batch #</th>
-              <th>Medicine</th>
-              <th>Expiry Date</th>
-              <th>On Hand</th>
-              <th>Dispensability</th>
-            </tr>
-          </thead>
-          <tbody>${batchRowsHtml}</tbody>
-        </table>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Batch #</th>
+                <th>Medicine</th>
+                <th>Expiry Date</th>
+                <th>On Hand</th>
+                <th>Dispensability</th>
+              </tr>
+            </thead>
+            <tbody>${batchRowsHtml}</tbody>
+          </table>
+        </div>
       </div>
     `;
   } catch (err) {

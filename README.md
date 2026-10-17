@@ -105,10 +105,11 @@ python3 -m apps.api.database.migrator
 python3 -m apps.api.database.seed
 
 # Run complete test suite (70 tests passing in ~1.9s)
-python3 -m unittest discover -s tests -p "test_*.py" -v
+# 1-Click Launch (Recommended - automatically frees port & opens browser)
+./start_matab.sh
 
-# Launch the standalone server on http://127.0.0.1:8000
-python3 -m apps.api.main
+# Or launch manually on http://127.0.0.1:8080
+python3 apps/api/main.py
 ```
 
 ### Demo Development Accounts

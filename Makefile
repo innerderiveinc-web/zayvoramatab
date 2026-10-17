@@ -29,4 +29,4 @@ seed:
 	python3 -m apps.api.database.seed
 
 run:
-	python3 -m apps.api.main
+	./start_matab.sh

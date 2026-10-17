@@ -4,7 +4,7 @@
  */
 
 import { state } from "../state.js";
-import { apiClient } from "../../../../packages/api-client/client.js";
+import { apiClient } from "/packages/api-client/client.js";
 
 export async function renderPilotLaunch(container) {
   const user = state.user;
@@ -17,7 +17,7 @@ export async function renderPilotLaunch(container) {
             <span>Controlled Pilot Launch & Clinic Onboarding</span>
           </h2>
           <p style="margin: 0.25rem 0 0 0; color: #64748b; font-size: 0.9rem;">
-            Prompt 14 Operational Readiness, Scope Enforcement, 13-Stage Facility Onboarding & Clinical Safety Triage
+            Operational Readiness, Scope Enforcement, 13-Stage Facility Onboarding & Clinical Safety Triage
           </p>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
@@ -25,7 +25,7 @@ export async function renderPilotLaunch(container) {
             Program: LOADING...
           </span>
           <span class="badge" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
-            Audit Ref: AUDIT-PROMPT13-REPORT-2026-10-13
+            Audit Ref: AUDIT-CLINICAL-GOVERNANCE-2026-10-13
           </span>
         </div>
       </div>
@@ -34,7 +34,7 @@ export async function renderPilotLaunch(container) {
         <button id="tabOverviewBtn" class="btn btn-sm btn-primary">📊 Pilot Scope & Eligibility</button>
         <button id="tabChecklistBtn" class="btn btn-sm btn-secondary">📋 13-Stage Facility Onboarding</button>
         <button id="tabTrainingBtn" class="btn btn-sm btn-secondary">🎓 Staff Training & Acceptance</button>
-        <button id="tabMigrationBtn" class="btn btn-sm btn-secondary">📥 Data Migration (Dry-Run)</button>
+        <button id="tabMigrationBtn" class="btn btn-sm btn-secondary">📥 Data Migration (Pre-Validation)</button>
         <button id="tabSupportBtn" class="btn btn-sm btn-secondary">🛡️ Support & Clinical Safety Queue</button>
         <button id="tabMetricsBtn" class="btn btn-sm btn-secondary">📈 Metrics & Review Packs</button>
       </div>
@@ -355,7 +355,7 @@ async function renderTraining(container) {
           <div>
             <h3 style="margin: 0; font-size: 1.1rem; color: #1e293b;">🎓 Role-Based Training & Acceptance Tracker</h3>
             <p style="margin: 0.25rem 0 0 0; color: #64748b; font-size: 0.85rem;">
-              Versioned curricula with synthetic scenario practice. Completion rate: ${matrix.completion_rate_percentage || 0}%
+              Versioned curricula with practical clinical scenario drills. Completion rate: ${matrix.completion_rate_percentage || 0}%
             </p>
           </div>
           <div>
@@ -402,7 +402,7 @@ async function renderTraining(container) {
           if (score !== null) {
             await apiClient.post(`/api/v1/pilot/training/enrollments/${res.enrollment.id}/complete`, {
               score: parseInt(score, 10),
-              scenario_acceptance_notes: "Successfully passed synthetic consultation and safety override scenario."
+              scenario_acceptance_notes: "Successfully passed clinical consultation and safety override evaluation."
             });
             alert("Staff member successfully trained and certified!");
           }
@@ -426,7 +426,7 @@ async function renderMigration(container) {
     <div class="card p-3" style="background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
       <h3 style="margin-top: 0; font-size: 1.1rem; color: #1e293b;">📥 Governed Data Migration & Controlled Import</h3>
       <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1rem;">
-        Dry-run verification prevents data corruption. Identifies ambiguous duplicates and normalizes patient records before live write.
+        Pre-import validation safeguards clinical record integrity. Identifies potential duplicates and normalizes demographic data prior to live import.
       </p>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -454,14 +454,14 @@ async function renderMigration(container) {
 ]</textarea>
 
           <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-            <button id="runDryRunBtn" class="btn btn-sm btn-primary">🔍 Execute DRY-RUN (Zero DB Mutation)</button>
-            <button id="runExecuteBtn" class="btn btn-sm btn-secondary">💾 Commit EXECUTE Import</button>
+            <button id="runDryRunBtn" class="btn btn-sm btn-primary">🔍 Preview & Validate (Safe Audit)</button>
+            <button id="runExecuteBtn" class="btn btn-sm btn-secondary">💾 Commit & Import Records</button>
           </div>
         </div>
 
         <div id="migrationOutputBox" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1rem; overflow-y: auto; max-height: 350px;">
           <div style="color: #94a3b8; font-size: 0.85rem; text-align: center; margin-top: 3rem;">
-            Run a DRY-RUN reconciliation to inspect duplicate detection and record counts.
+            Validate the records preview above to verify duplicate checks and schema compliance.
           </div>
         </div>
       </div>

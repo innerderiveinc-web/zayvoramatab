@@ -129,7 +129,7 @@ async function loadPatients(container, query = "") {
               <tr>
                 <td><code style="font-weight: 700; color: var(--matab-color-brand-primary);">${p.mrn}</code></td>
                 <td>
-                  <strong>${escapeHtml(p.display_name)}</strong>
+                  <strong>${escapeHtml((p.display_name || (p.given_name + ' ' + (p.family_name || ''))).replace(/\s*\[Synthetic\]/gi, ""))}</strong>
                   ${p.preferred_language ? `<span style="font-size: 0.75rem; color: var(--matab-color-text-muted); margin-left: 0.35rem;">(${p.preferred_language.toUpperCase()})</span>` : ""}
                 </td>
                 <td>${formatAgeDob(p)}</td>
@@ -208,7 +208,7 @@ async function renderPatient360(container, patientId) {
           </button>
           <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
             <h1 style="font-size: 1.5rem; color: var(--matab-color-brand-primary); margin: 0;">
-              ${escapeHtml(p.display_name)}
+              ${escapeHtml((p.display_name || (p.given_name + ' ' + (p.family_name || ''))).replace(/\s*\[Synthetic\]/gi, ""))}
             </h1>
             <code style="background: var(--matab-color-bg-muted); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700;">
               ${p.mrn}
@@ -602,10 +602,10 @@ async function renderDuplicatesTab(container, contentArea, patientId) {
       <div class="card">
         <div style="margin-bottom: 1rem;">
           <h3 style="font-size: 1.1rem; color: var(--matab-color-brand-primary); margin: 0;">
-            Deterministic Duplicate Resolution Queue
+            Patient Record Matching & Verification Queue
           </h3>
           <p style="font-size: 0.85rem; color: var(--matab-color-text-secondary); margin-top: 0.25rem;">
-            Potential duplicate matches flagged by deterministic clinical heuristics. Automatic merges are strictly prohibited.
+            Potential duplicate medical records identified for operator review. To ensure clinical safety and record integrity, each match requires explicit manual verification.
           </p>
         </div>
 
@@ -681,8 +681,15 @@ async function renderDuplicatesTab(container, contentArea, patientId) {
 }
 
 async function resolveDuplicate(container, patientId, candidateId, decision) {
-  const notes = prompt(`Enter resolution justification for ${decision.replace(/_/g, " ")}:`, "Human operator verified separate clinical identities");
-  if (notes === null) return;
+  const notes = await window.openPromptModal({
+    title: "Duplicate Patient Resolution",
+    message: `Enter operational and clinical justification for marking as ${decision.replace(/_/g, " ")}:`,
+    defaultValue: "Clinical operator verified separate identities and demographics",
+    placeholder: "e.g., Verified separate clinical identities via phone and address check",
+    confirmText: "Record Resolution",
+    required: true
+  });
+  if (!notes) return;
 
   try {
     await apiClient.post(`/api/v1/patients/${patientId}/duplicate-resolutions/${candidateId}`, {
@@ -716,11 +723,11 @@ function openRegisterModal(container) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
               <div class="form-group">
                 <label class="form-label">Given Name *</label>
-                <input type="text" id="reg-given-name" class="form-input" placeholder="e.g. Tariq / طارق" required />
+                <input type="text" id="reg-given-name" class="form-input" placeholder="e.g. Tariq" required />
               </div>
               <div class="form-group">
                 <label class="form-label">Family / Last Name</label>
-                <input type="text" id="reg-family-name" class="form-input" placeholder="e.g. Ahmad / احمد" />
+                <input type="text" id="reg-family-name" class="form-input" placeholder="e.g. Ahmad" />
               </div>
             </div>
 
@@ -1219,9 +1226,16 @@ function openEncounterLifecycleWorkspace(container, encounter, onDone) {
 
     const cancelBtn = modalContainer.querySelector("#btn-trans-cancel");
     if (cancelBtn) {
-      cancelBtn.addEventListener("click", () => {
-        const reason = prompt("Enter required reason for encounter cancellation:", "Patient requested rescheduling");
-        if (reason && reason.trim()) {
+      cancelBtn.addEventListener("click", async () => {
+        const reason = await window.openPromptModal({
+          title: "Cancel Clinical Encounter",
+          message: "A documented operational or clinical reason is required to cancel this encounter:",
+          defaultValue: "Patient requested rescheduling",
+          placeholder: "e.g., Patient requested rescheduling due to emergency",
+          confirmText: "Cancel Encounter",
+          required: true
+        });
+        if (reason) {
           doTransition("CANCELLED", reason.trim());
         }
       });
@@ -1317,18 +1331,24 @@ function openAddIdentifierModal(container, patientId, onAdded) {
   });
 }
 
-function openRetireIdentifierModal(container, patientId, identifierId, onRetired) {
-  const reason = prompt("Enter justification for retiring this identifier (e.g. Entered in error / Replaced):", "Entered in error");
-  if (!reason || !reason.trim()) return;
+async function openRetireIdentifierModal(container, patientId, identifierId, onRetired) {
+  const reason = await window.openPromptModal({
+    title: "Retire Patient Identifier",
+    message: "Enter audit justification for retiring this identifier (e.g. Entered in error / Replaced):",
+    defaultValue: "Entered in error",
+    placeholder: "e.g., Entered in error / Replaced by official government card",
+    confirmText: "Retire Identifier",
+    required: true
+  });
+  if (!reason) return;
 
-  apiClient.post(`/api/v1/patients/${patientId}/identifiers/${identifierId}/retire`, { reason: reason.trim() })
-    .then(() => {
-      alert("Identifier retired successfully.");
-      onRetired();
-    })
-    .catch(err => {
-      alert(`Failed to retire identifier: ${err.message}`);
-    });
+  try {
+    await apiClient.post(`/api/v1/patients/${patientId}/identifiers/${identifierId}/retire`, { reason: reason.trim() });
+    window.showToast("Identifier retired successfully.", "success");
+    onRetired();
+  } catch (err) {
+    window.showToast(`Failed to retire identifier: ${err.message}`, "error");
+  }
 }
 
 function openRecordConsentModal(container, patientId, onRecorded) {
@@ -1396,18 +1416,24 @@ function openRecordConsentModal(container, patientId, onRecorded) {
   });
 }
 
-function openWithdrawConsentModal(container, patientId, consentId, onWithdrawn) {
-  const reason = prompt("Enter patient's reason for withdrawing consent:", "Patient verbal request to withdraw");
-  if (!reason || !reason.trim()) return;
+async function openWithdrawConsentModal(container, patientId, consentId, onWithdrawn) {
+  const reason = await window.openPromptModal({
+    title: "Withdraw Patient Consent",
+    message: "Enter documented reason for withdrawing consent:",
+    defaultValue: "Patient verbal request to withdraw",
+    placeholder: "e.g., Patient verbal request at front desk",
+    confirmText: "Withdraw Consent",
+    required: true
+  });
+  if (!reason) return;
 
-  apiClient.post(`/api/v1/patients/${patientId}/consents/${consentId}/withdraw`, { reason: reason.trim() })
-    .then(() => {
-      alert("Consent withdrawn successfully.");
-      onWithdrawn();
-    })
-    .catch(err => {
-      alert(`Failed to withdraw consent: ${err.message}`);
-    });
+  try {
+    await apiClient.post(`/api/v1/patients/${patientId}/consents/${consentId}/withdraw`, { reason: reason.trim() });
+    window.showToast("Consent withdrawn successfully.", "success");
+    onWithdrawn();
+  } catch (err) {
+    window.showToast(`Failed to withdraw consent: ${err.message}`, "error");
+  }
 }
 
 // -------------------------------------------------------------

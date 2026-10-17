@@ -1,0 +1,19 @@
+# ADR-050: Enterprise Interoperability, FHIR APIs & ABDM Data Exchange Engine
+
+- **Status:** Accepted
+- **Date:** October 2026
+- **Context:** Healthcare delivery requires secure data interoperability with external hospitals, laboratories, referral networks, and India's Ayushman Bharat Digital Mission (ABDM). Classical Unani medicine relies on unique holistic concepts (Mizaj, Akhlat, Nuskha formulations) that must not be forced into lossy standard codes without reviewed equivalence. Furthermore, external records received from foreign institutions must never silently overwrite local clinical charts or automatically alter active medications. Data exchanges must be governed by active, time- and scope-limited patient consent, durable idempotent queues, replay-safe callback authentication, and cryptographic audit logging.
+- **Decision:** Implement Migration 030 (`interop_specification_registry`, `interop_terminology_mappings`, `abdm_consent_requests`, `abdm_consent_artefacts`, `inbound_record_reconciliations`, `interop_transfer_outbox`, `interop_webhook_verifications`); build `EnterpriseInteroperabilityEngine`:
+  1. **Pinned Specifications:** Enforce authoritative version pinning (HL7 FHIR R4.0.1, NRCeS ABDM IG `ndhm.in#6.5.0`, LOINC 2.76, SNOMED CT 2024-03, UCUM 2.1, ABDM HIE-CM v3) with SHA-256 package checksum verification.
+  2. **Unani Terminology Preservation:** Classify terminology mappings into 4 explicit states (`exact_reviewed`, `broader_than`, `narrower_than`, `no_safe_mapping`). Default classical concepts to `no_safe_mapping`, preserving canonical Urdu/Arabic names and internal URI coding in FHIR output without misleading coercion.
+  3. **Deterministic NRCeS FHIR R4 DocumentBundle Builder:** Generate compliant DocumentBundles with `Composition` as the mandatory first entry, incorporating Patient, Practitioner, Encounter, Condition, and Observation resources with deterministic bundle SHA-256 hashing.
+  4. **ABDM Milestones (M1–M4):**
+     - M1: Verify ABHA address and 14-digit number, linking to patient records.
+     - M2: Discover care contexts without exposing clinical diagnosis or medication PHI in display strings.
+     - M3: Create structured consent requests and validate granted consent artefact scope (status, date range, HI types). Enforce immediate blocking upon revocation.
+     - M4: Validate facility HFR and clinician HPR registry credentials.
+  5. **Inbound Clinical Reconciliation Queue:** Stage incoming external records in an isolated review queue. Require explicit clinician reconciliation action (`ACCEPTED`, `REJECTED`, `CONTRADICTION_FLAGGED`, `ATTACHED_AS_DOCUMENT`) prior to incorporating data into local encounters. Zero silent overwrites.
+  6. **Durable Outbox & Replay Protection:** Implement transactional outbox with idempotency keys and retry policies. Validate inbound webhooks for timestamp freshness ($\le 300$s) and duplicate request IDs.
+  7. **Tamper-Evident Audit Ledger Integration:** Emit structured events (`INTEROP_FHIR_EXPORT`, `INTEROP_ABDM_M1` through `M4`, `INTEROP_RECONCILE`, `INTEROP_OUTBOX_DISPATCH`) to Prompt 29's `ClinicalAuditLedgerEngine` ($H_i = \text{SHA-256}(C_i \parallel H_{i-1})$) using allowed result states (`succeeded`, `denied`, `blocked`, `failed`, `partial`, `unknown`).
+  8. **APIs & Web UI:** Mount 23 REST endpoints under `/api/v1/interop/*` with permission checks (`interop:read`, `interop:write`, `interop:admin`, `interop:reconcile`) and integrate the Interoperability & ABDM console into the Knowledge Admin web UI.
+- **Consequences:** Eliminates semantic distortion of Unani medical concepts, guarantees ABDM M1-M4 milestone readiness, prevents silent data contamination from external systems, enforces strict patient consent scope gating, and ensures complete legal defensibility via the immutable audit ledger.

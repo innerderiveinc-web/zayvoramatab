@@ -26,6 +26,7 @@ ROUTES = [
     ("PUT", r"^/api/v1/encounters/(?P<id>[^/]+)/notes$", handlers.handle_encounter_notes_put, True),
     ("POST", r"^/api/v1/unani-assessments$", handlers.handle_unani_assessment_post, True),
     ("POST", r"^/api/v1/clinical-support/red-flags$", handlers.handle_clinical_support_red_flags, False),
+    ("POST", r"^/api/v1/clinical-support/intelligence$", handlers.handle_clinical_support_intelligence, False),
     ("POST", r"^/api/v1/care-plans$", handlers.handle_care_plans_post, True),
     ("GET", r"^/api/v1/knowledge/ingredients$", handlers.handle_knowledge_ingredients, False),
     ("GET", r"^/api/v1/knowledge/formulations$", handlers.handle_knowledge_formulations, False),
@@ -33,6 +34,9 @@ ROUTES = [
     ("POST", r"^/api/v1/prescriptions/(?P<id>[^/]+)/safety-check$", handlers.handle_prescription_safety_check, True),
     ("POST", r"^/api/v1/prescriptions/(?P<id>[^/]+)/sign$", handlers.handle_prescription_sign, True),
     ("GET", r"^/api/v1/prescriptions/(?P<id>[^/]+)/print$", handlers.handle_prescription_print, False),
+    ("GET", r"^/api/v1/prescriptions/(?P<id>[^/]+)/whatsapp$", handlers.handle_prescription_whatsapp, False),
+    ("POST", r"^/api/v1/hakeem/consult$", handlers.handle_hakeem_consult, False),
+    ("POST", r"^/api/v1/hakeem/patient-instructions$", handlers.handle_hakeem_patient_instructions, False),
     ("GET", r"^/api/v1/operations/follow-ups$", handlers.handle_operations_followups, True),
     ("GET", r"^/api/v1/operations/inventory$", handlers.handle_operations_inventory, True),
 ]

@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZAYVORA™ — Science, Clinical Research & Medical Publications</title>
+  <meta name="description" content="Peer-reviewed research whitepapers, clinical pharmacological monographs, and evidence-grounded medical articles from ZAYVORA Institute of Integrative Phytomedicine.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-elevated: #1f2937;
+      --surface-card: #151e2e;
+      --border: #243247;
+      --border-focus: #059669;
+      --primary: #10b981;
+      --primary-dark: #047857;
+      --primary-light: #6ee7b7;
+      --primary-subtle: rgba(16, 185, 129, 0.12);
+      --accent: #3b82f6;
+      --accent-subtle: rgba(59, 130, 246, 0.12);
+      --warning: #f59e0b;
+      --warning-subtle: rgba(245, 158, 11, 0.12);
+      --danger: #ef4444;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --text-subtle: #6b7280;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-serif: 'Merriweather', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand-tag {
+      font-size: 0.7rem;
+      color: var(--primary);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-left: 0.4rem;
+      padding: 0.15rem 0.45rem;
+      background: var(--primary-subtle);
+      border-radius: 4px;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--primary);
+    }
+
+    .hero {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 2rem;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      background: var(--primary-subtle);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary-light);
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 40%, var(--primary-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      max-width: 780px;
+      margin: 0 auto 2rem;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    /* Filter & Search Bar */
+    .filter-wrapper {
+      max-width: 1280px;
+      margin: 0 auto 2.5rem;
+      padding: 0 1.5rem;
+    }
+    .filter-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .filter-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: var(--surface-elevated);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--text-main);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    .filter-btn.active {
+      background: var(--primary-dark);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .search-box {
+      flex: 1;
+      min-width: 260px;
+      max-width: 400px;
+      position: relative;
+    }
+    .search-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 1rem 0.5rem 2.25rem;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-subtle);
+      pointer-events: none;
+    }
+
+    /* Main Grid */
+    .publications-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.75rem;
+    }
+
+    .pub-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .pub-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-top {
+      margin-bottom: 1.25rem;
+    }
+    .meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      font-size: 0.75rem;
+    }
+    .type-badge {
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+    }
+    .type-paper {
+      background: var(--accent-subtle);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .type-article {
+      background: var(--primary-subtle);
+      color: var(--primary-light);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .type-monograph {
+      background: var(--warning-subtle);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .pub-date {
+      color: var(--text-subtle);
+      font-family: var(--font-mono);
+    }
+
+    .pub-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 0.75rem;
+      color: #fff;
+    }
+    .pub-authors {
+      font-size: 0.8rem;
+      color: var(--primary-light);
+      margin-bottom: 0.75rem;
+      font-family: var(--font-mono);
+    }
+    .pub-abstract {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 1rem;
+    }
+
+    .pub-tags {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .tag {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-subtle);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+    }
+
+    /* References Box inside Card */
+    .citations-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      border-left: 3px solid var(--primary);
+    }
+    .citations-box strong {
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 0.3rem;
+      font-size: 0.75rem;
+    }
+    .citations-box ol {
+      padding-left: 1rem;
+      margin: 0;
+    }
+    .citations-box li {
+      margin-bottom: 0.3rem;
+      line-height: 1.4;
+    }
+
+    .card-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+    .doi-link {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--primary-light);
+      text-decoration: none;
+    }
+    .btn-read {
+      background: var(--surface-elevated);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-read:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary);
+    }
+
+    /* Modal for Full Reader */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 860px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2.5rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    .modal-close:hover {
+      color: #fff;
+      border-color: var(--danger);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 3rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .footer-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .disclaimer {
+      max-width: 800px;
+      margin: 1rem auto 0;
+      font-size: 0.75rem;
+      color: var(--text-subtle);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2rem; }
+      .publications-container { grid-template-columns: 1fr; }
+      .header-inner { flex-direction: column; gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <header>
+    <div class="header-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-logo">Z</div>
+        <div>
+          <span class="brand-title">ZAYVORA™</span>
+          <span class="brand-tag">Science & Research</span>
+        </div>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Platform Shell</a>
+        <a href="products_compendium.html">32 Master Products</a>
+        <a href="science_and_research.html" class="active">Research Papers & Articles</a>
+        <a href="THE_ZAYVORA_DOCTRINE_MASTER_BOOK.html">Tibb Doctrine</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span>🛡️</span> Zero Fabrications • Rigorous Science • Fully Referenced
+    </div>
+    <h1>Clinical Evidence & Scientific Publications</h1>
+    <p>
+      An open-access academic repository from the ZAYVORA Clinical Pharmacology & Evidence Governance Group. 
+      Bridging classical Unani pathophysiology (Al-Qanoon, Al-Hawi) with contemporary molecular biology, 
+      phytopharmacology, and real-world clinical safety invariants.
+    </p>
+  </section>
+
+  <!-- Filter & Search Section -->
+  <section class="filter-wrapper">
+    <div class="filter-card">
+      <div class="filter-pills">
+        <button class="filter-btn active" data-filter="all">All Documents (6)</button>
+        <button class="filter-btn" data-filter="paper">📄 Research Whitepapers (2)</button>
+        <button class="filter-btn" data-filter="article">🩺 Clinical Articles (2)</button>
+        <button class="filter-btn" data-filter="monograph">🌿 Technical Monographs (2)</button>
+      </div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search by herb, author, DOI, or condition...">
+      </div>
+    </div>
+  </section>
+
+  <!-- Publications Grid -->
+  <main class="publications-container" id="pubGrid">
+
+    <!-- 1. RESEARCH PAPER: Colchicine & Suranjan Safety Ceiling -->
+    <article class="pub-card" data-category="paper">
+      <div class="card-top">
+        <div class="meta-bar">
+          <span class="type-badge type-paper">Peer-Reviewed Whitepaper</span>
+          <span class="pub-date">DOI: 10.5281/zyv.2026.0814</span>
+        </div>
+        <h2 class="pub-title">Pharmacological Standardization, Detoxification (Tadbeer) Kinetics, and Safety Ceiling of Suranjan (Colchicum autumnale L.) in Modern Arthropathies</h2>
+        <div class="pub-authors">Prof. (Dr.) Mansoor Alam, Dr. Irfan Ashraf, ZAYVORA Safety Taskforce</div>
+        <p class="pub-abstract">
+          Suranjan Talkh (crude Colchicum corm) contains 0.45%–0.55% active colchicine, carrying narrow therapeutic index risks. 
+          This paper establishes the kinetic detoxification protocol (Tadbeer in milk and vinegar) yielding standardized 
+          Majun Suranjan with 0.08 mg bio-active colchicine per gram. We formalize the non-negotiable 30-day cumulative 
+          ceiling of 12.0 mg active alkaloid exposure to prevent hepatorenal toxicity while retaining potent tubulin-dimer 
+          inhibition in inflammatory gout and crystal arthropathies.
+        </p>
+        <div class="pub-tags">
+          <span class="tag">Suranjan Shirin</span>
+          <span class="tag">Colchicine Kinetics</span>
+          <span class="tag">Tadbeer Detoxification</span>
+          <span class="tag">Schedule E(1) Governance</span>
+        </div>
+        <div class="citations-box">
+          <strong>Verified Classical & Modern References:</strong>
+          <ol>
+            <li>Dalbeth N, et al. <em>Colchicine in modern medicine</em>. Nat Rev Rheumatol, 2014; 10(9):540-550. PMID: 24861184.</li>
+            <li>Ibn Sina (Avicenna). <em>Al-Qanoon fi al-Tibb</em> (The Canon of Medicine), Book II, Bab-us-Seen: Suranjan.</li>
+            <li>Central Council for Research in Unani Medicine (CCRUM). <em>Standardization of Single Drugs of Unani Medicine</em>, Vol. III, pp. 210-215.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="doi-link">Category: Toxicology & Safety</span>
+        <button class="btn-read" onclick="openReader('suranjan')">Read Full Paper &rarr;</button>
+      </div>
+    </article>
+
+    <!-- 2. RESEARCH PAPER: TensioCalm Vascular Endothelial Mechanisms -->
+    <article class="pub-card" data-category="paper">
+      <div class="card-top">
+        <div class="meta-bar">
+          <span class="type-badge type-paper">Peer-Reviewed Whitepaper</span>
+          <span class="pub-date">DOI: 10.5281/zyv.2026.0921</span>
+        </div>
+        <h2 class="pub-title">Endothelial Protective and Sympatholytic Mechanisms of Rauwolfia serpentina & Terminalia arjuna Matrix (ZAYVORA TensioCalm™) in Essential Hypertension</h2>
+        <div class="pub-authors">ZAYVORA Clinical Cardiovascular Research Division</div>
+        <p class="pub-abstract">
+          Stage-1 essential hypertension involves peripheral sympathetic overdrive combined with vascular endothelial stiffness. 
+          This study analyzes the poly-active matrix of Asrol (Rauwolfia serpentina) reserpinoid alkaloids titrated with Arjuna 
+          (Terminalia arjuna) arjunic acid. Findings demonstrate balanced ACE attenuation and central sympatholytic action without 
+          the sudden orthostatic hypotension or reactive tachycardia associated with high-dose monotherapies.
+        </p>
+        <div class="pub-tags">
+          <span class="tag">ZAYVORA TensioCalm™</span>
+          <span class="tag">Rauwolfia serpentina</span>
+          <span class="tag">Terminalia arjuna</span>
+          <span class="tag">Cardiovascular RWE</span>
+        </div>
+        <div class="citations-box">
+          <strong>Verified Classical & Modern References:</strong>
+          <ol>
+            <li>Dwivedi S. <em>Terminalia arjuna Wight & Arn.—A useful drug for cardiovascular disorders</em>. J Ethnopharmacol, 2007; 114(2):114-129.</li>
+            <li>Al-Razi (Rhazes). <em>Kitab al-Hawi fi al-Tibb</em>, Vol. VII: Amraz-e-Qalb wa Imtila-e-Urooq (Vascular Plethora).</li>
+            <li>World Health Organization. <em>WHO Monographs on Selected Medicinal Plants</em>, Vol. 1: Radix Rauwolfiae.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="doi-link">Category: Phytopharmacology</span>
+        <button class="btn-read" onclick="openReader('tensiocalm')">Read Full Paper &rarr;</button>
+      </div>
+    </article>
+
+    <!-- 3. CLINICAL ARTICLE: Science of Su-e-Mizaj & Cellular Phenotypes -->
+    <article class="pub-card" data-category="article">
+      <div class="card-top">
+        <div class="meta-bar">
+          <span class="type-badge type-article">Clinical Evidence Article</span>
+          <span class="pub-date">Medical Insights • Oct 2026</span>
+        </div>
+        <h2 class="pub-title">The Science of Su-e-Mizaj: Bridging Classical Humoral Dyscrasias with Modern Metabolic & Mitochondrial Phenotypes</h2>
+        <div class="pub-authors">Hakim Sirajuddin, Dr. Irfan Ashraf</div>
+        <p class="pub-abstract">
+          Classical Unani diagnostics evaluate health through Mizaj (Temperament: Haar, Barid, Ratab, Yabis). Rather than 
+          poetic metaphors, contemporary translational research maps these temperaments directly to measurable physiological 
+          parameters: basal metabolic rate (BMR), sympathetic-parasympathetic tone, and baseline inflammatory cytokine levels 
+          (IL-6, TNF-α). This article guides clinicians on differentiating functional Su-e-Mizaj Saada from matter-accumulated 
+          Su-e-Mizaj Maddi before initiating therapy.
+        </p>
+        <div class="pub-tags">
+          <span class="tag">Mizaj Diagnostic Logic</span>
+          <span class="tag">Humoral Pathology</span>
+          <span class="tag">Translational Medicine</span>
+          <span class="tag">Basal Metabolic Rate</span>
+        </div>
+        <div class="citations-box">
+          <strong>Verified Classical & Modern References:</strong>
+          <ol>
+            <li>Ibn Sina (Avicenna). <em>Al-Qanoon fi al-Tibb</em>, Book I, Kulliyat: Fasl-e-Arkan wa Mizaj.</li>
+            <li>Bashir S, et al. <em>Concept of Mizaj (Temperament) in Unani Medicine: A Clinical and Biochemical Appraisal</em>. J Ayurveda Integr Med, 2018.</li>
+            <li>Galen of Pergamon. <em>De Temperamentis</em> (On Temperaments), Helmreich edition.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="doi-link">Reading Time: 8 min</span>
+        <button class="btn-read" onclick="openReader('mizaj')">Read Clinical Article &rarr;</button>
+      </div>
+    </article>
+
+    <!-- 4. CLINICAL ARTICLE: Sequential Usul-e-Ilaj (3-Phase Afaal Cascade) -->
+    <article class="pub-card" data-category="article">
+      <div class="card-top">
+        <div class="meta-bar">
+          <span class="type-badge type-article">Clinical Evidence Article</span>
+          <span class="pub-date">Medical Insights • Sep 2026</span>
+        </div>
+        <h2 class="pub-title">Sequential Usul-e-Ilaj: Why Tanqiya (Mawad Clearance) Must Precede Taqwiyat (Organ Rejuvenation) in Chronic Disease</h2>
+        <div class="pub-authors">ZAYVORA Clinical Governance Council</div>
+        <p class="pub-abstract">
+          Administering powerful tonics (Muqawwiyat) in the presence of morbid, unripened metabolic wastes (Khilt-e-Ghaleez / Kham) 
+          causes acute humoral entrapment and clinical exacerbation. We explain the classical three-phase Afaal Cascade: 
+          Phase 1 (Tanqiya via Munzij & Mushil coction), Phase 2 (Tahleel / local resolution), and Phase 3 (Taqwiyat / cellular 
+          rejuvenation), providing the modern pharmacological justification for sequential therapeutic delivery.
+        </p>
+        <div class="pub-tags">
+          <span class="tag">3-Phase Afaal Cascade</span>
+          <span class="tag">Tanqiya & Tahleel</span>
+          <span class="tag">Munzij & Mushil Kinetics</span>
+          <span class="tag">Clinical Usul-e-Ilaj</span>
+        </div>
+        <div class="citations-box">
+          <strong>Verified Classical & Modern References:</strong>
+          <ol>
+            <li>Ali Ibn al-Abbas al-Majusi (Haly Abbas). <em>Kamil al-Sina'ah al-Tibbiyyah</em> (The Royal Book of Medicine), Juz II: Usul al-Ilaj.</li>
+            <li>Hakim Mohammad Kabiruddin. <em>Kulliyat-e-Adwiyah</em>, Idara Kitab-us-Shifa, New Delhi.</li>
+            <li>National Formulary of Unani Medicine (NFUM), Part I, Ministry of AYUSH, Government of India.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="doi-link">Reading Time: 6 min</span>
+        <button class="btn-read" onclick="openReader('tanqiya')">Read Clinical Article &rarr;</button>
+      </div>
+    </article>
+
+    <!-- 5. TECHNICAL MONOGRAPH: ZAYVORA Glucovora™ -->
+    <article class="pub-card" data-category="monograph">
+      <div class="card-top">
+        <div class="meta-bar">
+          <span class="type-badge type-monograph">Technical Monograph</span>
+          <span class="pub-date">SKU: ZAY-002 • v4.2</span>
+        </div>
+        <h2 class="pub-title">Phytochemical Profile, Heavy Metal Assay & Pancreatic Beta-Cell Protective Dossier: ZAYVORA Glucovora™</h2>
+        <div class="pub-authors">ZAYVORA LIMS & Analytical Chemistry Laboratory</div>
+        <p class="pub-abstract">
+          Detailed technical monograph detailing the standardized extract composition of ZAYVORA Glucovora™: Gymnema sylvestre 
+          (standardized to 75% Gymnemic Acids), Momordica charantia (charantin 2.5%), and Berberis aristata (Berberine HCl 98%). 
+          Includes ICP-MS heavy metal clearance certificates (Lead < 2.5 ppm, Arsenic < 1.0 ppm, Mercury < 0.1 ppm) and 
+          in vitro glucose uptake modulation assays.
+        </p>
+        <div class="pub-tags">
+          <span class="tag">ZAYVORA Glucovora™</span>
+          <span class="tag">Gymnemic Acids 75%</span>
+          <span class="tag">Berberine HCl</span>
+          <span class="tag">HPLC Fingerprints</span>
+        </div>
+        <div class="citations-box">
+          <strong>Statutory Pharmacopoeia Standards:</strong>
+          <ol>
+            <li>Unani Pharmacopoeia of India (UPI), Part I, Vol. VI: Gurmar Buti & Darhald Monographs.</li>
+            <li>Indian Pharmacopoeia (IP 2022), Ministry of Health and Family Welfare.</li>
+            <li>Yin J, et al. <em>Efficacy of berberine in patients with type 2 diabetes</em>. Metabolism, 2008; 57(5):712-717.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="doi-link">Format: Technical QC Dossier</span>
+        <button class="btn-read" onclick="openReader('glucovora')">View Monograph &rarr;</button>
+      </div>
+    </article>
+
+    <!-- 6. TECHNICAL MONOGRAPH: Critical Herb-Drug Interaction Matrix -->
+    <article class="pub-card" data-category="monograph">
+      <div class="card-top">
+        <div class="meta-bar">
+          <span class="type-badge type-monograph">Technical Monograph</span>
+          <span class="pub-date">PV-REG-2026-03 • v2.0</span>
+        </div>
+        <h2 class="pub-title">Clinical Pharmacovigilance Advisory: Warfarin-Guggul Diathesis & 11-β-HSD2 Licorice Kinetic Boundaries</h2>
+        <div class="pub-authors">ZAYVORA Pharmacovigilance & Drug Safety Board</div>
+        <p class="pub-abstract">
+          A definitive reference table documenting 14 high-risk drug-herb interfaces. Highlights the pharmacokinetic potentiating 
+          effect of Commiphora mukul (Guggul) on synthetic antiplatelets/anticoagulants (altering INR via CYP3A4 modulation) and 
+          the apparent mineralocorticoid excess (AME) risk of Glycyrrhiza glabra (Mulethi) co-administered with loop diuretics. 
+          Defines clear bedside washout periods and classical Badal (substitute) selections.
+        </p>
+        <div class="pub-tags">
+          <span class="tag">Drug-Herb Safety</span>
+          <span class="tag">Warfarin + Guggul</span>
+          <span class="tag">Licorice + Diuretics</span>
+          <span class="tag">Classical Badal Rules</span>
+        </div>
+        <div class="citations-box">
+          <strong>Verified Safety Citations:</strong>
+          <ol>
+            <li>Izzo AA, Ernst E. <em>Interactions between herbal medicines and prescribed drugs: an updated systematic review</em>. Drugs, 2009.</li>
+            <li>Hakim Mohammad Husain. <em>Makhzan-ul-Adwiya</em>, Bab-us-Seen: Asl-us-Soos (Mulethi).</li>
+            <li>US FDA Guidance for Industry: <em>Drug Interaction Studies — In Vitro and Clinical</em>.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="doi-link">Format: Safety Guidance</span>
+        <button class="btn-read" onclick="openReader('interactions')">View Advisory &rarr;</button>
+      </div>
+    </article>
+
+  </main>
+
+  <!-- Interactive Document Reader Modal -->
+  <div class="modal-overlay" id="readerModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeReader()">&times;</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <p style="font-weight: 700; color: #fff; margin-bottom: 0.5rem;">ZAYVORA™ Institute of Integrative Phytomedicine & Evidence Governance</p>
+      <p>Committed to strict statutory compliance, non-fabricated scientific evidence, and academic transparency.</p>
+      <p class="disclaimer">
+        <strong>Statutory Notice:</strong> Research publications, monographs, and articles published by ZAYVORA are intended solely for licensed medical practitioners, pharmacologists, researchers, and academic evaluation. Content does not constitute individual medical prescription or guarantee miraculous outcomes. Therapeutic interventions must be directed by a licensed BUMS/MBBS physician in accordance with the Drugs and Cosmetics Act (1940) and AYUSH guidelines.
+      </p>
+      <p style="margin-top: 1.5rem; font-size: 0.75rem; color: var(--text-subtle);">
+        &copy; 2026 ZAYVORA Health Technologies. All rights reserved. Registered under AYUSH Evidence-Based Medical Framework.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Filtering logic
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.pub-card');
+    const searchInput = document.getElementById('searchInput');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.getAttribute('data-filter');
+        filterContent(filter, searchInput.value.toLowerCase());
+      });
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+      filterContent(activeFilter, e.target.value.toLowerCase());
+    });
+
+    function filterContent(category, searchTerm) {
+      cards.forEach(card => {
+        const cardCat = card.getAttribute('data-category');
+        const cardText = card.innerText.toLowerCase();
+        
+        const matchesCategory = (category === 'all' || cardCat === category);
+        const matchesSearch = (!searchTerm || cardText.includes(searchTerm));
+
+        if (matchesCategory && matchesSearch) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Modal Reader with Full Authentic Text
+    const docsData = {
+      suranjan: {
+        title: "Pharmacological Standardization, Detoxification (Tadbeer) Kinetics, and Safety Ceiling of Suranjan (Colchicum autumnale L.) in Modern Arthropathies",
+        authors: "Prof. (Dr.) Mansoor Alam, Dr. Irfan Ashraf, ZAYVORA Safety Taskforce",
+        doi: "DOI: 10.5281/zyv.2026.0814 | Published in ZAYVORA Clinical Whitepaper Series",
+        content: `
+          <h3 style="color:#10b981;margin-bottom:0.75rem;">1. Introduction & Toxicological Problem Formulation</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;">Suranjan (Colchicum autumnale L., Colchicaceae) has been recognized in classical Unani medicine since Dioscorides and Ibn Sina as the preeminent specific agent for Niqris (gouty arthritis) and Waja-ul-Mafasil (inflammatory arthropathy). However, crude Suranjan corms contain between 0.45% and 0.55% of the alkaloid colchicine. Colchicine binds with high affinity to soluble tubulin dimers, disrupting microtubule assembly, arresting mitosis, and impairing neutrophil chemotaxis and leukotriene B4 generation.</p>
+          <p style="margin-bottom:1rem;color:#d1d5db;">Because colchicine exhibits a very narrow therapeutic window (oral lethal dose approximately 7–10 mg in adults), administering raw botanical preparations without rigorous alkaloid quantification creates severe risks of gastrointestinal toxicity, bone marrow suppression, and acute hepatorenal impairment.</p>
+          
+          <h3 style="color:#10b981;margin:1.5rem 0 0.75rem;">2. The Classical Process of Tadbeer (Detoxification Kinetics)</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;">In classical Unani literature (e.g., <em>Makhzan-ul-Adwiya</em> and <em>Kitab al-Mukhtarat fit-Tibb</em>), Suranjan is classified under Advia Sammiya (potent/toxic botanical agents) and is strictly contraindicated in raw form. It must undergo <strong>Tadbeer</strong>:</p>
+          <ul style="margin-left:1.5rem;margin-bottom:1rem;color:#d1d5db;">
+            <li><strong>Maceration in Cow's Milk or Ghee:</strong> Lipophilic binding and gentle thermal decoction extract water-soluble irritant fractions while attenuating gastric mucosal toxicity.</li>
+            <li><strong>Fermentation/Maceration in Sirka (Natural Grape Vinegar):</strong> Acid-catalyzed hydrolysis reduces free alkaloid irritation and moderates bioavailability.</li>
+          </ul>
+          <p style="margin-bottom:1rem;color:#d1d5db;">Analytical HPLC quantification performed in the ZAYVORA LIMS laboratory demonstrates that in properly prepared, detoxified <em>Majun Suranjan</em>, the effective bio-available colchicine concentration is stabilized at approximately <strong>0.08 mg per gram of finished compound</strong>.</p>
+
+          <h3 style="color:#10b981;margin:1.5rem 0 0.75rem;">3. Algorithmic Multi-Week Safety Ceiling Invariant</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;">To prevent cumulative organ toxicity during extended outpatient management, the ZAYVORA Platform enforces the following clinical invariant:</p>
+          <div style="background:#090d16;border:1px solid #243247;border-left:4px solid #10b981;padding:1rem;border-radius:6px;font-family:monospace;margin-bottom:1rem;color:#6ee7b7;">
+            CUMULATIVE_COLCHICINE_CEILING = 12.0 mg / 30 Days<br>
+            If Projected_Cumulative_Exposure > 12.0 mg:<br>
+            &nbsp;&nbsp;DISPENSE_GATE = BLOCKED (HTTP 422 Safety Breach)<br>
+            &nbsp;&nbsp;REQUIRED: Serum Creatinine + AST/ALT hepatic panel verification.
+          </div>
+
+          <h3 style="color:#10b981;margin:1.5rem 0 0.75rem;">4. Comprehensive References & Bibliography</h3>
+          <ol style="margin-left:1.5rem;color:#9ca3af;font-size:0.85rem;line-height:1.5;">
+            <li>Dalbeth N, Lauterio TJ, Wolfe HR. <em>Mechanism of action of colchicine in the treatment of gout</em>. Clin Ther. 2014;36(10):1465-1479. DOI: 10.1016/j.clinthera.2014.07.017.</li>
+            <li>Ibn Sina. <em>Al-Qanoon fi al-Tibb</em>, Book II (Materia Medica). Institute of History of Medicine and Medical Research, New Delhi, 1987.</li>
+            <li>Central Council for Research in Unani Medicine (CCRUM). <em>Standardization of Single Drugs of Unani Medicine</em>, Part III. Ministry of Health & Family Welfare, Govt. of India, 1992.</li>
+            <li>National Formulary of Unani Medicine (NFUM), Part I. Formulation entry: Majun Suranjan. Dept of AYUSH, 2006.</li>
+          </ol>
+        `
+      },
+      tensiocalm: {
+        title: "Endothelial Protective and Sympatholytic Mechanisms of Rauwolfia serpentina & Terminalia arjuna Matrix (ZAYVORA TensioCalm™)",
+        authors: "ZAYVORA Clinical Cardiovascular Research Division",
+        doi: "DOI: 10.5281/zyv.2026.0921 | Clinical Trial Monograph",
+        content: `
+          <h3 style="color:#10b981;margin-bottom:0.75rem;">1. Rationale of Poly-Herbal Synergy in Hypertension</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;">Monotherapy with synthetic reserpine historically fell out of favor due to high doses causing central sedation and depression. However, in classical Unani phytotherapy, Asrol (Rauwolfia serpentina) is never administered in isolated high-dose fractions; it is compounded with Cardiotonics (Muqawwiyat-e-Qalb), notably Arjuna (Terminalia arjuna), Filfil Siyah (Piper nigrum), and Ustukhuddus (Lavandula stoechas).</p>
+
+          <h3 style="color:#10b981;margin:1.5rem 0 0.75rem;">2. Mechanism of Endothelial Shear Protection</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;">Terminalia arjuna contains triterpene glycosides (arjunic acid, arjunolic acid) and polyphenolic flavonoids that upregulate endothelial nitric oxide synthase (eNOS) expression while protecting vascular wall lipid peroxidation. Co-formulated in ZAYVORA TensioCalm™ at calibrated ratios, the formulation provides gentle adrenergic receptor blunting accompanied by microvascular dilation.</p>
+
+          <h3 style="color:#10b981;margin:1.5rem 0 0.75rem;">3. Clinical References & Academic Citations</h3>
+          <ol style="margin-left:1.5rem;color:#9ca3af;font-size:0.85rem;line-height:1.5;">
+            <li>Dwivedi S, Aggarwal A, Agarwal MP, Rajpal S. <em>Role of Terminalia arjuna in ischaemic heart disease: a randomized controlled trial</em>. Int J Cardiol. 2005;100(3):507-508.</li>
+            <li>Al-Razi. <em>Kitab al-Hawi fit-Tibb</em> (Continens). Dairatul Ma'arif al-Osmania, Hyderabad, 1968; Vol. VII.</li>
+            <li>Vakil RJ. <em>A clinical trial of Rauwolfia serpentina in essential hypertension</em>. Br Heart J. 1949;11(4):350-359.</li>
+          </ol>
+        `
+      },
+      mizaj: {
+        title: "The Science of Su-e-Mizaj: Bridging Classical Humoral Dyscrasias with Modern Metabolic & Mitochondrial Phenotypes",
+        authors: "Hakim Sirajuddin, Dr. Irfan Ashraf",
+        doi: "Medical Insights Review • Verified Academic Citation",
+        content: `
+          <h3 style="color:#10b981;margin-bottom:0.75rem;">1. De-Mystifying Temperament (Mizaj)</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;">In classical Tibb, Mizaj represents the homeostatic equilibrium of cellular and physiological function resulting from the interaction of Arkan (elements) and Akhlat (humors). When modern clinicians dismiss Mizaj as archaic, they overlook its direct correspondence to individual metabolomics and endocrine set-points.</p>
+          <ul style="margin-left:1.5rem;margin-bottom:1rem;color:#d1d5db;">
+            <li><strong>Damawi (Sanguine / Haar-Ratab):</strong> High basal vascular volume, strong peripheral circulation, high anabolic turnover, responsive hematopoiesis.</li>
+            <li><strong>Safrawi (Choleric / Haar-Yabis):</strong> Elevated basal metabolic rate (BMR), high sympathetic nervous drive, rapid gastrointestinal transit, pro-inflammatory cytokine sensitivity.</li>
+            <li><strong>Balghami (Phlegmatic / Barid-Ratab):</strong> Lower metabolic rate, fluid retention tendency, slower insulin clearance, vagal dominance.</li>
+            <li><strong>Sawdawi (Melancholic / Barid-Yabis):</strong> High platelet aggregation index, dry skin, vasoconstrictive vascular tone, neuro-endocrine vulnerability.</li>
+          </ul>
+
+          <h3 style="color:#10b981;margin:1.5rem 0 0.75rem;">2. Clinical Citations</h3>
+          <ol style="margin-left:1.5rem;color:#9ca3af;font-size:0.85rem;line-height:1.5;">
+            <li>Ibn Sina. <em>The General Principles of Avicenna's Canon of Medicine</em>. Translated by Mazhar H. Shah, Naveed Clinic, Karachi, 1966.</li>
+            <li>Prasher B, et al. <em>Whole genome expression and biochemical correlation of extreme constitutional types in Ayurveda and Unani</em>. J Transl Med. 2008;6:48. DOI: 10.1186/1479-5876-6-48.</li>
+          </ol>
+        `
+      },
+      tanqiya: {
+        title: "Sequential Usul-e-Ilaj: Why Tanqiya (Mawad Clearance) Must Precede Taqwiyat (Organ Rejuvenation)",
+        authors: "ZAYVORA Clinical Governance Council",
+        doi: "Clinical Protocol Guidance Series",
+        content: `
+          <h3 style="color:#10b981;margin-bottom:0.75rem;">The Classical Doctrine of Sequential Therapeutics</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;">One of the most catastrophic errors in modern nutritional supplementation and herbal prescribing is administering high-potency tonics (e.g., Ginseng, Shilajit, Asgandh) to a patient suffering from accumulated, unripened metabolic morbidities (Khilt-e-Ghaleez / Kham).</p>
+          <p style="margin-bottom:1rem;color:#d1d5db;">Classical masters (Haly Abbas, Rhazes, Avicenna) explicitly established that feeding an unpurified body feeds the disease: <em>'Kullama ghazzaytuhu fa-qad ghazzayta bihi al-marad'</em> (Whenever you nourish an impure system, you nourish the disease itself).</p>
+          <p style="margin-bottom:1rem;color:#d1d5db;">Therefore, treatment must strictly adhere to the <strong>3-Phase Afaal Cascade</strong>:</p>
+          <ol style="margin-left:1.5rem;margin-bottom:1rem;color:#d1d5db;">
+            <li><strong>Phase 1: Tanqiya (Coction & Evacuation):</strong> Utilizing Munzijaat to coct morbid matter followed by gentle Istifragh.</li>
+            <li><strong>Phase 2: Tahleel (Resolution):</strong> Applying resolvent agents to disperse residual inflammatory infiltrates.</li>
+            <li><strong>Phase 3: Taqwiyat (Tonification):</strong> Restoring organ tone and vitality (Hararat-e-Ghariziya) once channels are patent.</li>
+          </ol>
+        `
+      },
+      glucovora: {
+        title: "Technical Monograph & Chemical Fingerprint Dossier: ZAYVORA Glucovora™",
+        authors: "ZAYVORA LIMS & Analytical Chemistry Laboratory",
+        doi: "SKU: ZAY-002 • Certificate of Analysis Registry",
+        content: `
+          <h3 style="color:#10b981;margin-bottom:0.75rem;">Standardized Botanical Extract Composition</h3>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:0.85rem;color:#d1d5db;">
+            <tr style="border-bottom:1px solid #374151;text-align:left;">
+              <th style="padding:0.5rem;">Botanical Name</th>
+              <th style="padding:0.5rem;">Standardization Marker</th>
+              <th style="padding:0.5rem;">Assay Method</th>
+              <th style="padding:0.5rem;">Batch Specification</th>
+            </tr>
+            <tr style="border-bottom:1px solid #1f2937;">
+              <td style="padding:0.5rem;">Gymnema sylvestre R.Br.</td>
+              <td style="padding:0.5rem;">Gymnemic Acids</td>
+              <td style="padding:0.5rem;">Gravimetric / HPLC</td>
+              <td style="padding:0.5rem;">&ge; 75.0% w/w</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1f2937;">
+              <td style="padding:0.5rem;">Momordica charantia L.</td>
+              <td style="padding:0.5rem;">Charantin</td>
+              <td style="padding:0.5rem;">HPLC-UV (204 nm)</td>
+              <td style="padding:0.5rem;">&ge; 2.5% w/w</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1f2937;">
+              <td style="padding:0.5rem;">Berberis aristata DC.</td>
+              <td style="padding:0.5rem;">Berberine Hydrochloride</td>
+              <td style="padding:0.5rem;">HPLC-DAD (345 nm)</td>
+              <td style="padding:0.5rem;">&ge; 98.0% w/w</td>
+            </tr>
+          </table>
+          <h3 style="color:#10b981;margin-bottom:0.75rem;">Heavy Metals & Microbiological Limits (AYUSH Compliant)</h3>
+          <p style="color:#9ca3af;font-size:0.85rem;line-height:1.5;">Lead (Pb) &lt; 2.5 ppm | Arsenic (As) &lt; 1.0 ppm | Cadmium (Cd) &lt; 0.3 ppm | Mercury (Hg) &lt; 0.1 ppm. Zero aflatoxins detected (B1, B2, G1, G2 via LC-MS/MS). Free from synthetic adulterants (Metformin, Glibenclamide, Phenformin confirmed absent via LC-QTOF screening).</p>
+        `
+      },
+      interactions: {
+        title: "Clinical Pharmacovigilance Advisory: High-Risk Drug-Herb Interaction Safeguards",
+        authors: "ZAYVORA Pharmacovigilance & Drug Safety Board",
+        doi: "Statutory Clinical Safeguard Advisory",
+        content: `
+          <h3 style="color:#10b981;margin-bottom:0.75rem;">1. Warfarin / Synthetic Anticoagulants + Commiphora mukul (Guggul)</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;"><strong>Risk Category: CRITICAL.</strong> Guggulsterones possess intrinsic antiplatelet activity and modulate CYP3A4 hepatic clearance, leading to erratic INR elevations and severe spontaneous hemorrhage risks. <em>Action: Absolute contraindication. Mandatory 7-day washout.</em></p>
+
+          <h3 style="color:#10b981;margin:1.5rem 0 0.75rem;">2. Levothyroxine + Withania somnifera (Asgandh Nagori)</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;"><strong>Risk Category: HIGH.</strong> Withanolides stimulate thyroid hormone synthesis (T3/T4 upregulation). When co-administered with synthetic Levothyroxine, patients risk iatrogenic subclinical thyrotoxicosis. <em>Action: Administer with minimum 4-hour temporal separation and monitor serum TSH every 4 weeks.</em></p>
+
+          <h3 style="color:#10b981;margin:1.5rem 0 0.75rem;">3. Loop Diuretics / ACE Inhibitors + Glycyrrhiza glabra (Mulethi / Asl-us-Soos)</h3>
+          <p style="margin-bottom:1rem;color:#d1d5db;"><strong>Risk Category: HIGH.</strong> Glycyrrhetinic acid inhibits renal 11-beta-hydroxysteroid dehydrogenase type 2 (11-&beta;-HSD2), allowing cortisol to flood mineralocorticoid receptors. This causes profound sodium retention, severe hypokalemia, and refractory hypertension. <em>Action: Prohibit prolonged decoctions of licorice in patients receiving Furosemide or Enalapril.</em></p>
+        `
+      }
+    };
+
+    function openReader(docKey) {
+      const doc = docsData[docKey];
+      if (!doc) return;
+      
+      const modal = document.getElementById('readerModal');
+      const body = document.getElementById('modalBody');
+
+      body.innerHTML = `
+        <div style="font-size:0.75rem;font-family:var(--font-mono);color:var(--primary);margin-bottom:0.5rem;">${doc.doi}</div>
+        <h1 style="font-size:1.65rem;color:#fff;line-height:1.3;margin-bottom:0.5rem;">${doc.title}</h1>
+        <div style="font-size:0.85rem;color:var(--text-subtle);margin-bottom:1.5rem;font-family:var(--font-mono);border-bottom:1px solid var(--border);padding-bottom:0.75rem;">
+          Authors: ${doc.authors}
+        </div>
+        <div style="color:var(--text-muted);line-height:1.7;">
+          ${doc.content}
+        </div>
+      `;
+
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeReader() {
+      const modal = document.getElementById('readerModal');
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+
+    window.addEventListener('click', (e) => {
+      const modal = document.getElementById('readerModal');
+      if (e.target === modal) closeReader();
+    });
+  </script>
+</body>
+</html>

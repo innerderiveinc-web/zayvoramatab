@@ -1,10 +1,9 @@
-"""Authentication and Session Management Routes."""
-
+import uuid
 from typing import Dict, Any, Tuple
 import sqlite3
 from apps.api.config import config
-from apps.api.core.errors import AuthenticationError, ValidationError, RateLimitError
-from apps.api.core.security import verify_password, create_session, check_rate_limit, generate_token
+from apps.api.core.errors import AuthenticationError, ValidationError, RateLimitError, ConflictError
+from apps.api.core.security import verify_password, hash_password, create_session, check_rate_limit, generate_token, validate_session
 from apps.api.core.audit import log_audit_event
 
 def handle_auth_login(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
@@ -92,17 +91,11 @@ def handle_auth_login(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[in
         client_ip=client_ip
     )
 
+    session_user = validate_session(conn, token)
+
     return 200, {
         "token": token,
-        "user": {
-            "id": row["id"],
-            "username": row["username"],
-            "full_name": row["full_name"],
-            "organization_id": row["organization_id"],
-            "org_name": row["org_name"],
-            "org_profile": row["org_profile"],
-            "active_facility_id": active_facility_id
-        },
+        "user": session_user,
         "request_id": request_id
     }
 
@@ -196,3 +189,121 @@ def handle_password_reset_request(conn: sqlite3.Connection, req: Dict[str, Any])
         )
 
     return 200, resp
+
+
+def handle_auth_register_clinic(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
+    """Self-service Organization & Administrator Registration for new Matab/Clinics."""
+    client_ip = req.get("client_ip", "127.0.0.1")
+    request_id = req.get("request_id")
+    body = req.get("body", {})
+
+    org_name = body.get("org_name", "").strip()
+    org_code = body.get("org_code", "").strip().upper()
+    profile_type = body.get("profile_type", "MATAB").strip().upper()
+    admin_name = body.get("admin_name", "").strip()
+    admin_username = body.get("admin_username", "").strip()
+    admin_email = body.get("admin_email", "").strip()
+    admin_password = body.get("admin_password", "")
+
+    if not org_name or not org_code or not admin_name or not admin_username or not admin_password:
+        raise ValidationError("Clinic name, clinic code, administrator full name, username, and password are required.", request_id=request_id)
+
+    if len(admin_password) < 6:
+        raise ValidationError("Administrator password must be at least 6 characters long.", request_id=request_id)
+
+    check_rate_limit(client_ip, limit_per_minute=config.auth_rate_limit_per_min)
+
+    cursor = conn.cursor()
+
+    # Check if organization code already exists
+    cursor.execute("SELECT id FROM organizations WHERE code = ?;", (org_code,))
+    if cursor.fetchone():
+        raise ConflictError(f"Clinic/Organization code '{org_code}' is already registered. Please choose another code.", request_id=request_id)
+
+    # Check if username already exists
+    cursor.execute("SELECT id FROM users WHERE username = ?;", (admin_username,))
+    if cursor.fetchone():
+        raise ConflictError(f"Username '{admin_username}' is already taken. Please choose another username.", request_id=request_id)
+
+    org_id = f"org-{uuid.uuid4().hex[:12]}"
+    fac_id = f"fac-{uuid.uuid4().hex[:12]}"
+    user_id = f"usr-{uuid.uuid4().hex[:12]}"
+
+    # 1. Create Organization
+    conn.execute("""
+        INSERT INTO organizations (id, name, code, profile_type, is_active, created_at)
+        VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP);
+    """, (org_id, org_name, org_code, profile_type))
+
+    # 2. Create Default Primary Facility
+    fac_name = f"{org_name} - Main OPD"
+    fac_code = f"{org_code}-OPD"
+    conn.execute("""
+        INSERT INTO facilities (id, organization_id, name, code, is_active, created_at)
+        VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP);
+    """, (fac_id, org_id, fac_name, fac_code))
+
+    # 3. Create Root Administrator User
+    pw_hash = hash_password(admin_password)
+    conn.execute("""
+        INSERT INTO users (id, organization_id, username, email, password_hash, full_name, is_active, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP);
+    """, (user_id, org_id, admin_username, admin_email or None, pw_hash, admin_name))
+
+    # 4. Resolve ORG_ADMIN Role
+    cursor.execute("SELECT id FROM roles WHERE code = 'ORG_ADMIN';")
+    role_row = cursor.fetchone()
+    if role_row:
+        role_id = role_row["id"]
+        # Link user to organization role
+        conn.execute("""
+            INSERT INTO user_organization_memberships (id, user_id, organization_id, role_id, is_active)
+            VALUES (?, ?, ?, ?, 1);
+        """, (str(uuid.uuid4()), user_id, org_id, role_id))
+
+        # Link user to facility
+        conn.execute("""
+            INSERT INTO user_facility_memberships (id, user_id, facility_id, role_id, is_active)
+            VALUES (?, ?, ?, ?, 1);
+        """, (str(uuid.uuid4()), user_id, fac_id, role_id))
+
+    # 5. Issue Session Token
+    user_agent = req.get("headers", {}).get("user-agent")
+    token = create_session(
+        conn=conn,
+        user_id=user_id,
+        organization_id=org_id,
+        active_facility_id=fac_id,
+        ip_address=client_ip,
+        user_agent=user_agent
+    )
+
+    log_audit_event(
+        conn=conn,
+        action_type="AUTH_REGISTER_CLINIC",
+        target_entity_type="ORGANIZATION",
+        target_entity_id=org_id,
+        organization_id=org_id,
+        facility_id=fac_id,
+        actor_id=user_id,
+        outcome="SUCCESS",
+        request_id=request_id,
+        client_ip=client_ip,
+        details={"org_name": org_name, "org_code": org_code, "admin_username": admin_username}
+    )
+
+    session_user = validate_session(conn, token)
+
+    return 201, {
+        "token": token,
+        "user": session_user,
+        "organization": {
+            "id": org_id,
+            "name": org_name,
+            "code": org_code,
+            "facility_id": fac_id,
+            "facility_name": fac_name
+        },
+        "message": "Matab Clinic & Administrator account successfully registered.",
+        "request_id": request_id
+    }

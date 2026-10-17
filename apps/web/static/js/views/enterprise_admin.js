@@ -4,7 +4,8 @@
  */
 
 import { state } from "../state.js";
-import { apiClient } from "../../../../packages/api-client/client.js";
+import { apiClient } from "/packages/api-client/client.js";
+
 
 export async function renderEnterpriseAdmin(container) {
   const user = state.user;
@@ -12,16 +13,17 @@ export async function renderEnterpriseAdmin(container) {
   const orgId = user?.organization_id || "org-matab-default";
 
   container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
       <div>
         <h2 style="margin:0;">🏛️ Enterprise Multi-Branch & Hospital Administration</h2>
         <div style="font-size:0.85rem; color:#4b5563;">
           Organization Hierarchy, Branch Lifecycle, Scoped Staff Assignments, Inter-Facility Transfers, Layered Config & Integrations
         </div>
       </div>
-      <div style="display:flex; gap:0.5rem;">
-        <button id="btnRunMigrationDryRun" class="btn btn-secondary btn-sm">🔍 Single-Clinic Migration Check</button>
-        <button id="btnRefreshEnterprise" class="btn btn-primary btn-sm">🔄 Refresh</button>
+      <div style="display:flex; gap:0.5rem; flex-wrap: wrap;">
+        <button id="btnOpenAddStaffModal" class="btn btn-primary btn-sm">➕ Add Doctor / Staff Member</button>
+        <button id="btnRunMigrationDryRun" class="btn btn-secondary btn-sm">🔍 Migration Check</button>
+        <button id="btnRefreshEnterprise" class="btn btn-secondary btn-sm">🔄 Refresh</button>
       </div>
     </div>
 
@@ -42,8 +44,11 @@ export async function renderEnterpriseAdmin(container) {
 
       <!-- 3. Scoped Staff & Practitioner Assignments -->
       <div class="card">
-        <h3 style="margin-top:0;">3. Scoped Staff Assignments</h3>
-        <div id="assignmentsPanel">Loading assignments...</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <h3 style="margin:0;">3. Clinical Staff & User Accounts</h3>
+          <button id="btnCardAddStaff" class="btn btn-primary btn-sm" style="font-size:0.75rem; padding:0.25rem 0.55rem;">➕ Add Staff</button>
+        </div>
+        <div id="assignmentsPanel">Loading staff accounts...</div>
       </div>
 
       <!-- 4. Inter-Facility Transfer Work Queue -->
@@ -64,6 +69,8 @@ export async function renderEnterpriseAdmin(container) {
         <div id="integrationsAuditPanel">Loading integrations & audit...</div>
       </div>
     </div>
+
+    <div id="staffModalContainer"></div>
   `;
 
   const alertBox = container.querySelector("#enterpriseAlertBox");
@@ -73,9 +80,11 @@ export async function renderEnterpriseAdmin(container) {
     alertBox.innerHTML = `<strong>${isError ? "⚠️ Alert:" : "✅ Status:"}</strong> ${msg}`;
   }
 
+  let cachedFacilities = [];
+
   async function loadAll() {
     try {
-      const [orgRes, facRes, assignRes, trfRes, cfgRes, modRes, intgRes, audRes] = await Promise.all([
+      const [orgRes, facRes, assignRes, trfRes, cfgRes, modRes, intgRes, audRes, usersRes] = await Promise.all([
         apiClient.get(`/api/v1/organizations/${orgId}`),
         apiClient.get("/api/v1/facilities"),
         apiClient.get(`/api/v1/facilities/${activeFacId}/assignments`).catch(() => ({ assignments: [] })),
@@ -84,6 +93,7 @@ export async function renderEnterpriseAdmin(container) {
         apiClient.get(`/api/v1/facilities/${activeFacId}/modules`),
         apiClient.get("/api/v1/integrations/connectors").catch(() => ({ connectors: [] })),
         apiClient.get("/api/v1/admin/audit-events").catch(() => ({ audit_events: [] })),
+        apiClient.get("/api/v1/users").catch(() => ({ users: [] }))
       ]);
 
       const org = orgRes.organization;
@@ -99,6 +109,7 @@ export async function renderEnterpriseAdmin(container) {
       `;
 
       const facilities = facRes.facilities || [];
+      cachedFacilities = facilities;
       container.querySelector("#facilitiesPanel").innerHTML = `
         <div style="font-size:0.85rem;">
           ${facilities.map(f => `
@@ -128,16 +139,36 @@ export async function renderEnterpriseAdmin(container) {
         });
       });
 
-      const assignments = assignRes.assignments || [];
+      const users = usersRes.users || [];
+      const roleIcons = {
+        PRACTITIONER: "🩺",
+        RECEPTIONIST: "📋",
+        PHARMACIST: "💊",
+        CASHIER: "💳",
+        ORG_ADMIN: "🏛️",
+        INVENTORY_MANAGER: "📦",
+        READ_ONLY_AUDITOR: "🔍"
+      };
+
       container.querySelector("#assignmentsPanel").innerHTML = `
         <div style="font-size:0.85rem;">
-          <div><strong>Active Scoped Assignments (${activeFacId}):</strong> ${assignments.length}</div>
-          ${assignments.slice(0, 6).map(a => `
-            <div style="padding:0.4rem 0; border-bottom:1px solid #f3f4f6;">
-              <strong>${a.full_name}</strong> — <code>${a.role_code}</code> (${a.assignment_type})
-              <span class="badge">${a.status}</span>
-            </div>
-          `).join("") || `<div style="color:#6b7280; margin-top:0.4rem;">Using organization-wide role memberships.</div>`}
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+            <strong>Active Staff Accounts (${users.length}):</strong>
+            <span style="font-size:0.75rem; color:#6b7280;">Facility: ${activeFacId}</span>
+          </div>
+          <div style="max-height: 240px; overflow-y: auto;">
+            ${users.map(u => `
+              <div style="padding:0.45rem 0.2rem; border-bottom:1px solid #f3f4f6; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>${roleIcons[u.role_code] || "👤"} ${u.full_name}</strong>
+                  <div style="color:#6b7280; font-size:0.75rem;"><code>${u.username}</code> ${u.email ? '• ' + u.email : ''}</div>
+                </div>
+                <span class="badge ${u.role_code === 'PRACTITIONER' ? 'badge-success' : (u.role_code === 'ORG_ADMIN' ? 'badge-info' : 'badge-secondary')}">
+                  ${u.role_code || 'STAFF'}
+                </span>
+              </div>
+            `).join("") || `<div style="color:#6b7280;">No staff accounts found.</div>`}
+          </div>
         </div>
       `;
 
@@ -194,7 +225,120 @@ export async function renderEnterpriseAdmin(container) {
     }
   }
 
+  function openAddStaffModal(facilities) {
+    const modalBox = container.querySelector("#staffModalContainer");
+    modalBox.innerHTML = `
+      <div class="modal-backdrop">
+        <div class="modal-box" style="max-width: 520px;">
+          <div class="modal-header">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 1.15rem;">
+              <span>➕</span> Provision New Clinical Staff
+            </h3>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnCloseStaffModal" style="padding: 0.2rem 0.5rem;">✕</button>
+          </div>
+          <form id="addStaffForm">
+            <div class="modal-body" style="padding: 1.25rem; max-height: 70vh; overflow-y: auto;">
+              <div style="background: var(--matab-color-brand-surface); border: 1px solid var(--matab-color-brand-subtle); padding: 0.75rem; border-radius: var(--matab-radius-md); font-size: 0.82rem; color: var(--matab-color-brand-primary); margin-bottom: 1rem;">
+                Create authorized practitioner or operational staff accounts with Role-Based Access Control (RBAC).
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <div class="form-group" style="grid-column: span 2;">
+                  <label class="form-label">Full Name & Clinical Designation *</label>
+                  <input type="text" id="staffFullName" class="form-input" placeholder="e.g. Dr. Hakeem Mohammad Imran" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Login Username *</label>
+                  <input type="text" id="staffUsername" class="form-input" placeholder="e.g. dr.imran" autocomplete="username" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">System Role *</label>
+                  <select id="staffRoleCode" class="form-select">
+                    <option value="PRACTITIONER">🩺 Hakim / Doctor (Physician)</option>
+                    <option value="RECEPTIONIST">📋 Front Desk / Receptionist</option>
+                    <option value="PHARMACIST">💊 Pharmacist / Dispensary</option>
+                    <option value="CASHIER">💳 Cashier / Billing</option>
+                    <option value="ORG_ADMIN">🏛️ Hospital Admin / Director</option>
+                    <option value="INVENTORY_MANAGER">📦 Inventory Manager</option>
+                    <option value="READ_ONLY_AUDITOR">🔍 Compliance Auditor</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Official Email</label>
+                  <input type="email" id="staffEmail" class="form-input" placeholder="e.g. imran@matab.org" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Initial Password *</label>
+                  <input type="password" id="staffPassword" class="form-input" value="matab123" required minlength="6" />
+                </div>
+
+                <div class="form-group" style="grid-column: span 2;">
+                  <label class="form-label">Assigned Facility *</label>
+                  <select id="staffFacilityId" class="form-select">
+                    ${facilities.map(f => `<option value="${f.id}">${f.name} (${f.code})</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+
+              <div id="staffErrorBox" style="display: none; background: var(--matab-color-status-danger-bg); color: var(--matab-color-status-danger); border: 1px solid var(--matab-color-status-danger-border); padding: 0.65rem; border-radius: var(--matab-radius-md); font-size: 0.82rem; margin-top: 0.75rem;"></div>
+            </div>
+            <div class="modal-footer" style="padding: 0.75rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+              <button type="button" class="btn btn-secondary" id="btnCancelStaffModal">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="btnSubmitStaff">
+                Provision Staff Account ➔
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    const closeModal = () => { modalBox.innerHTML = ""; };
+    modalBox.querySelector("#btnCloseStaffModal").addEventListener("click", closeModal);
+    modalBox.querySelector("#btnCancelStaffModal").addEventListener("click", closeModal);
+
+    modalBox.querySelector("#addStaffForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errBox = modalBox.querySelector("#staffErrorBox");
+      const submitBtn = modalBox.querySelector("#btnSubmitStaff");
+      errBox.style.display = "none";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating Account...";
+
+      const payload = {
+        full_name: modalBox.querySelector("#staffFullName").value.trim(),
+        username: modalBox.querySelector("#staffUsername").value.trim(),
+        role_code: modalBox.querySelector("#staffRoleCode").value,
+        email: modalBox.querySelector("#staffEmail").value.trim() || null,
+        password: modalBox.querySelector("#staffPassword").value,
+        facility_id: modalBox.querySelector("#staffFacilityId").value
+      };
+
+      try {
+        await apiClient.post("/api/v1/users", payload);
+        closeModal();
+        if (window.showToast) {
+          window.showToast(`Staff member '${payload.full_name}' provisioned successfully!`, "success");
+        }
+        await loadAll();
+      } catch (err) {
+        errBox.textContent = err.message || "Failed to create user account.";
+        errBox.style.display = "block";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Provision Staff Account ➔";
+      }
+    });
+  }
+
   container.querySelector("#btnRefreshEnterprise").addEventListener("click", loadAll);
+  container.querySelector("#btnOpenAddStaffModal")?.addEventListener("click", () => openAddStaffModal(cachedFacilities));
+  container.querySelector("#btnCardAddStaff")?.addEventListener("click", () => openAddStaffModal(cachedFacilities));
+
   container.querySelector("#btnRunMigrationDryRun").addEventListener("click", async () => {
     try {
       const res = await apiClient.post("/api/v1/admin/single-clinic-migration", {

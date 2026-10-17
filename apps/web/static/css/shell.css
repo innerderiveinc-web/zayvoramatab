@@ -1,153 +1,235 @@
-/* ZAYVORA MATAB OS — Web Shell Layout & Component Styles */
+/* ZAYVORA MATAB OS — Modern Hospital Clinical Shell & Component System */
 
 @import url("./tokens.css");
 
-* {
+/* -------------------------------------------------------------------------
+   1. Base Reset & Typography
+   ------------------------------------------------------------------------- */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+html, body {
+  min-height: 100%;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--matab-font-sans);
   background-color: var(--matab-color-bg-app);
   color: var(--matab-color-text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 :focus-visible {
-  outline: var(--matab-focus-ring);
-  outline-offset: 2px;
+  outline: var(--matab-focus-ring) !important;
+  outline-offset: var(--matab-focus-ring-offset) !important;
 }
 
-/* Environment Banner */
-.env-banner {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 0.35rem 1rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-align: center;
-  border-bottom: 1px solid #fde68a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-/* App Header */
-.app-header {
+/* -------------------------------------------------------------------------
+   2. Skip Link (Accessibility)
+   ------------------------------------------------------------------------- */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 1.5rem;
   background: var(--matab-color-brand-primary);
+  color: #ffffff;
+  padding: 0.75rem 1.25rem;
+  z-index: 99999;
+  font-weight: 700;
+  border-radius: var(--matab-radius-md);
+  box-shadow: var(--matab-shadow-lg);
+  transition: top var(--matab-transition-fast);
+  text-decoration: none;
+}
+.skip-to-content:focus {
+  top: 1rem;
+  outline: 3px solid #facc15;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* -------------------------------------------------------------------------
+   3. Modern Clinical Header & Command Bar
+   ------------------------------------------------------------------------- */
+.app-header {
+  background: var(--matab-header-gradient);
   color: var(--matab-color-text-inverse);
   padding: 0.75rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: var(--matab-shadow-md);
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .brand-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .brand-title {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .brand-badge {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
   background: rgba(255, 255, 255, 0.2);
-  padding: 0.15rem 0.5rem;
-  border-radius: 9999px;
+  color: #ffffff;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--matab-radius-pill);
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.facility-dropdown {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--matab-radius-sm);
-  font-size: 0.85rem;
+.header-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--matab-radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.status-dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4ade80;
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.3);
+  display: inline-block;
 }
 
 .header-user-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .user-tag {
   font-size: 0.85rem;
   background: rgba(255, 255, 255, 0.15);
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--matab-radius-sm);
+  backdrop-filter: blur(8px);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--matab-radius-pill);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-/* Navigation Bar */
+/* -------------------------------------------------------------------------
+   4. Refined Navigation Bar
+   ------------------------------------------------------------------------- */
 .nav-bar {
   background: #ffffff;
   border-bottom: 1px solid var(--matab-color-border-subtle);
   display: flex;
-  padding: 0 1.5rem;
-  gap: 0.5rem;
+  padding: 0.35rem 1.5rem;
+  gap: 0.35rem;
   overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  position: sticky;
+  top: 57px;
+  z-index: 90;
+  box-shadow: var(--matab-shadow-xs);
+}
+
+.nav-bar::-webkit-scrollbar {
+  display: none; /* Safari & Chrome */
 }
 
 .nav-tab {
-  padding: 0.85rem 1.25rem;
-  font-size: 0.95rem;
+  padding: 0.6rem 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--matab-color-text-muted);
+  color: var(--matab-color-text-secondary);
   background: transparent;
-  border: none;
-  border-bottom: 3px solid transparent;
+  border: 1px solid transparent;
+  border-radius: var(--matab-radius-md);
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   min-height: var(--matab-touch-target-min);
-  transition: all 0.15s ease-in-out;
+  transition: all var(--matab-transition-fast);
+  white-space: nowrap;
 }
 
 .nav-tab:hover {
   color: var(--matab-color-brand-primary);
+  background: var(--matab-color-brand-surface);
+  border-color: var(--matab-color-brand-subtle);
 }
 
 .nav-tab.active {
   color: var(--matab-color-brand-primary);
-  border-bottom-color: var(--matab-color-brand-primary);
+  background: var(--matab-color-brand-surface);
+  border-color: var(--matab-color-brand-subtle);
+  box-shadow: 0 1px 3px rgba(6, 78, 59, 0.08);
 }
 
-/* Content Container */
+.nav-tab.active::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--matab-color-brand-primary);
+  margin-left: 0.15rem;
+}
+
+/* -------------------------------------------------------------------------
+   5. Content Layout Container
+   ------------------------------------------------------------------------- */
 .main-content {
   padding: 1.5rem;
-  max-width: 1300px;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
-/* Cards & Surfaces */
+/* -------------------------------------------------------------------------
+   6. Elevated Cards & Panels
+   ------------------------------------------------------------------------- */
 .card {
   background: var(--matab-color-bg-card);
   border: 1px solid var(--matab-color-border-subtle);
   border-radius: var(--matab-radius-lg);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  padding: 1.25rem;
+  box-shadow: var(--matab-shadow-sm);
+  padding: 1.35rem;
   margin-bottom: 1.25rem;
+  transition: box-shadow var(--matab-transition-fast);
+}
+
+.card:hover {
+  box-shadow: var(--matab-shadow-md);
 }
 
 .card-header {
@@ -155,182 +237,251 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.65rem;
   border-bottom: 1px solid var(--matab-color-border-subtle);
 }
 
 .card-title {
-  font-size: 1.1rem;
+  font-size: 1.12rem;
   font-weight: 700;
   color: var(--matab-color-brand-primary);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Buttons */
+/* -------------------------------------------------------------------------
+   7. Buttons & Actions
+   ------------------------------------------------------------------------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
+  gap: 0.45rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  padding: 0.5rem 1rem;
+  padding: 0.55rem 1.05rem;
   border-radius: var(--matab-radius-md);
   border: 1px solid transparent;
   cursor: pointer;
   min-height: var(--matab-touch-target-min);
-  transition: all 0.15s;
+  transition: all var(--matab-transition-fast);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn:active {
+  transform: scale(0.98);
 }
 
 .btn-primary {
   background: var(--matab-color-brand-primary);
   color: #ffffff;
+  box-shadow: 0 1px 2px rgba(6, 78, 59, 0.2);
 }
 .btn-primary:hover {
-  background: var(--matab-color-brand-accent);
+  background: var(--matab-color-brand-primary-hover);
+  box-shadow: 0 2px 4px rgba(6, 78, 59, 0.25);
 }
 
 .btn-secondary {
-  background: var(--matab-color-bg-muted);
-  color: var(--matab-color-text-primary);
-  border-color: var(--matab-color-border-subtle);
+  background: #ffffff;
+  color: var(--matab-color-text-secondary);
+  border-color: var(--matab-color-border-strong);
+  box-shadow: var(--matab-shadow-xs);
 }
 .btn-secondary:hover {
-  background: #e2e8f0;
+  background: var(--matab-color-bg-muted);
+  color: var(--matab-color-text-primary);
+  border-color: #94a3b8;
+}
+
+.btn-accent {
+  background: var(--matab-color-brand-accent);
+  color: #ffffff;
+}
+.btn-accent:hover {
+  background: var(--matab-color-brand-accent-hover);
+}
+
+.btn-danger {
+  background: var(--matab-color-status-danger-bg);
+  color: var(--matab-color-status-danger);
+  border-color: var(--matab-color-status-danger-border);
+}
+.btn-danger:hover {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .btn-sm {
-  padding: 0.25rem 0.6rem;
-  font-size: 0.8rem;
-  min-height: 32px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  min-height: 34px;
 }
 
-/* Form Controls */
+/* -------------------------------------------------------------------------
+   8. Form Controls & Inputs
+   ------------------------------------------------------------------------- */
 .form-group {
   margin-bottom: 1rem;
 }
 
 .form-label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  margin-bottom: 0.35rem;
-  color: var(--matab-color-text-primary);
+  margin-bottom: 0.4rem;
+  color: var(--matab-color-text-secondary);
 }
 
-.form-input, .form-select {
+.form-input, .form-control, .form-select, select.form-control, textarea.form-control {
   width: 100%;
-  padding: 0.6rem 0.75rem;
-  font-size: 0.95rem;
-  border: 1px solid var(--matab-color-border-subtle);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.92rem;
+  color: var(--matab-color-text-primary);
+  border: 1px solid var(--matab-color-border-strong);
   border-radius: var(--matab-radius-md);
   background: #ffffff;
   min-height: var(--matab-touch-target-min);
+  transition: border-color var(--matab-transition-fast), box-shadow var(--matab-transition-fast);
 }
 
-/* Tables */
+.form-input:focus, .form-control:focus, .form-select:focus {
+  border-color: var(--matab-color-brand-accent);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+  outline: none;
+}
+
+/* -------------------------------------------------------------------------
+   9. Clean Modern Data Tables
+   ------------------------------------------------------------------------- */
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.9rem;
 }
 
 .data-table th {
   background: var(--matab-color-bg-muted);
   text-align: left;
-  padding: 0.65rem 0.85rem;
-  font-weight: 600;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--matab-color-text-secondary);
-  border-bottom: 1px solid var(--matab-color-border-subtle);
+  border-top: 1px solid var(--matab-color-border-subtle);
+  border-bottom: 1px solid var(--matab-color-border-strong);
+}
+
+.data-table th:first-child {
+  border-top-left-radius: var(--matab-radius-md);
+}
+.data-table th:last-child {
+  border-top-right-radius: var(--matab-radius-md);
 }
 
 .data-table td {
-  padding: 0.75rem 0.85rem;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--matab-color-border-subtle);
   vertical-align: middle;
 }
 
-/* Status Badges */
+.data-table tbody tr {
+  transition: background-color var(--matab-transition-fast);
+}
+
+.data-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* -------------------------------------------------------------------------
+   10. Semantic Badges & Chips
+   ------------------------------------------------------------------------- */
 .badge {
-  display: inline-block;
-  padding: 0.2rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.6rem;
   font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: var(--matab-radius-sm);
+  font-weight: 700;
+  border-radius: var(--matab-radius-pill);
   text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
 }
 
-.badge-success { background: var(--matab-color-status-success-bg); color: var(--matab-color-status-success); border: 1px solid #bbf7d0; }
-.badge-warning { background: var(--matab-color-status-warning-bg); color: var(--matab-color-status-warning); border: 1px solid #fde68a; }
-.badge-danger { background: var(--matab-color-status-danger-bg); color: var(--matab-color-status-danger); border: 1px solid #fecaca; }
-.badge-info { background: var(--matab-color-status-info-bg); color: var(--matab-color-status-info); border: 1px solid #bae6fd; }
+.badge-success { background: var(--matab-color-status-success-bg); color: var(--matab-color-status-success); border: 1px solid var(--matab-color-status-success-border); }
+.badge-warning { background: var(--matab-color-status-warning-bg); color: var(--matab-color-status-warning); border: 1px solid var(--matab-color-status-warning-border); }
+.badge-danger { background: var(--matab-color-status-danger-bg); color: var(--matab-color-status-danger); border: 1px solid var(--matab-color-status-danger-border); }
+.badge-info { background: var(--matab-color-status-info-bg); color: var(--matab-color-status-info); border: 1px solid var(--matab-color-status-info-border); }
+.badge-secondary { background: var(--matab-color-bg-muted); color: var(--matab-color-text-secondary); border: 1px solid var(--matab-color-border-strong); }
 
-/* Honest Future Module State Banner */
-.unimplemented-banner {
-  background: #f8fafc;
-  border: 2px dashed var(--matab-color-border-strong);
-  border-radius: var(--matab-radius-lg);
-  padding: 3rem 1.5rem;
-  text-align: center;
-  margin: 1.5rem 0;
-}
-
-.unimplemented-banner h3 {
-  color: var(--matab-color-text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.unimplemented-banner p {
-  color: var(--matab-color-text-muted);
-  max-width: 550px;
-  margin: 0 auto 1.25rem auto;
-  font-size: 0.9rem;
-}
-
-/* Modal Components */
+/* -------------------------------------------------------------------------
+   11. Dialogs & Modals
+   ------------------------------------------------------------------------- */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(2px);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 1.25rem;
 }
 
 .modal-box {
   background: #ffffff;
-  border-radius: var(--matab-radius-lg);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  border-radius: var(--matab-radius-xl);
+  box-shadow: var(--matab-shadow-xl);
   width: 100%;
-  max-width: 640px;
+  max-width: 680px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid var(--matab-color-border-subtle);
+  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modal-header {
-  padding: 1rem 1.25rem;
+  padding: 1.1rem 1.5rem;
   border-bottom: 1px solid var(--matab-color-border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: #fafafa;
 }
 
 .modal-header h3 {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  font-weight: 700;
   color: var(--matab-color-brand-primary);
 }
 
 .modal-body {
-  padding: 1.25rem;
+  padding: 1.5rem;
   overflow-y: auto;
 }
 
 .modal-footer {
-  padding: 0.85rem 1.25rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid var(--matab-color-border-subtle);
   background: var(--matab-color-bg-muted);
   display: flex;
@@ -338,103 +489,183 @@ body {
   gap: 0.75rem;
 }
 
-/* Alerts and Notifications */
+/* -------------------------------------------------------------------------
+   12. Notification & Alert Banners
+   ------------------------------------------------------------------------- */
 .alert-box {
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.15rem;
   border-radius: var(--matab-radius-md);
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
   font-size: 0.9rem;
-}
-
-.alert-warning {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #92400e;
-}
-
-.alert-danger {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
-}
-
-.alert-info {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  color: #0369a1;
-}
-
-.alert-success {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #166534;
-}
-
-/* Tabs */
-.tab-group {
   display: flex;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--matab-color-border-subtle);
-  margin-bottom: 1.25rem;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.tab-btn {
-  padding: 0.6rem 1rem;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--matab-color-text-secondary);
-  cursor: pointer;
+.alert-warning { background: var(--matab-color-status-warning-bg); border: 1px solid var(--matab-color-status-warning-border); color: #92400e; }
+.alert-danger { background: var(--matab-color-status-danger-bg); border: 1px solid var(--matab-color-status-danger-border); color: #991b1b; }
+.alert-info { background: var(--matab-color-status-info-bg); border: 1px solid var(--matab-color-status-info-border); color: #0369a1; }
+.alert-success { background: var(--matab-color-status-success-bg); border: 1px solid var(--matab-color-status-success-border); color: #166534; }
+
+/* -------------------------------------------------------------------------
+   13. Right-to-Left (RTL) Layout & Urdu / Hindi Typography
+   ------------------------------------------------------------------------- */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: start;
 }
 
-.tab-btn:hover {
-  color: var(--matab-color-brand-primary);
+[dir="rtl"] body,
+[dir="rtl"] .app-header,
+[dir="rtl"] .nav-bar,
+[dir="rtl"] .main-content,
+[dir="rtl"] .modal-box {
+  font-family: var(--matab-font-urdu), var(--matab-font-sans);
 }
 
-.tab-btn.active {
-  color: var(--matab-color-brand-primary);
-  border-bottom-color: var(--matab-color-brand-primary);
+[lang="hi"] body,
+[lang="hi"] .app-header,
+[lang="hi"] .nav-bar,
+[lang="hi"] .main-content {
+  font-family: var(--matab-font-hindi), var(--matab-font-sans);
 }
 
-/* Timeline */
-.timeline-list {
-  position: relative;
-  padding-left: 1.5rem;
+[dir="rtl"] .modal-footer {
+  justify-content: flex-start;
 }
 
-.timeline-list::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 7px;
-  width: 2px;
-  background: var(--matab-color-border-subtle);
+bdi, .bdi-token {
+  direction: ltr !important;
+  unicode-bidi: isolate;
+  display: inline-block;
 }
 
-.timeline-item {
-  position: relative;
-  margin-bottom: 1.25rem;
+/* -------------------------------------------------------------------------
+   13. Toast Notification System
+   ------------------------------------------------------------------------- */
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 440px;
 }
 
-.timeline-dot {
-  position: absolute;
-  left: -1.5rem;
-  top: 4px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--matab-color-brand-primary);
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px var(--matab-color-border-subtle);
-}
-
-.timeline-card {
-  background: #ffffff;
-  border: 1px solid var(--matab-color-border-subtle);
+.toast-message {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
   border-radius: var(--matab-radius-md);
-  padding: 0.75rem 1rem;
+  background: #ffffff;
+  color: var(--matab-color-text-primary);
+  box-shadow: var(--matab-shadow-lg);
+  border: 1px solid var(--matab-color-border-subtle);
+  font-size: 0.88rem;
+  font-weight: 500;
+  animation: toastSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.toast-success {
+  border-left: 4px solid var(--matab-color-status-success);
+  background: var(--matab-color-status-success-bg);
+}
+
+.toast-error {
+  border-left: 4px solid var(--matab-color-status-danger);
+  background: var(--matab-color-status-danger-bg);
+}
+
+.toast-warning {
+  border-left: 4px solid var(--matab-color-status-warning);
+  background: var(--matab-color-status-warning-bg);
+}
+
+.toast-info {
+  border-left: 4px solid var(--matab-color-status-info);
+  background: var(--matab-color-status-info-bg);
+}
+
+/* -------------------------------------------------------------------------
+   14. Print Media Rules for Clinical Prescriptions (A4 & 80mm Thermal)
+   ------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: auto;
+    margin: 0mm !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .app-header, .nav-bar, .skip-to-content, #btn-print-rx, button, .modal-backdrop,
+  #quick-nav-bar, #guided-sections-container, #context-drawer-panel, #workspace-header, #patient-banner {
+    display: none !important;
+  }
+  #modal-print-rx {
+    display: block !important;
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  #modal-print-rx .card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Thermal 80mm Slip Print Mode (72mm Printable Thermal Head Width) */
+  body.print-mode-thermal #printable-rx-content {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    margin: 0 auto !important;
+    padding: 1.5mm !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    color: #000000 !important;
+  }
+  body.print-mode-thermal table {
+    font-size: 10px !important;
+  }
+  body.print-mode-thermal h2, body.print-mode-thermal h3 {
+    font-size: 13px !important;
+    margin: 2px 0 !important;
+  }
+  body.print-mode-thermal .thermal-divider {
+    border-top: 1px dashed #000000 !important;
+    margin: 4px 0 !important;
+  }
+
+  /* A4 Formal Clinic Letterhead Print Mode */
+  body.print-mode-a4 #printable-rx-content {
+    width: 190mm !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
+    padding: 8mm 10mm !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+    color: #0f172a !important;
+  }
 }
 

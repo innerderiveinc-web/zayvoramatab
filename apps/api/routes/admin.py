@@ -66,6 +66,13 @@ def handle_users_create(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[
         VALUES (?, ?, ?, ?, 1);
     """, (str(uuid.uuid4()), user_id, user["organization_id"], role_id))
 
+    fac_id = body.get("facility_id") or user.get("active_facility_id")
+    if fac_id:
+        conn.execute("""
+            INSERT OR IGNORE INTO user_facility_memberships (id, user_id, facility_id, role_id, is_active)
+            VALUES (?, ?, ?, ?, 1);
+        """, (str(uuid.uuid4()), user_id, fac_id, role_id))
+
     log_audit_event(
         conn=conn,
         action_type="USER_CREATED",

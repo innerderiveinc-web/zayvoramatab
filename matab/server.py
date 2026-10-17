@@ -2,6 +2,9 @@
 
 import sys
 import os
+from pathlib import Path
+# Guarantee parent directory is on sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import mimetypes
 from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler

@@ -8,7 +8,32 @@ let currentStep = 1; // 1: History, 2: Vitals, 3: Assessment, 4: Care Plan, 5: N
 let draftedItems = [];
 let availableFormulations = [];
 
+
+async function refreshIntelligence(enc) {
+  try {
+    const complaint = enc.clinical_notes?.chief_complaint || enc.clinical_notes?.history_of_presenting_illness || 'General Consultation';
+    const mizaj = enc.unani_assessment?.dominant_mizaj || 'BALGHAMI';
+    const nabz = enc.unani_assessment?.nabz_quality || 'MUTAWASSIT';
+    const sue = enc.unani_assessment?.su_e_mizaj_type || 'MADDI';
+    const res = await api.post('/api/v1/clinical-support/intelligence', {
+      complaint: complaint,
+      dominant_mizaj: mizaj,
+      nabz_quality: nabz,
+      su_e_mizaj_type: sue,
+      vitals: enc.vitals
+    });
+    if (res?.intelligence) {
+      enc.intelligence = res.intelligence;
+      const zone3 = document.querySelector('#zone3Guidance');
+      if (zone3) renderZone3(zone3, enc);
+    }
+  } catch (e) {
+    console.warn('Intelligence refresh warning:', e);
+  }
+}
+
 export async function renderCanvas(container) {
+  refreshIntelligence(enc);
   const t = translations[state.currentLang] || translations.en;
   const enc = state.activeEncounter;
 
@@ -365,6 +390,12 @@ function renderStepContent(container, enc, step) {
     // Step 4: Usul-e-Ilaj Care Plan
     container.innerHTML = `
       <form id="carePlanForm">
+        <div style="background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 6px; padding: 0.6rem 0.75rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 0.78rem; color: #0f766e;">
+            <strong>⚡ Zayvora Protocol:</strong> ${enc.intelligence?.suggested_usul_e_ilaj || 'Tanqiya & Tadeel-e-Mizaj (7 Days)'}
+          </div>
+          <button type="button" id="applyIntelBtn" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; white-space: nowrap;">✨ Auto-Fill</button>
+        </div>
         <div class="form-group">
           <label class="form-label">Usul-e-Ilaj Therapeutic Objective *</label>
           <input type="text" id="usulSummaryInput" class="form-input" 
@@ -673,15 +704,56 @@ function renderStepContent(container, enc, step) {
         openPrintModal(pr.id);
       });
     }
+
+    const waBtn = container.querySelector("#whatsappPrescriptionBtn");
+    if (waBtn) {
+      waBtn.addEventListener("click", async () => {
+        try {
+          const res = await api.get(`/api/v1/prescriptions/${pr.id}/whatsapp`);
+          if (res?.whatsapp?.whatsapp_url) {
+            window.open(res.whatsapp.whatsapp_url, "_blank");
+          }
+        } catch (e) {
+          alert("WhatsApp dispatch error: " + e.message);
+        }
+      });
+    }
   }
 }
 
 async function renderZone3(el, enc) {
   const pr = enc.prescription;
   const safetyState = pr?.overall_safety_state || "PASS";
+  const intel = enc.intelligence;
+  const axisName = intel?.primary_axis?.name || "Gastrointestinal Axis (Meda wa Ama'a)";
+  const axisPower = intel?.primary_axis?.governing_power || "Quwwat-e-Hazima (Digestive Faculty)";
+  const cascadeStage = intel?.afaal_cascade?.stage_name || "Tanqiya (Targeted Humoral Evacuation)";
+  const cascadePrinciple = intel?.afaal_cascade?.classical_principle || "Istifragh-e-Mawad-e-Fasida";
+  const cascadeDays = intel?.afaal_cascade?.standard_duration_days || 7;
+  const secondaryAxis = intel?.secondary_axis?.name;
 
   el.innerHTML = `
     <h4 style="margin-bottom: 0.75rem; color: var(--color-primary-dark);">Contextual Guidance</h4>
+
+    <div class="guidance-box" style="border-left: 4px solid var(--color-primary, #0e7490); background: #f0fdfa;">
+      <div class="guidance-title" style="color: #0e7490; display: flex; justify-content: space-between; align-items: center;">
+        <span>⚡ ZAYVORA Intelligence</span>
+        <span class="badge badge-pass" style="background: #0e7490; color: #fff; font-size: 0.65rem;">Core Engines</span>
+      </div>
+      <div style="font-size: 0.78rem; margin-top: 0.5rem; line-height: 1.45; color: #1e293b;">
+        <div><strong>🩺 Active Organ-Axis:</strong><br><span style="color: #0369a1; font-weight: 600;">${axisName}</span></div>
+        <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 0.35rem;">Power: ${axisPower}</div>
+        ${secondaryAxis ? `<div style="font-size: 0.72rem; color: #b45309; margin-bottom: 0.35rem;">🔗 <em>Reflex Sympathy:</em> ${secondaryAxis}</div>` : ''}
+        <div style="margin-top: 0.4rem;"><strong>🧪 Af'aal Cascade Phase:</strong><br><span style="color: #047857; font-weight: 600;">${cascadeStage} (${cascadeDays} Days)</span></div>
+        <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 0.35rem;">Principle: <em>${cascadePrinciple}</em></div>
+        ${intel?.recovery_stage?.current_stage ? `<div style="font-size: 0.72rem; color: #4338ca; margin-bottom: 0.35rem;">📅 <strong>Journey Stage:</strong> ${intel.recovery_stage.current_stage.stage_name}</div>` : ''}
+        ${intel?.tadbeer_protocols?.recommended_tadbeer_list?.length ? `<div style="font-size: 0.72rem; color: #991b1b; margin-bottom: 0.35rem;">🩸 <strong>Tadbeer (Hijama/Daluk):</strong> ${intel.tadbeer_protocols.recommended_tadbeer_list[0].modality}</div>` : ''}
+        ${intel?.diet_parhez ? `<div style="font-size: 0.72rem; color: #065f46; border-top: 1px dashed #cbd5e1; padding-top: 4px; margin-top: 4px;">🥗 <strong>Parhez:</strong> Avoid ${intel.diet_parhez.foods_to_avoid[0]}</div>` : ''}
+        <button type="button" id="askHakeemAiBtn" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.5rem; background: #0e7490; color: white; border: none; margin-top: 0.6rem; width: 100%; border-radius: 4px; font-weight: 600; cursor: pointer;">
+          🌿 طبی مشیر — Clinical Guidance &amp; Case Breakdown
+        </button>
+      </div>
+    </div>
 
     <div class="guidance-box ${safetyState === 'BLOCK' ? 'alert-block' : safetyState === 'WARN' ? 'alert-warn' : ''}">
       <div class="guidance-title">🛡️ Safety Preflight: <span class="badge ${safetyState === 'PASS' ? 'badge-pass' : safetyState === 'BLOCK' ? 'badge-block' : 'badge-warn'}">${safetyState}</span></div>
@@ -701,6 +773,54 @@ async function renderZone3(el, enc) {
       </ul>
     </div>
   `;
+
+  // Attach Tibbi Advisor modal listener
+  el.querySelector("#askHakeemAiBtn")?.addEventListener("click", async () => {
+    let modal = document.querySelector("#hakeemAiModal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "hakeemAiModal";
+      modal.style.cssText = "display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(2px);";
+      modal.innerHTML = `
+        <div style="background: white; border-radius: 8px; width: 92%; max-width: 680px; max-height: 82vh; overflow-y: auto; padding: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-top: 4px solid #0e7490;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.6rem; margin-bottom: 1rem;">
+            <div style="font-weight: 700; color: #0e7490; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>🌿 طبی مشیر (Clinical Guidance &amp; Case Breakdown)</span>
+            </div>
+            <button id="closeHakeemModalBtn" style="border: none; background: #f1f5f9; border-radius: 4px; width: 28px; height: 28px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+          </div>
+          <div id="hakeemModalContent" style="font-size: 0.88rem; line-height: 1.6; color: #1e293b; white-space: pre-wrap; font-family: system-ui, -apple-system, sans-serif;">
+            📖 Consulting classical compendia and analyzing organ-axis...
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.querySelector("#closeHakeemModalBtn")?.addEventListener("click", () => { modal.style.display = "none"; });
+      modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
+    }
+    modal.style.display = "flex";
+    const contentEl = modal.querySelector("#hakeemModalContent");
+    contentEl.textContent = "⏳ Consulting classical doctrine (Ibn Sina & Razi) and synthesizing case...";
+
+    try {
+      const payload = {
+        complaint: enc.clinical_notes?.chief_complaint || enc.clinical_notes?.history_of_presenting_illness || 'General Systemic Malaise',
+        dominant_mizaj: enc.unani_assessment?.dominant_mizaj || 'BALGHAMI',
+        organ_axis: enc.intelligence?.primary_axis?.name || 'Gastro-Intestinal Axis',
+        su_e_mizaj_type: enc.unani_assessment?.su_e_mizaj_type || 'MADDI',
+        nabz_quality: enc.unani_assessment?.nabz_quality || 'MUTAWASSIT',
+        vitals: enc.vitals
+      };
+      const res = await api.post("/api/v1/hakeem/consult", payload);
+      if (res?.consultation?.case_impression) {
+        contentEl.textContent = res.consultation.case_impression;
+      } else {
+        contentEl.textContent = "Clinical case breakdown unavailable.";
+      }
+    } catch (err) {
+      contentEl.textContent = "Consultation error: " + err.message;
+    }
+  });
 }
 
 async function openPrintModal(prescriptionId) {
@@ -772,7 +892,35 @@ async function openPrintModal(prescriptionId) {
           </tbody>
         </table>
 
+        ${pData.musleh_and_badraqa?.recommended_badraqa ? `
+        <div style="margin: 12px 0; font-size: 9pt; background: #eff6ff; border-left: 3px solid #3b82f6; padding: 6px 10px; border-radius: 4px;">
+          <strong>Target Vehicle (Badraqa):</strong> ${pData.musleh_and_badraqa.recommended_badraqa.preferred_badraqa} — <em>${pData.musleh_and_badraqa.recommended_badraqa.rationale}</em>
+        </div>
+        ` : ''}
+
+        ${pData.diet_parhez ? `
+        <div style="margin-top: 15px; border: 1px solid #10b981; border-radius: 6px; padding: 10px; background: #f0fdf4;">
+          <h4 style="margin: 0 0 5px 0; color: #065f46; font-size: 10.5pt;">🌿 Patient Parhez & Dietary Guidance (Asbab-e-Sittah / ${pData.diet_parhez.mizaj_label})</h4>
+          <div style="font-size: 8.5pt; margin-bottom: 6px; color: #374151;"><strong>Usul-e-Ghiza:</strong> <em>${pData.diet_parhez.dietary_principle}</em></div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 8pt;">
+            <div style="background: #fff; padding: 6px; border-radius: 4px; border-left: 3px solid #ef4444;">
+              <strong style="color: #b91c1c;">🚫 Mamnoo (Strictly Avoid):</strong>
+              <ul style="margin: 3px 0 0 0; padding-left: 14px;">
+                ${pData.diet_parhez.foods_to_avoid.slice(0, 4).map(f => `<li>${f}</li>`).join('')}
+              </ul>
+            </div>
+            <div style="background: #fff; padding: 6px; border-radius: 4px; border-left: 3px solid #10b981;">
+              <strong style="color: #047857;">✅ Mufeed (Favor in Diet):</strong>
+              <ul style="margin: 3px 0 0 0; padding-left: 14px;">
+                ${pData.diet_parhez.foods_to_favor.slice(0, 4).map(f => `<li>${f}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+        ` : ''}
+
         <div class="footer">
+          <div style="margin-bottom: 5px; font-size: 7.5pt; color: #666;"><strong>Statutory Disclaimer:</strong> Classical Unani Formulation (Tibbi Nuskha) regulated under AYUSH Drug Rules & Schedule E(1). Dispense strictly as directed by a registered practitioner.</div>
           <div><strong>Signed Electronically:</strong> ${pData.verification.signed_at}</div>
           <div><strong>Cryptographic Hash (SHA-256):</strong> <code>${pData.verification.signature_hash}</code></div>
           <div><em>This prescription is immutable and verified by ZAYVORA MATAB OS v1.1.</em></div>

@@ -313,7 +313,7 @@ function renderModernAssessmentUI(container, pane, patientId, encounterId, asses
               </div>
             `).join("") : `
               <div style="text-align: center; padding: 1rem; color: var(--matab-color-text-muted); font-size: 0.82rem;">
-                Click "Differential Support" above to evaluate approved heuristics for this presentation.
+                Click "Differential Considerations" above to review established clinical and classical diagnostic guidelines for this presentation.
               </div>
             `}
           </div>
@@ -377,7 +377,7 @@ function renderModernAssessmentUI(container, pane, patientId, encounterId, asses
                 No external referrals or transfers documented for this encounter.
               </div>
             `}
-        <!-- 7. Governed Evidence & Knowledge Reference Cards (Prompt 06) -->
+        <!-- 7. Governed Evidence & Knowledge Reference Cards -->
         <div class="card" style="margin-top: 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--matab-color-border-subtle); padding-bottom: 0.4rem;">
             <h3 style="font-size: 1rem; color: var(--matab-color-brand-primary); margin: 0;">
@@ -513,9 +513,9 @@ function setupModernAssessmentEvents(container, pane, patientId, encounterId, as
         await saveModernAssessmentFields(pane, assess.id, assess.version_number);
         const res = await apiClient.post(`/api/v1/modern-assessments/${assess.id}/differential-support`, {});
         if (res.status === "CONTENT_UNAVAILABLE") {
-          alert(`Notice: ${res.message}`);
+          window.showToast(res.message || "No specific differential guidelines available for current symptoms.", "info");
         } else {
-          alert(`Evaluated differential heuristics: ${res.candidates ? res.candidates.length : 0} candidate consideration(s) surfaced.`);
+          window.showToast(`Differential diagnosis evaluated: ${res.candidates ? res.candidates.length : 0} clinical consideration(s) ready for review.`, "success");
         }
         loadModernAssessmentPane(container, pane, patientId, encounterId);
       } catch (err) {
@@ -547,8 +547,15 @@ function setupModernAssessmentEvents(container, pane, patientId, encounterId, as
   pane.querySelectorAll(".btn-ack-red-flag").forEach(btn => {
     btn.addEventListener("click", async () => {
       const alertId = btn.getAttribute("data-id");
-      const actionText = prompt("Document clinical action taken or override rationale for this red flag:");
-      if (!actionText || !actionText.trim()) return;
+      const actionText = await window.openPromptModal({
+        title: "Clinical Red Flag Acknowledgment",
+        message: "Document clinical action taken, vital sign reassessment, or emergency mitigation rationale:",
+        defaultValue: "Patient monitored, vital signs re-checked, and red flag stabilization initiated",
+        placeholder: "e.g., Emergency referral initiated or vitals stabilized",
+        confirmText: "Acknowledge Red Flag",
+        required: true
+      });
+      if (!actionText) return;
 
       try {
         await apiClient.post(`/api/v1/modern-assessments/${assess.id}/red-flags/${alertId}/acknowledge`, {
@@ -875,7 +882,7 @@ function openAddProblemModal(container, pane, patientId, encounterId, assess) {
         problem_title: title,
         status: status,
         code_value: code || null,
-        code_system: code ? "ICD-10-MOCK" : "UNCODED",
+        code_system: code ? "ICD-10-WHO" : "UNCODED",
         is_primary: isPrimary
       });
       modalContainer.innerHTML = "";

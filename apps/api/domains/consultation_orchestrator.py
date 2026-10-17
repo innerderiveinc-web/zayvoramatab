@@ -185,7 +185,7 @@ class ConsultationOrchestratorService:
 
             # C. Unani Assessment Lane
             cur.execute("""
-                SELECT id, status, dominant_mizaj as primary_mizaj, secondary_mizaj,
+                SELECT id, status, dominant_mizaj, dominant_mizaj as primary_mizaj, secondary_mizaj,
                        mizaj_rationale, clinical_reasoning
                 FROM unani_assessments
                 WHERE encounter_id = ? AND organization_id = ?
@@ -295,6 +295,7 @@ class ConsultationOrchestratorService:
                 "draft_lanes": {
                     "visit": visit_data,
                     "history_observations": modern_data,
+                    "modern_assessment": modern_data,
                     "unani_assessment": unani_data,
                     "care_plan": care_plan_data,
                     "prescription": rx_data,
@@ -347,6 +348,186 @@ class ConsultationOrchestratorService:
                         version = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE id = ? AND organization_id = ?;
                 """, (reason_for_visit, encounter_type, new_version, encounter_id, org_id))
+
+            enc_fac_id = encounter.get("facility_id") or "fac-central-opd"
+            cur_u = conn.cursor()
+            cur_u.execute("SELECT 1 FROM users WHERE id = ?;", (user_id,))
+            enc_author_id = user_id if cur_u.fetchone() else (encounter.get("practitioner_id") or "usr-hakeem-1")
+
+            # 1. Persist Unani Assessment draft if provided
+            unani_payload = payload.get("unani_assessment")
+            if unani_payload and isinstance(unani_payload, dict):
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT id FROM unani_assessments
+                    WHERE encounter_id = ? AND organization_id = ?
+                    ORDER BY created_at DESC LIMIT 1;
+                """, (encounter_id, org_id))
+                u_row = cur.fetchone()
+                dominant_mizaj = unani_payload.get("dominant_mizaj") or unani_payload.get("primary_mizaj")
+                secondary_mizaj = unani_payload.get("secondary_mizaj")
+                clinical_reasoning = unani_payload.get("clinical_reasoning")
+                mizaj_rationale = unani_payload.get("mizaj_rationale")
+                if isinstance(mizaj_rationale, (dict, list)):
+                    mizaj_rationale = json.dumps(mizaj_rationale)
+
+                if u_row:
+                    conn.execute("""
+                        UPDATE unani_assessments
+                        SET dominant_mizaj = COALESCE(?, dominant_mizaj),
+                            secondary_mizaj = COALESCE(?, secondary_mizaj),
+                            clinical_reasoning = COALESCE(?, clinical_reasoning),
+                            mizaj_rationale = COALESCE(?, mizaj_rationale),
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?;
+                    """, (dominant_mizaj, secondary_mizaj, clinical_reasoning, mizaj_rationale, u_row["id"]))
+                else:
+                    new_u_id = f"uas-{uuid.uuid4().hex[:12]}"
+                    today_date = datetime.utcnow().strftime("%Y-%m-%d")
+                    conn.execute("""
+                        INSERT INTO unani_assessments (
+                            id, organization_id, facility_id, patient_id, encounter_id,
+                            template_version_id, author_id, status, assessment_date,
+                            dominant_mizaj, secondary_mizaj, mizaj_rationale, mizaj_uncertainty,
+                            clinical_reasoning, version_number, created_at, updated_at
+                        ) VALUES (?, ?, ?, ?, ?, 'ver-tmpl-unani-core-1', ?, 'DRAFT', ?, ?, ?, ?, 'ASSESSED', ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+                    """, (new_u_id, org_id, enc_fac_id, encounter["patient_id"], encounter_id, enc_author_id, today_date, dominant_mizaj or 'NOT_ASSESSED', secondary_mizaj, mizaj_rationale, clinical_reasoning))
+
+            # 2. Persist Modern Clinical Assessment draft if provided
+            modern_payload = payload.get("modern_assessment")
+            if modern_payload and isinstance(modern_payload, dict):
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT id FROM modern_clinical_assessments
+                    WHERE encounter_id = ? AND organization_id = ?
+                    ORDER BY created_at DESC LIMIT 1;
+                """, (encounter_id, org_id))
+                m_row = cur.fetchone()
+                working_assessment = modern_payload.get("working_assessment")
+                clinical_rationale = modern_payload.get("clinical_rationale")
+                chief_complaint = modern_payload.get("chief_complaint") or encounter.get("reason_for_visit", "")
+                hpi = modern_payload.get("history_of_present_illness")
+                phys_exam = modern_payload.get("physical_examination_json")
+                if isinstance(phys_exam, dict):
+                    phys_exam_str = json.dumps(phys_exam)
+                else:
+                    phys_exam_str = phys_exam
+
+                if m_row:
+                    conn.execute("""
+                        UPDATE modern_clinical_assessments
+                        SET working_assessment = COALESCE(?, working_assessment),
+                            clinical_rationale = COALESCE(?, clinical_rationale),
+                            physical_examination_json = COALESCE(?, physical_examination_json),
+                            history_of_present_illness = COALESCE(?, history_of_present_illness),
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?;
+                    """, (working_assessment, clinical_rationale, phys_exam_str, hpi, m_row["id"]))
+                else:
+                    new_m_id = f"mca-{uuid.uuid4().hex[:12]}"
+                    today_date = datetime.utcnow().strftime("%Y-%m-%d")
+                    conn.execute("""
+                        INSERT INTO modern_clinical_assessments (
+                            id, organization_id, facility_id, patient_id, encounter_id,
+                            author_id, status, assessment_date, chief_complaint, history_of_present_illness,
+                            working_assessment, clinical_rationale, physical_examination_json,
+                            version_number, created_at, updated_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+                    """, (new_m_id, org_id, enc_fac_id, encounter["patient_id"], encounter_id, enc_author_id, today_date, chief_complaint, hpi, working_assessment, clinical_rationale, phys_exam_str))
+
+            # 3. Persist Care Plan (Usool-e-Ilaj) draft if provided
+            care_payload = payload.get("care_plan")
+            if care_payload and isinstance(care_payload, dict):
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT id FROM care_plans
+                    WHERE encounter_id = ? AND organization_id = ?
+                    ORDER BY created_at DESC LIMIT 1;
+                """, (encounter_id, org_id))
+                cp_row = cur.fetchone()
+                title = care_payload.get("title") or care_payload.get("usool_e_ilaj")
+                overall_goal = care_payload.get("overall_goal")
+                clinical_rationale = care_payload.get("clinical_rationale")
+                if isinstance(clinical_rationale, (dict, list)):
+                    clinical_rationale = json.dumps(clinical_rationale)
+
+                if cp_row:
+                    conn.execute("""
+                        UPDATE care_plans
+                        SET title = COALESCE(?, title),
+                            overall_goal = COALESCE(?, overall_goal),
+                            clinical_rationale = COALESCE(?, clinical_rationale),
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?;
+                    """, (title, overall_goal, clinical_rationale, cp_row["id"]))
+                else:
+                    new_cp_id = f"cp-{uuid.uuid4().hex[:12]}"
+                    conn.execute("""
+                        INSERT INTO care_plans (
+                            id, organization_id, facility_id, patient_id, encounter_id,
+                            author_id, responsible_practitioner_id, title, overall_goal,
+                            clinical_rationale, status, version_number, created_at, updated_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+                    """, (new_cp_id, org_id, enc_fac_id, encounter["patient_id"], encounter_id, enc_author_id, enc_author_id, title or 'Usool-e-Ilaj Plan', overall_goal or 'Tadeel wa Shifa', clinical_rationale))
+
+            # 4. Persist Prescription (Nuskha items) draft if provided
+            rx_payload = payload.get("prescription")
+            if not rx_payload and "prescription_items" in payload:
+                rx_payload = {"items": payload["prescription_items"]}
+            if rx_payload and isinstance(rx_payload, dict):
+                items = rx_payload.get("items", [])
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT id FROM prescriptions
+                    WHERE encounter_id = ? AND organization_id = ? AND status != 'CANCELLED'
+                    ORDER BY created_at DESC LIMIT 1;
+                """, (encounter_id, org_id))
+                rx_row = cur.fetchone()
+                rx_id = None
+                if rx_row:
+                    rx_id = rx_row["id"]
+                else:
+                    rx_id = f"rx-{uuid.uuid4().hex[:12]}"
+                    rx_number = f"RX-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
+                    conn.execute("""
+                        INSERT INTO prescriptions (
+                            id, organization_id, facility_id, prescription_number,
+                            patient_id, encounter_id, practitioner_id, version_number,
+                            status, overall_safety_state, created_at, updated_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'DRAFT', 'CLEARED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+                    """, (rx_id, org_id, enc_fac_id, rx_number, encounter["patient_id"], encounter_id, enc_author_id))
+
+                if items and isinstance(items, list):
+                    conn.execute("DELETE FROM prescription_items WHERE prescription_id = ?;", (rx_id,))
+                    for idx_item, it in enumerate(items, start=1):
+                        it_id = f"rxi-{uuid.uuid4().hex[:12]}"
+                        f_id = it.get("formulation_id")
+                        if f_id:
+                            cur_f = conn.cursor()
+                            cur_f.execute("SELECT 1 FROM formulations WHERE id = ?;", (f_id,))
+                            if not cur_f.fetchone():
+                                f_id = None
+                        item_type = "CATALOG_FORMULATION" if f_id else "CUSTOM_FORMULA"
+
+                        conn.execute("""
+                            INSERT INTO prescription_items (
+                                id, prescription_id, item_type, formulation_id,
+                                item_name, dosage_form, dose_amount, dose_unit,
+                                route, frequency, duration_days, anupan_vehicle,
+                                instructions, sort_order
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ORAL', ?, ?, ?, ?, ?);
+                        """, (
+                            it_id, rx_id, item_type, f_id,
+                            it.get("item_name") or it.get("name", "Medicine"),
+                            it.get("dosage_form", "safoof"),
+                            it.get("dose_amount", 5),
+                            it.get("dose_unit", "g"),
+                            it.get("frequency", "BD"),
+                            it.get("duration_days", 30),
+                            it.get("anupan_vehicle", "Water"),
+                            it.get("instructions", "As prescribed"),
+                            idx_item
+                        ))
 
             # Mark updated sections as in_progress if currently not_started
             updated_sections = payload.get("updated_sections") or []

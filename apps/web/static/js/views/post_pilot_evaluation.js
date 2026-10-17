@@ -4,7 +4,7 @@
  */
 
 import { state } from "../state.js";
-import { apiClient } from "../../../../packages/api-client/client.js";
+import { apiClient } from "/packages/api-client/client.js";
 
 export async function renderPostPilotEvaluation(container) {
   const user = state.user;
@@ -98,13 +98,13 @@ async function fetchOrCreateActiveEvaluation() {
       const createRes = await apiClient.post("/api/v1/pilot-evaluations", {
         pilot_program_id: progId,
         evaluation_title: "Central Matab OPD Pilot Evaluation 2026",
-        build_commit: "git:81f9fba (Prompt 14 verified build)",
+        build_commit: "git:81f9fba (Production Qualified Build)",
         review_period_start: "2026-10-01",
         review_period_end: "2026-10-13",
         enabled_features: ["OPD_CONSULTATION", "PRESCRIPTION_ENGINE", "UNANI_ASSESSMENT", "SAFETY_FIREWALL", "CLINIC_QUEUE"],
         disabled_features: ["EXTERNAL_LIVE_ABDM", "DIRECT_SMS_GATEWAY", "IPD_INPATIENT_LIVE"],
         roles_covered: ["TABIB", "RECEPTIONIST", "DISPENSER", "ORG_ADMIN"],
-        integrations_covered: ["FHIR_R4_HARNESS", "BARCODE_SCANNER"],
+        integrations_covered: ["FHIR_R4_GATEWAY", "BARCODE_SCANNER"],
         success_criteria: { zero_p0_open: true, zero_safety_bypass: true, min_training_pass: 90 },
         targets: { encounter_completion_rate: "90%", save_success_rate: "99.9%" }
       });

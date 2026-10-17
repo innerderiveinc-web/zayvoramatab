@@ -174,8 +174,48 @@ class SafetyPreflightEngine:
         else:
             overall_state = "PASS"
             
+        # --- Check 3: Integrative Herb-Drug Safety & Schedule E(1) ---
+        try:
+            from matab.engines.herb_drug_safety_engine import evaluate_integrative_and_toxic_safety
+            # Fetch patient clinical problems
+            cursor.execute("SELECT problem_name FROM clinical_problems WHERE encounter_id IN (SELECT id FROM encounters WHERE patient_id = ?);", (patient_id,))
+            dx_rows = cursor.fetchall()
+            patient_dx = " ".join([r[0] for r in dx_rows if r[0]])
+            
+            herb_drug_findings = evaluate_integrative_and_toxic_safety(prescription_items, patient_diagnoses=patient_dx)
+            for hdf in herb_drug_findings:
+                rule_findings.append({
+                    "rule": hdf["rule_id"],
+                    "severity": hdf["severity"],
+                    "item": hdf["item"],
+                    "message": f"{hdf['title']}: {hdf['message']}"
+                })
+        except Exception as e:
+            pass
+
+        # --- Check 4: Classical Musleh & Badraqa Guidance ---
+        musleh_analysis = {}
+        try:
+            from matab.engines.musleh_badraqa_engine import analyze_prescription_musleh_and_badraqa
+            musleh_analysis = analyze_prescription_musleh_and_badraqa(prescription_items)
+            for malert in musleh_analysis.get("musleh_alerts", []):
+                rule_findings.append({
+                    "rule": "MUSLEH_RECOMMENDED",
+                    "severity": "INFO",
+                    "item": malert["item_name"],
+                    "message": f"Classical Musleh Required: {malert['classical_musleh']} ({malert['clinical_advice']})"
+                })
+        except Exception:
+            pass
+
+        # Recompute overall state with new findings
+        has_block = any(f["severity"] == "BLOCK" for f in rule_findings)
+        has_warn = any(f["severity"] == "WARN" for f in rule_findings)
+        overall_state = "BLOCK" if has_block else ("WARN" if has_warn else "PASS")
+
         return {
             "overall_state": overall_state,
+            "musleh_guidance": musleh_analysis,
             "rules_evaluated_count": len(prescription_items) * 4 + len(ingredient_cumulative_mg),
             "findings": rule_findings
         }

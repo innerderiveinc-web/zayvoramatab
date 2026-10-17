@@ -226,3 +226,46 @@ def handle_operations_inventory(conn: sqlite3.Connection, req: Dict[str, Any]) -
     facility_id = user.get("facility_id") or "fac-matab-main"
     batches = OperationsService.get_inventory_batches(conn, facility_id)
     return 200, {"batches": batches}
+
+def handle_clinical_support_intelligence(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
+    body = req.get("body", {})
+    intelligence = ClinicalSupportService.get_clinical_intelligence(
+        complaint=body.get("complaint", ""),
+        symptoms=body.get("symptoms", []),
+        dominant_mizaj=body.get("dominant_mizaj"),
+        su_e_mizaj_type=body.get("su_e_mizaj_type"),
+        nabz_quality=body.get("nabz_quality"),
+        vitals=body.get("vitals"),
+        patient_age=body.get("patient_age"),
+        current_season=body.get("current_season")
+    )
+    return 200, {"intelligence": intelligence}
+
+def handle_prescription_whatsapp(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
+    prescription_id = req["path_params"]["id"]
+    wa_data = PrescriptionService.format_whatsapp_prescription(conn, prescription_id)
+    return 200, {"whatsapp": wa_data}
+
+def handle_hakeem_consult(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
+    body = req.get("body", {})
+    from matab.engines.hakeem_sahab_copilot import HakeemSahabCopilot
+    consult_result = HakeemSahabCopilot.consult(
+        complaint=body.get("complaint", "General Consultation"),
+        dominant_mizaj=body.get("dominant_mizaj", "BALGHAMI"),
+        organ_axis=body.get("organ_axis", "Gastro-Intestinal Axis"),
+        su_e_mizaj_type=body.get("su_e_mizaj_type", "MADDI"),
+        nabz_quality=body.get("nabz_quality", "MUTAWASSIT"),
+        vitals=body.get("vitals")
+    )
+    return 200, {"consultation": consult_result}
+
+def handle_hakeem_patient_instructions(conn: sqlite3.Connection, req: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
+    body = req.get("body", {})
+    from matab.engines.hakeem_sahab_copilot import HakeemSahabCopilot
+    instructions = HakeemSahabCopilot.generate_patient_instructions(
+        patient_name=body.get("patient_name", "Mariz"),
+        prescribed_items=body.get("items", []),
+        dominant_mizaj=body.get("dominant_mizaj", "BALGHAMI"),
+        language=body.get("language", "ur")
+    )
+    return 200, {"patient_instructions": instructions}
