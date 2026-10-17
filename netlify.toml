@@ -1,6 +1,5 @@
 [build]
-  command = "mkdir -p dist && cp -r apps/web/* dist/ && cp -r packages dist/"
-  publish = "dist"
+  publish = "."
 
 [[redirects]]
   from = "/*"

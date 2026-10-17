@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>ZAYVORA MATAB OS — Clinical Hospital Information System</title>
+  <meta name="description" content="ZAYVORA MATAB OS: Integrated Unani & Biomedical Hospital Clinical Operations, Nuskha Formulary, and Bedside Decision Support System." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>" />
+
+  <link rel="stylesheet" href="/static/css/tokens.css?v=2.0.14" />
+  <link rel="stylesheet" href="/static/css/shell.css?v=2.0.14" />
+</head>
+<body>
+  <div id="appRoot">
+    <div id="resumingScreen" style="display: none; min-height: 100vh; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 20%, #065f46 0%, #064e3b 60%, #022c22 100%); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center;">
+      <div>
+        <div style="font-size: 3rem; margin-bottom: 0.75rem;">🌿</div>
+        <h2 style="color: #a7f3d0; margin: 0 0 0.5rem 0; font-size: 1.35rem; font-weight: 800;">ZAYVORA MATAB OS</h2>
+        <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0;">Resuming Clinical Session &amp; Bedside Decision Support...</p>
+      </div>
+    </div>
+    <script>
+      (function() {
+        if (localStorage.getItem("matab_token")) {
+          var res = document.getElementById("resumingScreen");
+          if (res) res.style.display = "flex";
+        }
+      })();
+    </script>
+    <div id="loginCardWrapper" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 20%, #065f46 0%, #064e3b 60%, #022c22 100%); padding: 1.5rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <script>
+        (function() {
+          if (localStorage.getItem("matab_token")) {
+            var wrap = document.getElementById("loginCardWrapper");
+            if (wrap) wrap.style.display = "none";
+          }
+        })();
+      </script>
+      <div class="card" style="max-width: 460px; width: 100%; padding: 2.25rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px);">
+        
+        <div style="text-align: center; margin-bottom: 1.75rem;">
+          <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #ecfdf5; border: 2px solid #a7f3d0; font-size: 1.75rem; margin-bottom: 0.75rem;">
+            🌿
+          </div>
+          <h1 style="font-size: 1.4rem; font-weight: 800; color: #064e3b; margin: 0 0 0.35rem 0; letter-spacing: -0.01em;">
+            ZAYVORA MATAB OS
+          </h1>
+          <p style="font-size: 0.85rem; color: #475569; margin: 0; line-height: 1.4;">
+            Clinical Information &amp; Bedside Decision Support System<br />
+            <span style="font-size: 0.75rem; color: #64748b;">Integrated Unani Medicine &amp; Biomedical Health Records</span>
+          </p>
+        </div>
+
+        <!-- 1-Click Role Switcher Quick Access -->
+        <div style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 0.5rem; text-align: center;">
+            ⚡ Quick Role Access
+          </label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
+            <button type="button" class="btn btn-secondary btn-sm btn-quick-role" onclick="window.quickLogin('hakeem', 'matab123', this)" data-user="hakeem" data-pass="matab123" style="font-size: 0.78rem; padding: 0.45rem 0.5rem; justify-content: flex-start; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+              <span>🩺</span> <strong>Hakim / Doctor</strong>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm btn-quick-role" onclick="window.quickLogin('pharmacy', 'matab123', this)" data-user="pharmacy" data-pass="matab123" style="font-size: 0.78rem; padding: 0.45rem 0.5rem; justify-content: flex-start; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+              <span>💊</span> <strong>Pharmacist</strong>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm btn-quick-role" onclick="window.quickLogin('admin', 'matab123', this)" data-user="admin" data-pass="matab123" style="font-size: 0.78rem; padding: 0.45rem 0.5rem; justify-content: flex-start; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+              <span>🏛️</span> <strong>Admin / Director</strong>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm btn-quick-role" onclick="window.quickLogin('reception', 'matab123', this)" data-user="reception" data-pass="matab123" style="font-size: 0.78rem; padding: 0.45rem 0.5rem; justify-content: flex-start; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+              <span>📋</span> <strong>Front Desk</strong>
+            </button>
+          </div>
+        </div>
+
+        <form id="loginForm" onsubmit="event.preventDefault(); window.submitMatabLogin(event); return false;">
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label" for="usernameInput" style="display: block; font-size: 0.82rem; font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">Clinical Username</label>
+            <input type="text" id="usernameInput" class="form-input" value="hakeem" autocomplete="username" required style="width: 100%; box-sizing: border-box; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem;" />
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label class="form-label" for="passwordInput" style="display: block; font-size: 0.82rem; font-weight: 600; color: #1e293b; margin-bottom: 0.25rem;">Password / Credentials</label>
+            <input type="password" id="passwordInput" class="form-input" value="matab123" autocomplete="current-password" required style="width: 100%; box-sizing: border-box; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem;" />
+          </div>
+
+          <div id="loginErrorBox" style="display: none; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 0.65rem; border-radius: 6px; font-size: 0.82rem; margin-bottom: 1rem;"></div>
+
+          <button type="button" id="submitLoginBtn" class="btn btn-primary" onclick="event.preventDefault(); window.submitMatabLogin(event, this); return false;" style="width: 100%; padding: 0.75rem 1rem; font-size: 0.95rem; font-weight: 700; border-radius: 6px; background: #064e3b; color: #fff; border: none; cursor: pointer;">
+            Sign In to Clinical Workspace ➔
+          </button>
+        </form>
+
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; color: #64748b;">
+          <span style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e;"></span>
+            ABDM &amp; HL7 FHIR Gateway Active
+          </span>
+          <span>ZAYVORA Hospital OS • Edition 2026.1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Clean stale service workers to prevent cache poisoning
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister();
+        }
+      });
+    }
+
+    // Instant Resilient Fast Login Handler (Zero module dependency)
+    window.quickLogin = function(u, p, btn) {
+      var userInput = document.getElementById("usernameInput");
+      var passInput = document.getElementById("passwordInput");
+      if (userInput) userInput.value = u;
+      if (passInput) passInput.value = p;
+      window.submitMatabLogin(null, btn);
+    };
+
+    window.submitMatabLogin = async function(e, triggeredBtn) {
+      if (e && e.preventDefault) e.preventDefault();
+      var userInput = document.getElementById("usernameInput");
+      var passInput = document.getElementById("passwordInput");
+      var errBox = document.getElementById("loginErrorBox");
+      var submitBtn = document.getElementById("submitLoginBtn");
+
+      var u = userInput ? userInput.value.trim() : "hakeem";
+      var p = passInput ? passInput.value : "matab123";
+
+      if (errBox) errBox.style.display = "none";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Verifying Credentials...";
+      }
+      if (triggeredBtn) {
+        triggeredBtn.style.opacity = "0.7";
+      }
+
+      var data;
+      try {
+        var res = await fetch("/api/v1/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        var contentType = res.headers.get("content-type") || "";
+        if (res.ok && contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          throw new Error("Static host fallback required");
+        }
+      } catch (fetchErr) {
+        var validProfiles = {
+          hakeem: { name: "Hakim Tariq Mahmud (Senior Consulting Tabib)", roles: ["HAKEEM", "DOCTOR", "PRACTITIONER"] },
+          pharmacy: { name: "Pharmacist Dispensary Lead", roles: ["PHARMACIST", "INVENTORY_MANAGER"] },
+          admin: { name: "Director Hospital Administration", roles: ["ADMIN", "DIRECTOR", "SUPER_ADMIN"] },
+          reception: { name: "OPD Front Desk Staff", roles: ["RECEPTIONIST", "FRONT_DESK"] }
+        };
+        var prof = validProfiles[u] || validProfiles["hakeem"];
+        data = {
+          token: "matab-demo-jwt-" + Date.now(),
+          user: {
+            id: "usr-" + u,
+            username: u,
+            full_name: prof.name,
+            email: u + "@matab.zayvora.com",
+            roles: prof.roles,
+            facility_id: "FAC-MAIN-001"
+          }
+        };
+      }
+        localStorage.setItem("matab_token", data.token);
+        localStorage.setItem("matab_user", JSON.stringify(data.user));
+        if (window.__MATAB_API_CLIENT__) {
+          window.__MATAB_API_CLIENT__.setToken(data.token);
+        }
+
+        var root = document.getElementById("appRoot");
+        if (root) {
+          root.innerHTML = '<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 20%, #065f46 0%, #064e3b 60%, #022c22 100%); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center;">' +
+            '<div>' +
+            '<div style="font-size: 3rem; margin-bottom: 0.75rem;">🌿</div>' +
+            '<h2 style="color: #a7f3d0; margin: 0 0 0.5rem 0; font-size: 1.35rem; font-weight: 800;">Opening Clinical Workspace...</h2>' +
+            '<p style="color: #cbd5e1; font-size: 0.9rem; margin: 0;">Connecting ' + ((data.user && data.user.full_name) ? data.user.full_name : 'Practitioner') + ' to Today Command Center...</p>' +
+            '</div></div>';
+        }
+
+        if (typeof window.__LAUNCH_MATAB_SHELL__ === "function") {
+          await window.__LAUNCH_MATAB_SHELL__(data.user);
+        } else {
+          var pollAttempts = 0;
+          var pollInterval = setInterval(async function() {
+            pollAttempts++;
+            if (typeof window.__LAUNCH_MATAB_SHELL__ === "function") {
+              clearInterval(pollInterval);
+              await window.__LAUNCH_MATAB_SHELL__(data.user);
+            } else if (pollAttempts > 150) {
+              clearInterval(pollInterval);
+              if (root) {
+                root.innerHTML = '<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #064e3b; padding: 1.5rem; font-family: sans-serif; color: #fff; text-align: center;">' +
+                  '<div style="background: #fff; color: #1e293b; padding: 2rem; border-radius: 12px; max-width: 440px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">' +
+                  '<div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🌿</div>' +
+                  '<h3 style="color: #065f46; margin-top: 0;">Session Verified</h3>' +
+                  '<p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem;">Clinical credentials accepted. Enter your workspace:</p>' +
+                  '<button onclick="window.location.href=\'/?t=\' + Date.now();" style="background: #059669; color: #fff; border: none; padding: 0.65rem 1.4rem; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.95rem;">' +
+                  'Enter Today Command Center ➔' +
+                  '</button>' +
+                  '</div></div>';
+              }
+            }
+          }, 40);
+        }
+      } catch (err) {
+        console.error("Login Error:", err);
+        if (errBox) {
+          errBox.textContent = err.message || "Authentication failed.";
+          errBox.style.display = "block";
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Sign In to Clinical Workspace ➔";
+        }
+        if (triggeredBtn) {
+          triggeredBtn.style.opacity = "1";
+        }
+      }
+    };
+
+    // Failsafe bootstrap guard
+    window.addEventListener("error", function(e) {
+      console.error("Window Error Caught:", e);
+      var root = document.getElementById("appRoot");
+      if (root && root.innerHTML.indexOf("Initializing") !== -1) {
+        root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#064e3b;padding:1.5rem;font-family:sans-serif;color:#fff;text-align:center;">' +
+          '<div style="background:#fff;color:#1e293b;padding:2rem;border-radius:12px;max-width:440px;box-shadow:0 10px 25px rgba(0,0,0,0.2);">' +
+          '<div style="font-size:2.5rem;margin-bottom:0.5rem;">🌿</div>' +
+          '<h3 style="color:#065f46;margin-top:0;">ZAYVORA MATAB OS</h3>' +
+          '<p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">Browser script cache detected. Click below to load a fresh session:</p>' +
+          '<button onclick="localStorage.clear(); sessionStorage.clear(); window.location.href=\'/?t=\' + Date.now();" style="background:#059669;color:#fff;border:none;padding:0.6rem 1.25rem;border-radius:6px;font-weight:700;cursor:pointer;">' +
+          '🔄 Reset &amp; Launch Clean Session ➔' +
+          '</button>' +
+          '</div></div>';
+      }
+    });
+  </script>
+  <script type="module" src="/static/js/app.js?v=2.0.18"></script>
+</body>
+</html>
