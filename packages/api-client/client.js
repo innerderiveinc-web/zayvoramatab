@@ -64,13 +64,54 @@ function handleMockFallback(method, path, body, queryParams) {
 
   if (normPath === "/api/v1/today" || normPath === "/api/v1/operations/today") {
     return {
-      queue: [
-        { id: "ENC-001", token_number: 1, patient_name: "Mohammad Qasim", age: 46, gender: "MALE", chief_complaint: "Su-e-Hazm (Dyspepsia) & Acid Reflux", status: "WAITING", created_at: new Date().toISOString() },
-        { id: "ENC-002", token_number: 2, patient_name: "Fatima Begum", age: 52, gender: "FEMALE", chief_complaint: "Waja-ul-Mafasil (Joint Pain) in bilateral knees", status: "WAITING", created_at: new Date().toISOString() },
-        { id: "ENC-003", token_number: 3, patient_name: "Abdul Rehman", age: 34, gender: "MALE", chief_complaint: "Suda (Headache) & Zof-e-Aam (General Asthenia)", status: "IN_CONSULTATION", created_at: new Date().toISOString() },
-        { id: "ENC-004", token_number: 4, patient_name: "Zainab Bi", age: 61, gender: "FEMALE", chief_complaint: "Daqq-un-Nafs (Dyspnea) on minimal exertion", status: "WAITING", created_at: new Date().toISOString() }
-      ],
-      metrics: { today_tokens: 18, in_consultation: 1, completed: 11, pending: 6 }
+      today: {
+        metrics: {
+          todays_appointments_count: 5,
+          walk_ins_waiting_count: 3,
+          currently_in_consultation_count: 1,
+          completed_visits_count: 8,
+          follow_ups_due_count: 2
+        },
+        inventory_warnings: {},
+        active_queue_tokens: [
+          {
+            id: "tok-001",
+            token_code: "T-01",
+            patient_id: "PAT-001",
+            patient_name: "Mohammad Qasim",
+            patient_mrn: "MRN-1001",
+            visit_type: "OPD",
+            priority: "ROUTINE",
+            status: "waiting",
+            chief_complaint: "Su-e-Hazm (Dyspepsia) & Acid Reflux",
+            encounter_id: "ENC-001"
+          },
+          {
+            id: "tok-002",
+            token_code: "T-02",
+            patient_id: "PAT-002",
+            patient_name: "Fatima Begum",
+            patient_mrn: "MRN-1002",
+            visit_type: "OPD",
+            priority: "CLINICAL_URGENT",
+            status: "waiting",
+            chief_complaint: "Waja-ul-Mafasil (Joint Pain) in bilateral knees",
+            encounter_id: "ENC-002"
+          },
+          {
+            id: "tok-003",
+            token_code: "T-03",
+            patient_id: "PAT-003",
+            patient_name: "Abdul Rehman",
+            patient_mrn: "MRN-1003",
+            visit_type: "OPD",
+            priority: "ROUTINE",
+            status: "in_consultation",
+            chief_complaint: "Suda (Headache) & Zof-e-Aam (General Asthenia)",
+            encounter_id: "ENC-003"
+          }
+        ]
+      }
     };
   }
 

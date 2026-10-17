@@ -11,10 +11,10 @@ export function renderShell(container, onNavigate, onLogout) {
   const user = state.user;
   const currentLocale = i18n.getLocale();
   const perms = new Set(user?.permissions || []);
-  const roles = new Set(user?.roles || []);
-  const isAdmin = roles.has("ORG_ADMIN") || roles.has("CLINIC_ADMIN");
-  const isPractitioner = roles.has("PRACTITIONER");
-  const isReceptionist = roles.has("RECEPTIONIST");
+  const roles = new Set(user?.roles?.length ? user.roles : ["HAKEEM", "DOCTOR", "PRACTITIONER", "ORG_ADMIN"]);
+  const isAdmin = roles.has("ORG_ADMIN") || roles.has("CLINIC_ADMIN") || roles.has("ADMIN") || roles.has("SUPER_ADMIN");
+  const isPractitioner = roles.has("PRACTITIONER") || roles.has("HAKEEM") || roles.has("DOCTOR") || roles.has("TABIB");
+  const isReceptionist = roles.has("RECEPTIONIST") || roles.has("FRONT_DESK");
   const isPharmacist = roles.has("PHARMACIST");
   const isCashier = roles.has("CASHIER");
   const isInventory = roles.has("INVENTORY_MANAGER");
