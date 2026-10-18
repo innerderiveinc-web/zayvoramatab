@@ -4086,24 +4086,15 @@ async function viewMufradMonographFromRow(btn) {
 
   try {
     let monograph = null;
-    const res = await fetch(`/api/v1/library/corpus/mufradat/${encodeURIComponent(term)}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.monograph) monograph = data.monograph;
-    }
+    const res = await apiClient.get(`/api/v1/library/corpus/mufradat/${encodeURIComponent(term)}`);
+    if (res && res.monograph) monograph = res.monograph;
 
     if (!monograph) {
-      const sRes = await fetch(`/api/v1/library/corpus/mufradat?q=${encodeURIComponent(term)}&limit=1`);
-      if (sRes.ok) {
-        const sData = await sRes.json();
-        if (sData && sData.mufradat && sData.mufradat.length > 0) {
-          const mId = sData.mufradat[0].id;
-          const dRes = await fetch(`/api/v1/library/corpus/mufradat/${encodeURIComponent(mId)}`);
-          if (dRes.ok) {
-            const dData = await dRes.json();
-            if (dData && dData.monograph) monograph = dData.monograph;
-          }
-        }
+      const sRes = await apiClient.get(`/api/v1/library/corpus/mufradat?q=${encodeURIComponent(term)}&limit=1`);
+      if (sRes && sRes.mufradat && sRes.mufradat.length > 0) {
+        const mId = sRes.mufradat[0].id;
+        const dRes = await apiClient.get(`/api/v1/library/corpus/mufradat/${encodeURIComponent(mId)}`);
+        if (dRes && dRes.monograph) monograph = dRes.monograph;
       }
     }
 

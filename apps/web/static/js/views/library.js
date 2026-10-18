@@ -672,6 +672,40 @@ export async function renderLibrary(container) {
                     <span>⬇️</span> Download Complete Compendium (${b.file_size_mb} MB)
                   </a>
                 </div>
+              ` : (window.location.hostname.includes("netlify.app") || window.location.hostname.includes("web.app")) ? `
+                <div style="background: var(--matab-color-surface); padding: 2.25rem; border-radius: 12px; text-align: center; max-width: 720px; box-shadow: 0 15px 35px rgba(0,0,0,0.35); border: 1px solid var(--matab-color-border-subtle); margin: 1.5rem; max-height: 85vh; overflow-y: auto;">
+                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">📖</div>
+                  <span class="badge" style="background: rgba(0,0,0,0.05); color: ${catColor}; font-weight: 700; font-size: 0.8rem; border: 1px solid ${catColor}44; margin-bottom: 0.75rem;">
+                    ${getCategoryIcon(b.authority_category)} ${escapeHtml(b.authority_category.replace(/_/g, " "))}
+                  </span>
+                  <h2 style="color: var(--matab-color-text-primary); font-size: 1.35rem; margin: 0.35rem 0 0.5rem 0; line-height: 1.35;">
+                    ${escapeHtml(b.title)}
+                  </h2>
+                  ${b.title_original ? `<div style="font-family: 'Amiri', 'Noto Nastaliq Urdu', serif; font-size: 1.3rem; color: var(--matab-color-brand-primary); margin-bottom: 0.5rem; direction: rtl;">${escapeHtml(b.title_original)}</div>` : ''}
+                  <div style="font-size: 0.88rem; color: var(--matab-color-brand-primary); font-weight: 600; margin-bottom: 1rem;">
+                    ✍️ ${escapeHtml(b.primary_author)} • Era: ${escapeHtml(b.publication_era || 'Classical Benchmark')}
+                  </div>
+                  <p style="color: var(--matab-color-text-secondary); font-size: 0.88rem; line-height: 1.6; text-align: left; background: var(--matab-color-bg-secondary); padding: 1rem; border-radius: 8px; border-left: 4px solid ${catColor}; margin-bottom: 1.25rem;">
+                    ${escapeHtml(b.clinical_significance || "Authoritative medical reference text.")}
+                  </p>
+                  
+                  <div style="text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.85rem; font-size: 0.8rem; margin-bottom: 1.25rem;">
+                    <div style="font-weight: 700; color: #065f46; margin-bottom: 0.35rem;">🔒 Physical Matab Repository Metadata</div>
+                    <div><strong>File Name:</strong> ${escapeHtml(b.filename)}</div>
+                    <div><strong>Format &amp; Size:</strong> ${b.file_format} (${b.file_size_mb} MB) • Language: ${b.language}</div>
+                    <div style="word-break: break-all; margin-top: 0.25rem;"><strong>Local Archive Path:</strong> <code>${escapeHtml(b.file_path)}</code></div>
+                    <div style="word-break: break-all; margin-top: 0.25rem;"><strong>SHA-256 Fingerprint:</strong> <code>${escapeHtml(b.sha256_hash)}</code></div>
+                  </div>
+
+                  <div style="display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="btnCloudCiteModal" style="padding: 0.5rem 1.2rem; font-weight: 600;">
+                      ℹ️ Complete Metadata &amp; Citation
+                    </button>
+                    <button class="btn btn-secondary" id="btnCloudBrowseMufradat" style="padding: 0.5rem 1.2rem;">
+                      🌿 Browse 250 Mufradat Monographs
+                    </button>
+                  </div>
+                </div>
               ` : `
                 <iframe 
                   src="${viewUrl}" 
@@ -692,6 +726,29 @@ export async function renderLibrary(container) {
       modalContainer.querySelector("#readerInspectBtn").addEventListener("click", () => {
         openBookDetailModal(bookId);
       });
+      const cloudCiteBtn = modalContainer.querySelector("#btnCloudCiteModal");
+      if (cloudCiteBtn) {
+        cloudCiteBtn.addEventListener("click", () => {
+          openBookDetailModal(bookId);
+        });
+      }
+      const cloudMufradatBtn = modalContainer.querySelector("#btnCloudBrowseMufradat");
+      if (cloudMufradatBtn) {
+        cloudMufradatBtn.addEventListener("click", () => {
+          closeReader();
+          categorySelect.value = "MATERIA_MEDICA";
+          container.querySelectorAll(".btn-quick-filter").forEach(b => {
+            b.classList.remove("active", "btn-primary");
+            b.classList.add("btn-outline-secondary");
+            if (b.getAttribute("data-cat") === "MATERIA_MEDICA") {
+              b.classList.add("active", "btn-primary");
+              b.classList.remove("btn-outline-secondary");
+            }
+          });
+          currentOffset = 0;
+          loadBooks();
+        });
+      }
       modalContainer.querySelector(".modal-backdrop").addEventListener("click", (e) => {
         if (e.target === modalContainer.querySelector(".modal-backdrop")) closeReader();
       });
@@ -795,6 +852,8 @@ export async function renderLibrary(container) {
       alert(`Failed to load book details: ${e.message || e}`);
     }
   }
+
+  window.openBookDetailModal = openBookDetailModal;
 
   // Event Listeners
   container.querySelector("#btnSearchSubmit").addEventListener("click", () => {

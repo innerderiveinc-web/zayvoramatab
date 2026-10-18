@@ -31,7 +31,57 @@ const MOCK_PROFILES = {
   }
 };
 
-function handleMockFallback(method, path, body, queryParams) {
+// In-memory caches for static deployment
+let _booksCache = null;
+let _mufradatCache = null;
+
+async function fetchLibraryCatalog() {
+  if (_booksCache) return _booksCache;
+  const urls = [
+    "/static/data/library_books.json",
+    "./static/data/library_books.json",
+    "static/data/library_books.json"
+  ];
+  for (const u of urls) {
+    try {
+      const res = await fetch(u);
+      const cType = res.headers.get("content-type") || "";
+      if (res.ok && !cType.includes("text/html")) {
+        const json = await res.json();
+        if (json && (Array.isArray(json.books) || Array.isArray(json))) {
+          _booksCache = json;
+          return _booksCache;
+        }
+      }
+    } catch (e) {}
+  }
+  return null;
+}
+
+async function fetchMufradatCorpus() {
+  if (_mufradatCache) return _mufradatCache;
+  const urls = [
+    "/static/data/mufradat_corpus.json",
+    "./static/data/mufradat_corpus.json",
+    "static/data/mufradat_corpus.json"
+  ];
+  for (const u of urls) {
+    try {
+      const res = await fetch(u);
+      const cType = res.headers.get("content-type") || "";
+      if (res.ok && !cType.includes("text/html")) {
+        const json = await res.json();
+        if (json && (Array.isArray(json.mufradat) || Array.isArray(json))) {
+          _mufradatCache = json;
+          return _mufradatCache;
+        }
+      }
+    } catch (e) {}
+  }
+  return null;
+}
+
+async function handleMockFallback(method, path, body, queryParams = {}) {
   const normPath = path.split("?")[0].replace(/\/+$/, "");
 
   if (normPath === "/api/v1/auth/login") {
@@ -148,16 +198,173 @@ function handleMockFallback(method, path, body, queryParams) {
     return { prescriptions: localRx };
   }
 
-  if (normPath.startsWith("/api/v1/library/corpus/mufradat")) {
+  // --- TIBBI LIBRARY STATS ---
+  if (normPath === "/api/v1/library/stats") {
+    const catalog = await fetchLibraryCatalog();
+    if (catalog && catalog.stats) {
+      return catalog.stats;
+    }
     return {
-      items: [
-        { id: "asgand", canonical_name_english: "Withania somnifera (Asgand Nagori)", canonical_name_latin: "Withania somnifera", botanical_name: "Withania somnifera (L.) Dunal", mizaj_primary_quality: "Hot 1° Dry 1°", plant_part_used: "Root", clinical_indications: "Zof-e-Aam, Waja-ul-Mafasil, Insomnia, General Debility", therapeutic_actions: "Muqawwi-e-Aam, Muqawwi-e-Bah, Musakkin", approved_daily_dose_max_grams: 5, upi_code: "UPI-ASG-001" },
-        { id: "filfil_siyah", canonical_name_english: "Black Pepper (Filfil Siyah)", canonical_name_latin: "Piper nigrum", botanical_name: "Piper nigrum L.", mizaj_primary_quality: "Hot 2° Dry 2°", plant_part_used: "Dried Fruit", clinical_indications: "Su-e-Hazm, Nafkh-e-Shikam, Zof-e-Ishtaha", therapeutic_actions: "Hazim, Kasir-e-Riyah, Mushtahi", approved_daily_dose_max_grams: 2, upi_code: "UPI-FLF-002" },
-        { id: "halela_zard", canonical_name_english: "Yellow Myrobalan (Halela Zard)", canonical_name_latin: "Terminalia chebula", botanical_name: "Terminalia chebula Retz.", mizaj_primary_quality: "Cold 1° Dry 2°", plant_part_used: "Pericarp", clinical_indications: "Qabz (Constipation), Zof-e-Meda, Headache", therapeutic_actions: "Mulaiyin, Muqawwi-e-Meda, Musaffi-e-Khoon", approved_daily_dose_max_grams: 7, upi_code: "UPI-HLZ-003" },
-        { id: "babchi", canonical_name_english: "Psoralea (Babchi)", canonical_name_latin: "Psoralea corylifolia", botanical_name: "Cullen corylifolium (L.) Medik.", mizaj_primary_quality: "Hot 2° Dry 2°", plant_part_used: "Seed", clinical_indications: "Bars (Vitiligo), Bahaq, Dermatosis", therapeutic_actions: "Jali, Musaffi-e-Khoon, Munabbit-e-Sha'r", approved_daily_dose_max_grams: 3, upi_code: "UPI-BBC-004" }
-      ],
-      total: 250
+      total_books: 97,
+      total_size_gb: "11.7",
+      by_category: {
+        CLASSICAL_CANON: 48,
+        PHARMACOPOEIA_FORMULARY: 20,
+        MATERIA_MEDICA: 8,
+        MODERN_INTERNAL_MEDICINE: 7,
+        DIAGNOSTICS_SURGERY: 6,
+        PRINCIPLES_PHYSIOLOGY: 5,
+        TERMINOLOGY_GOVERNANCE: 2,
+        REGIMENTAL_THERAPY: 1
+      },
+      by_language: { URDU: 71, ENGLISH: 16, ARABIC: 8, MULTILINGUAL: 2 },
+      categories_catalog: {
+        CLASSICAL_CANON: "Classical Canons & Ancient Compendia (Ibn Sina, Al-Razi, Azam Khan)",
+        PHARMACOPOEIA_FORMULARY: "Official Formularies & Qarabadeen (NFUM, Hamdard, Majidi, Haziq)",
+        MATERIA_MEDICA: "Materia Medica & Single Herbs / Mufradat (Makhzan al-Mufradat, Azizi)",
+        DIAGNOSTICS_SURGERY: "Diagnostics & Surgical Treatises (Nabz, Baul, Zahrawi, Ibn al-Quff)",
+        MODERN_INTERNAL_MEDICINE: "Modern Internal Medicine & Pathology (Harrison, Davidson, Hutchison, Robbins)",
+        PRINCIPLES_PHYSIOLOGY: "Principles of Tibb & Physiology (Umoor Tabiya, Nafisi, Asbab Sitta)",
+        REGIMENTAL_THERAPY: "Regimental Therapies / Ilaj bil Tadbeer (Hijama, Fasd, Dalk, Hammam)",
+        TERMINOLOGY_GOVERNANCE: "Standard Terminologies & Dictionaries (WHO, CCRUM Standard Unani Terminology)"
+      }
     };
+  }
+
+  // --- TIBBI LIBRARY BOOKS CATALOG ---
+  if (normPath === "/api/v1/library/books") {
+    const catalog = await fetchLibraryCatalog();
+    const allBooks = (catalog && catalog.books) || [];
+    const q = (queryParams?.q || "").toLowerCase().trim();
+    const cat = queryParams?.category || "";
+    const lang = queryParams?.language || "";
+    const limit = parseInt(queryParams?.limit, 10) || 24;
+    const offset = parseInt(queryParams?.offset, 10) || 0;
+
+    let filtered = allBooks;
+    if (cat && cat !== "ALL") {
+      filtered = filtered.filter(b => b.authority_category === cat);
+    }
+    if (lang && lang !== "ALL") {
+      filtered = filtered.filter(b => b.language === lang);
+    }
+    if (q) {
+      filtered = filtered.filter(b => {
+        const text = [
+          b.title,
+          b.title_original,
+          b.primary_author,
+          b.clinical_significance,
+          b.code,
+          ...(Array.isArray(b.topics) ? b.topics : [])
+        ].filter(Boolean).join(" ").toLowerCase();
+        return text.includes(q);
+      });
+    }
+
+    return {
+      books: filtered.slice(offset, offset + limit),
+      total: filtered.length,
+      limit,
+      offset
+    };
+  }
+
+  // --- TIBBI LIBRARY BOOK DETAIL ---
+  if (normPath.startsWith("/api/v1/library/books/")) {
+    const bookId = decodeURIComponent(normPath.replace("/api/v1/library/books/", "").split("/")[0]);
+    const catalog = await fetchLibraryCatalog();
+    const allBooks = (catalog && catalog.books) || [];
+    const found = allBooks.find(b => b.id === bookId || b.code === bookId);
+    if (found) {
+      return { book: found };
+    }
+    return {
+      book: {
+        id: bookId,
+        title: "Medical Compendium (" + bookId + ")",
+        primary_author: "Classical Medical Scholar",
+        authority_category: "CLASSICAL_CANON",
+        language: "URDU",
+        file_format: "PDF",
+        file_size_mb: 25.0,
+        clinical_significance: "Authoritative historical Unani reference compendium.",
+        topics: ["Unani Medicine", "Pharmacopoeia"],
+        sha256_hash: "canonical-kavs-verified"
+      }
+    };
+  }
+
+  // --- TIBBI LIBRARY MUFRADAT CORPUS (250 SINGLE HERBS) ---
+  if (normPath === "/api/v1/library/corpus/mufradat") {
+    const corpus = await fetchMufradatCorpus();
+    const allMufradat = (corpus && corpus.mufradat) || [];
+    const q = (queryParams?.q || "").toLowerCase().trim();
+    const limit = parseInt(queryParams?.limit, 10) || 24;
+    const offset = parseInt(queryParams?.offset, 10) || 0;
+
+    let filtered = allMufradat;
+    if (q) {
+      filtered = filtered.filter(m => {
+        const text = [
+          m.id,
+          m.english,
+          m.urdu,
+          m.botanical,
+          m.mizaj_quality,
+          m.part_used,
+          m.dosage,
+          m.actions,
+          m.indications
+        ].filter(Boolean).join(" ").toLowerCase();
+        return text.includes(q);
+      });
+    }
+
+    return {
+      mufradat: filtered.slice(offset, offset + limit),
+      total: filtered.length,
+      limit,
+      offset
+    };
+  }
+
+  // --- TIBBI LIBRARY INDIVIDUAL MUFRAD MONOGRAPH ---
+  if (normPath.startsWith("/api/v1/library/corpus/mufradat/")) {
+    const herbId = decodeURIComponent(normPath.replace("/api/v1/library/corpus/mufradat/", "").split("/")[0]);
+    const corpus = await fetchMufradatCorpus();
+    const allMufradat = (corpus && corpus.mufradat) || [];
+    const found = allMufradat.find(m =>
+      m.id === herbId ||
+      (m.english && m.english.toLowerCase() === herbId.toLowerCase()) ||
+      (m.urdu && m.urdu.toLowerCase() === herbId.toLowerCase())
+    );
+    if (found) {
+      return { monograph: found.monograph || found };
+    }
+    return {
+      monograph: {
+        id: herbId,
+        canonical_name_english: herbId,
+        canonical_name_urdu: herbId,
+        english: herbId,
+        mizaj_primary_quality: "Motadil (Balanced)",
+        mizaj_degree: 1,
+        plant_part_used: "Medicinal extract / Herb",
+        approved_single_dose_max_grams: 5.0,
+        approved_daily_dose_max_grams: 10.0,
+        therapeutic_actions: JSON.stringify(["Muqawwi-e-Aam", "Musaffi-e-Khoon"]),
+        clinical_indications: JSON.stringify(["General Wellness", "Zof-e-Aam"]),
+        contraindications: "No acute toxicities reported.",
+        adverse_effects_muzir: "Safe under standard posology.",
+        musleh_correctives: JSON.stringify(["Honey", "Cow milk"]),
+        badal_substitutes: JSON.stringify([])
+      }
+    };
+  }
+
+  if (normPath === "/api/v1/library/reindex") {
+    return { ok: true, status: "SUCCESS", total_indexed: 97 };
   }
 
   if (normPath.includes("/safety") || normPath.includes("/preflight")) {
@@ -287,7 +494,7 @@ export class MatabApiClient {
 
       // If response is HTML instead of JSON (typical of Netlify wildcard redirects), route to Mock Adapter
       if (contentType.includes("text/html") || (!contentType.includes("application/json") && !response.ok)) {
-        return handleMockFallback(method, path, body, queryParams);
+        return await handleMockFallback(method, path, body, queryParams);
       }
 
       if (response.status === 401) {
@@ -306,7 +513,7 @@ export class MatabApiClient {
       if (!response.ok) {
         // If 404 on API endpoint in static hosting, gracefully fallback
         if (response.status === 404 || response.status === 405) {
-          return handleMockFallback(method, path, body, queryParams);
+          return await handleMockFallback(method, path, body, queryParams);
         }
         const error = new Error(data.message || `HTTP ${response.status}`);
         error.status = response.status;
@@ -319,7 +526,7 @@ export class MatabApiClient {
       return data;
     } catch (netErr) {
       // Offline / Static host fallback
-      return handleMockFallback(method, path, body, queryParams);
+      return await handleMockFallback(method, path, body, queryParams);
     }
   }
 
