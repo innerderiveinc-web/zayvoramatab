@@ -18,6 +18,7 @@ import { renderPilotLaunch } from "./views/pilot_launch.js";
 import { renderPostPilotEvaluation } from "./views/post_pilot_evaluation.js";
 import { renderLibrary } from "./views/library.js";
 import { renderMore } from "./views/more.js";
+import { renderSettings } from "./views/settings.js";
 
 // Session Recovery Hook on 401
 window.__MATAB_ON_UNAUTHORIZED__ = () => {
@@ -365,6 +366,9 @@ async function renderCurrentTab(tab, force = false) {
         break;
       case "library":
         await renderLibrary(content);
+        break;
+      case "settings":
+        await renderSettings(content);
         break;
       case "more":
         await renderMore(content);

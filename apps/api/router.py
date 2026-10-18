@@ -23,7 +23,8 @@ from apps.api.routes import (
     threat_modeling, clinical_safety, test_automation, accessibility_localization,
     api_integration_certification, performance_scalability, tenant_governance,
     backup_restore, library, master_clinical,
-    ai_copilot, zfie_routes, inventory, library_corpus, outcomes_prom
+    ai_copilot, zfie_routes, inventory, library_corpus, outcomes_prom,
+    settings_routes
 )
 
 
@@ -67,6 +68,11 @@ ROUTES = [
     ("POST", r"^/api/v1/auth/logout$", auth.handle_auth_logout, True),
     ("GET", r"^/api/v1/auth/me$", auth.handle_auth_me, True),
     ("POST", r"^/api/v1/auth/password-reset$", auth.handle_password_reset_request, False),
+    
+    # 0. System Settings & Matab Preferences Studio
+    ("GET", r"^/api/v1/settings$", settings_routes.handle_settings_get, False),
+    ("POST", r"^/api/v1/settings$", settings_routes.handle_settings_save, False),
+    ("PUT", r"^/api/v1/settings$", settings_routes.handle_settings_save, False),
     
     # Tenancy & Facilities
     ("GET", r"^/api/v1/organizations$", tenancy.handle_organizations_list, True),

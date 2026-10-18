@@ -181,6 +181,45 @@ function handleMockFallback(method, path, body, queryParams) {
     };
   }
 
+  if (normPath === "/api/v1/settings") {
+    let settings = null;
+    try {
+      settings = JSON.parse(localStorage.getItem("matab_system_settings") || "null");
+    } catch(e) {}
+    if (!settings) {
+      settings = {
+        clinic_name: "ZAYVORA Matab & Hospital",
+        clinic_tagline: "Center for Classical Unani Medicine & Bedside Decision Support",
+        head_practitioner: "Hakim Tariq Mahmud (Senior Consulting Tabib)",
+        registration_no: "AYUSH-UNANI-98241",
+        phone: "+91 98765 43210",
+        email: "matab@zayvora.com",
+        address: "42 Shifa Marg, Civil Lines, New Delhi, India",
+        consultation_fee: 300,
+        default_followup_days: 7,
+        default_print_format: "a4",
+        thermal_slip_width: "80mm",
+        header_mode: "full",
+        prescription_disclaimer: "Valid for clinical guidance. Please report any adverse symptoms immediately. Follow-up consultation recommended within 7 days.",
+        require_clinician_pin: true,
+        auto_deduct_inventory: true,
+        low_stock_threshold: 10,
+        enable_abdm_qr: true,
+        mizaj_required: false,
+        default_language: "en",
+        operating_hours: "09:30 AM – 08:30 PM (Mon – Sat)"
+      };
+    }
+    if (method === "POST" || method === "PUT") {
+      settings = { ...settings, ...body, updated_at: new Date().toISOString() };
+      try {
+        localStorage.setItem("matab_system_settings", JSON.stringify(settings));
+      } catch(e) {}
+      return { ok: true, status: "SAVED", settings };
+    }
+    return { ok: true, settings };
+  }
+
   return { ok: true, status: "SUCCESS", data: [] };
 }
 

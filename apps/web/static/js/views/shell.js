@@ -167,9 +167,14 @@ export function renderShell(container, onNavigate, onLogout) {
         <span>Tibb Library</span>
       </button>
 
-      <button class="nav-tab ${state.activeTab === "more" ? "active" : ""}" data-tab="more">
+      <button class="nav-tab ${state.activeTab === "settings" ? "active" : ""}" data-tab="settings">
         <span>⚙️</span>
-        <span>Governance & Settings</span>
+        <span>Settings</span>
+      </button>
+
+      <button class="nav-tab ${state.activeTab === "more" ? "active" : ""}" data-tab="more">
+        <span>🏛️</span>
+        <span>Governance</span>
       </button>
     </nav>
 
