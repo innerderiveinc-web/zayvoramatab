@@ -2240,67 +2240,32 @@ function calculate10AjnasMizaj() {
 }
 
 // -----------------------------------------------------------------------------
-// 1-CLICK MASTER DISEASE NUSKHA PRESETS
+// 1-CLICK MASTER DISEASE NUSKHA PRESETS (GOVERNED PROTOCOL DELEGATION)
 // -----------------------------------------------------------------------------
 
 function applyNuskhaPreset(protocolCode) {
-  const tbody = document.getElementById("tbody-nuskha-items");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-
-  const presets = {
-    DYSPEPSIA: {
-      principle: "Tadeel-e-Mizaj-e-Meda wa Taqwiyat-e-Hazm (Gastric Realignment & Digestive Fortification)",
-      items: [
-        { item_name: "Jawarish Kamuni", dose_amount: 5, dose_unit: "g", frequency: "BD", duration_days: 14, anupan_vehicle: "Water after meals" },
-        { item_name: "Habb-e-Kabid Naushadri", dose_amount: 2, dose_unit: "hab", frequency: "BD", duration_days: 14, anupan_vehicle: "Arq Badiyan (50ml)" }
-      ]
-    },
-    HEADACHE: {
-      principle: "Tanqiya-e-Dimagh wa Taskeen-e-Bukharaat (Cerebral Cleansing & Vapor Sedation)",
-      items: [
-        { item_name: "Itrifal Ustukhuddus", dose_amount: 6, dose_unit: "g", frequency: "HS", duration_days: 14, anupan_vehicle: "Warm Water at bedtime" },
-        { item_name: "Sharbat Deenar", dose_amount: 20, dose_unit: "ml", frequency: "BD", duration_days: 14, anupan_vehicle: "Water before meals" }
-      ]
-    },
-    ARTHRITIS: {
-      principle: "Istifragh-e-Khilt-e-Ghalib wa Taskeen-e-Waja (Morbid Humour Evacuation & Pain Relief)",
-      items: [
-        { item_name: "Majun Suranjan", dose_amount: 5, dose_unit: "g", frequency: "BD", duration_days: 21, anupan_vehicle: "Lukewarm Water" },
-        { item_name: "Habb-e-Suranjan", dose_amount: 1, dose_unit: "hab", frequency: "BD", duration_days: 10, anupan_vehicle: "Water" }
-      ]
-    },
-    ASTHMA: {
-      principle: "Taqtee-e-Balgham wa Tanfith-e-Riya (Phlegm Liquefaction & Pulmonary Expectoration)",
-      items: [
-        { item_name: "Lauq-e-Sapistan", dose_amount: 10, dose_unit: "g", frequency: "TDS", duration_days: 14, anupan_vehicle: "Lick slowly with warm water" },
-        { item_name: "Sharbat Banafsha", dose_amount: 20, dose_unit: "ml", frequency: "BD", duration_days: 14, anupan_vehicle: "Warm Water" }
-      ]
-    },
-    LIVER: {
-      principle: "Tafteeh-e-Sudad-e-Kabid wa Islah-e-Khyloosi (Hepatic Deobstruction & Chyme Optimization)",
-      items: [
-        { item_name: "Majun Dabeedul Ward", dose_amount: 5, dose_unit: "g", frequency: "BD", duration_days: 21, anupan_vehicle: "Arq Kasni (50ml)" },
-        { item_name: "Sharbat Deenar", dose_amount: 20, dose_unit: "ml", frequency: "BD", duration_days: 21, anupan_vehicle: "Water" }
-      ]
-    },
-    NERVINE: {
-      principle: "Taqwiyat-e-Asab wa Rooh Nafsani (Nervine Fortification & Psychic Vitality)",
-      items: [
-        { item_name: "Majun Falasfa", dose_amount: 5, dose_unit: "g", frequency: "BD", duration_days: 30, anupan_vehicle: "Milk" },
-        { item_name: "Khamira Gaozaban Ambari Jawaharwala", dose_amount: 3, dose_unit: "g", frequency: "OD", duration_days: 30, anupan_vehicle: "Morning empty stomach" }
-      ]
-    }
+  // Map legacy shorthand codes to canonical reviewed Master Clinical Protocols (P-01 to P-21)
+  // Ensures all prescribed formulas comply with governed dosages, Afaal cascades, and safety bounds
+  const codeToMasterProtocol = {
+    DYSPEPSIA: "P-03",
+    HEADACHE: "P-11",
+    ARTHRITIS: "P-10",
+    ASTHMA: "P-08",
+    LIVER: "P-04",
+    NERVINE: "P-12"
   };
 
-  const selected = presets[protocolCode];
-  if (!selected) return;
+  const targetProtocolId = codeToMasterProtocol[protocolCode] || protocolCode;
 
-  const principleInput = document.getElementById("input-plan-principle");
-  if (principleInput) principleInput.value = selected.principle;
-
-  selected.items.forEach(it => addNuskhaItemRow(it));
-  triggerAutosave();
+  if (typeof loadMasterProtocol === "function") {
+    if (cachedMasterData && cachedMasterData.protocols && cachedMasterData.protocols.length > 0) {
+      loadMasterProtocol(targetProtocolId);
+    } else if (typeof fetchMasterClinicalData === "function") {
+      fetchMasterClinicalData().then(() => {
+        loadMasterProtocol(targetProtocolId);
+      });
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------
