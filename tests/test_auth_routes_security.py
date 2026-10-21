@@ -1,7 +1,12 @@
 """Regression tests for Unauthenticated Route Rejection and Secure Token Handling."""
 
+import os
+import sys
 import unittest
 import json
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from apps.api.router import ApiRouter
 
 class TestAuthRoutesSecurity(unittest.TestCase):
