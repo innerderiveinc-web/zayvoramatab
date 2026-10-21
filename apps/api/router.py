@@ -31,20 +31,20 @@ from apps.api.routes import (
 
 
 ROUTES = [
-    # 1. Clinical Advisor & Decision Support (Online Medical Reference & Classical Unani Engine)
-    ("POST", r"^/api/v1/hakeem-ai/query$", ai_copilot.handle_ai_query, False),
-    ("POST", r"^/api/v1/clinical/ai-assistant$", ai_copilot.handle_ai_query, False),
-    ("GET", r"^/api/v1/hakeem-ai/status$", ai_copilot.handle_ai_status, False),
+    # 1. Clinical Advisor & Decision Support (Governed Clinical Reference & Classical Unani Engine)
+    ("POST", r"^/api/v1/hakeem-ai/query$", ai_copilot.handle_ai_query, True),
+    ("POST", r"^/api/v1/clinical/ai-assistant$", ai_copilot.handle_ai_query, True),
+    ("GET", r"^/api/v1/hakeem-ai/status$", ai_copilot.handle_ai_status, True),
 
     # 2. ZFIE (Formulation Intelligence Engine - Molecular & Bio-Targets)
-    ("GET", r"^/api/v1/zfie/formulations/(?P<sku>[^/]+)/molecular-profile$", zfie_routes.handle_zfie_formulation_profile, False),
-    ("GET", r"^/api/v1/zfie/compounds$", zfie_routes.handle_zfie_compounds, False),
-    ("GET", r"^/api/v1/zfie/targets$", zfie_routes.handle_zfie_targets, False),
+    ("GET", r"^/api/v1/zfie/formulations/(?P<sku>[^/]+)/molecular-profile$", zfie_routes.handle_zfie_formulation_profile, True),
+    ("GET", r"^/api/v1/zfie/compounds$", zfie_routes.handle_zfie_compounds, True),
+    ("GET", r"^/api/v1/zfie/targets$", zfie_routes.handle_zfie_targets, True),
 
     # 3. FEFO Inventory, Dispensing & Statutory Mudabbar Gate
-    ("GET", r"^/api/v1/inventory$", inventory.handle_inventory_list, False),
-    ("POST", r"^/api/v1/inventory/allocate-fefo$", inventory.handle_inventory_allocate_fefo, False),
-    ("POST", r"^/api/v1/inventory/dispense$", inventory.handle_inventory_dispense, False),
+    ("GET", r"^/api/v1/inventory$", inventory.handle_inventory_list, True),
+    ("POST", r"^/api/v1/inventory/allocate-fefo$", inventory.handle_inventory_allocate_fefo, True),
+    ("POST", r"^/api/v1/inventory/dispense$", inventory.handle_inventory_dispense, True),
 
     # 5. Grand Classical Library & Corpus (1,593 Standard Terms & 250 Mufradat)
     ("GET", r"^/api/v1/library/corpus/terms$", library_corpus.handle_corpus_terms, False),
@@ -53,10 +53,10 @@ ROUTES = [
     ("GET", r"^/api/v1/library/corpus/sources$", library_corpus.handle_corpus_sources, False),
 
     # 6. Patient-Side Outcome Measures (PROMs) & Adherence
-    ("POST", r"^/api/v1/outcomes/proms$", outcomes_prom.handle_prom_create, False),
-    ("GET", r"^/api/v1/outcomes/proms$", outcomes_prom.handle_prom_list, False),
-    ("POST", r"^/api/v1/outcomes/adherence$", outcomes_prom.handle_adherence_create, False),
-    ("GET", r"^/api/v1/outcomes/adherence$", outcomes_prom.handle_adherence_list, False),
+    ("POST", r"^/api/v1/outcomes/proms$", outcomes_prom.handle_prom_create, True),
+    ("GET", r"^/api/v1/outcomes/proms$", outcomes_prom.handle_prom_list, True),
+    ("POST", r"^/api/v1/outcomes/adherence$", outcomes_prom.handle_adherence_create, True),
+    ("GET", r"^/api/v1/outcomes/adherence$", outcomes_prom.handle_adherence_list, True),
 
     # Observability & Liveness
     ("GET", r"^/api/v1/health/live$", health.handle_health_live, False),
@@ -70,9 +70,9 @@ ROUTES = [
     ("POST", r"^/api/v1/auth/password-reset$", auth.handle_password_reset_request, False),
     
     # 0. System Settings & Matab Preferences Studio
-    ("GET", r"^/api/v1/settings$", settings_routes.handle_settings_get, False),
-    ("POST", r"^/api/v1/settings$", settings_routes.handle_settings_save, False),
-    ("PUT", r"^/api/v1/settings$", settings_routes.handle_settings_save, False),
+    ("GET", r"^/api/v1/settings$", settings_routes.handle_settings_get, True),
+    ("POST", r"^/api/v1/settings$", settings_routes.handle_settings_save, True),
+    ("PUT", r"^/api/v1/settings$", settings_routes.handle_settings_save, True),
     
     # Tenancy & Facilities
     ("GET", r"^/api/v1/organizations$", tenancy.handle_organizations_list, True),
@@ -1292,11 +1292,17 @@ class ApiRouter:
                 }
                 return 400, {"Content-Type": "application/json", "X-Request-Id": request_id}, json.dumps(err_resp).encode("utf-8")
 
-        # Resolve auth token (Bearer header, cookie, or query parameter fallback for embeds)
+        # Resolve auth token (Bearer header, X-Auth-Token header, or session cookie only)
+        # Security: Query-string token parameter fallback is prohibited to prevent token leakage in HTTP logs/referrers
         auth_header = headers.get("authorization") or headers.get("Authorization") or ""
         token = auth_header.replace("Bearer ", "").strip() if "Bearer " in auth_header else headers.get("x-auth-token", "")
-        if not token and query_params:
-            token = query_params.get("token") or query_params.get("auth_token") or ""
+        if not token:
+            cookie_header = headers.get("cookie") or headers.get("Cookie") or ""
+            for cookie_part in cookie_header.split(";"):
+                cookie_part = cookie_part.strip()
+                if cookie_part.startswith("session_token="):
+                    token = cookie_part.partition("=")[2].strip()
+                    break
 
         req = {
             "method": method,

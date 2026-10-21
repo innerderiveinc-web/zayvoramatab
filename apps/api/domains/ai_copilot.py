@@ -38,7 +38,7 @@ Strict Clinical Governance Rules:
             "title": "Guggul + Warfarin / Antiplatelets",
             "mechanism": "Guggulsterones inhibit platelet aggregation and potentiate CYP clearance, significantly increasing bleeding diathesis and altering INR levels.",
             "classical_ref": "Makhzan-ul-Adwiya (Vol. 2): Guggul is Lateef, Mohallil, and Riqat-e-Dam (blood-thinning). Contraindicated with active bleeding.",
-            "action": "Discontinue Guggul. Substitute with Suranjan Shirin (Colchicum autumnale) with INR monitoring."
+            "action": "Discontinue Guggul immediately. Do not substitute with narrow-therapeutic-index botanicals (e.g. Suranjan/Colchicum) due to extreme toxicity risks. Consult clinical pharmacologist and monitor urgent prothrombin time (PT/INR)."
         },
         ("levothyroxine", "asgandh"): {
             "severity": "HIGH RISK",
@@ -66,6 +66,31 @@ Strict Clinical Governance Rules:
         context = context or {}
         q_lower = query_clean.lower()
 
+        # 0. Intercept autonomous diagnosis, prescribing, and dosage calculation requests
+        from apps.api.domains.clinical_rag import ClinicalRAGEngine
+        try:
+            rag_engine = ClinicalRAGEngine()
+            intent = rag_engine.resolve_query_intent(query_clean)
+            if intent.get("requires_strict_abstention"):
+                return {
+                    "ok": True,
+                    "query": query_clean,
+                    "provider": "Governed Clinical Safety Perimeter (Fail-Closed)",
+                    "response": (
+                        "### 🛑 Prohibited Autonomous Clinical Action\n\n"
+                        "> **Clinical Safety Policy:** Autonomous diagnostic labelling, automatic formula selection, and computational dose calculation are strictly prohibited under statutory clinical governance.\n\n"
+                        "The consulting physician must perform a bedside clinical examination, determine patient Mizaj, and select an individualized formulation from the Master Clinical Formulary."
+                    ),
+                    "safety_alert": {
+                        "severity": "RESTRICTED INTENT",
+                        "title": "Autonomous Clinical Action Prohibited",
+                        "action": "Clinician must formulate prescription manually using reviewed clinical protocols."
+                    },
+                    "badal_info": None
+                }
+        except Exception:
+            pass
+
         # 1. Screen for Immediate Safety Alerts
         safety_alert = cls._check_safety_registry(q_lower)
 
@@ -80,10 +105,8 @@ Strict Clinical Governance Rules:
         if gemini_key:
             try:
                 import ssl
-                try:
-                    ssl_ctx = ssl.create_default_context()
-                except Exception:
-                    ssl_ctx = ssl._create_unverified_context()
+                # Strictly use standard verified SSL context (never disable verification)
+                ssl_ctx = ssl.create_default_context()
 
                 gemini_url = (
                     "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -116,7 +139,7 @@ Strict Clinical Governance Rules:
                         parts = candidates[0]["content"].get("parts", [])
                         if parts:
                             ai_response_text = parts[0].get("text", "")
-                            provider_used = "Verified Medical Literature (Online Reference)"
+                            provider_used = "Clinical Decision Support Copilot (Requires Clinician Validation)"
             except Exception as e:
                 # Log degradation and fall back smoothly
                 print(f"[Clinical Advisor Notice] Online query fallback: {e}. Utilizing Classical Unani Reference.", flush=True)
@@ -124,7 +147,7 @@ Strict Clinical Governance Rules:
         # 4. Fallback if Gemini unavailable or not configured
         if not ai_response_text:
             ai_response_text = cls._synthesize_classical_fallback(query_clean, q_lower, badal_info, safety_alert)
-            if provider_used != "Verified Medical Literature (Online Reference)":
+            if not provider_used.startswith("Clinical Decision"):
                 provider_used = "Classical Unani Compendia (Standard Reference)"
 
         return {

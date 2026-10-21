@@ -96,7 +96,7 @@ Suggest classical Unani Usul-e-Ilaj, sequential Nuzj/Tanqiya formulation options
 
         return {
             "status": "SUCCESS",
-            "source": "Verified Online Medical Literature" if os.getenv("GEMINI_API_KEY") else "Classical Unani Knowledge Compendia",
+            "source": "Clinical Decision Support Assistant (Clinician Review Required)",
             "case_impression": ai_response,
             "dominant_mizaj": dominant_mizaj,
             "organ_axis": organ_axis,
@@ -110,7 +110,7 @@ Suggest classical Unani Usul-e-Ilaj, sequential Nuzj/Tanqiya formulation options
         dominant_mizaj: str,
         language: str = "ur"
     ) -> str:
-        """Generate warm, patient-friendly prescription instructions in Urdu, Hindi, or Roman Urdu."""
+        """Generate patient instructions from clinician-entered prescription."""
         prompt = f"""Create clear, polite, step-by-step medication taking instructions for patient '{patient_name}'.
 Language requested: {language} (Urdu / Hindi / Roman Urdu).
 Mizaj: {dominant_mizaj}
@@ -127,19 +127,21 @@ Tone: Respectful, reassuring, and extremely easy for an ordinary family to follo
         if ai_response:
             return ai_response
 
-        # Deterministic fallback format
+        # Deterministic fallback format without unverified defaults
         lines = [
             f"Bismillah-ir-Rahman-ir-Rahim",
             f"Mohtaram/Mohtarma {patient_name} ke liye Dawa aur Parhez ki Hidayat:",
             "",
-            "DAWA KHANE KA TAREEQA:"
+            "DAWA KHANE KA TAREEQA (Hakeem ke Mashware ke Mutabiq):"
         ]
         for idx, it in enumerate(prescribed_items, 1):
             name = it.get("item_name") or it.get("custom_name") or "Dawa"
-            dose = f"{it.get('dose_amount', '1')} {it.get('dose_unit', 'chammach')}"
-            freq = it.get("frequency", "Subah-Sham")
-            anupan = it.get("anupan_vehicle", "Taza pani")
-            lines.append(f"{idx}. {name}: {dose} ({freq}) — {anupan} ke sath lein.")
+            amt = it.get('dose_amount')
+            unit = it.get('dose_unit')
+            dose_str = f"{amt} {unit}" if (amt and unit) else "Hakeem ki tayy shuda miqdar"
+            freq = it.get("frequency") or "Hakeem ki hidayat ke mutabiq"
+            anupan = it.get("anupan_vehicle") or "Hakeem ki hidayat ke mutabiq"
+            lines.append(f"{idx}. {name}: {dose_str} ({freq}) — {anupan} ke sath lein.")
 
         lines.extend([
             "",

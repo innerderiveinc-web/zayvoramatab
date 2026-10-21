@@ -2203,43 +2203,40 @@ function toggle10AjnasCalculator() {
 }
 
 function calculate10AjnasMizaj() {
-  const m = document.getElementById("calc-malmas")?.value || "MOTADIL";
-  const l = document.getElementById("calc-lahm")?.value || "MOTADIL";
-  const s = document.getElementById("calc-shaar")?.value || "MOTADIL";
-  const c = document.getElementById("calc-lawn")?.value || "MOTADIL";
-  const bunya = document.getElementById("calc-bunya")?.value || "MOTADIL";
-  const inf = document.getElementById("calc-infial")?.value || "MOTADIL";
-  const nawm = document.getElementById("calc-nawm")?.value || "MOTADIL";
-  const afal = document.getElementById("calc-afal")?.value || "MOTADIL";
-  const fuz = document.getElementById("calc-fuzalat")?.value || "MOTADIL";
-  const p = document.getElementById("calc-nabz")?.value || "MOTADIL";
+  const m = document.getElementById("calc-malmas")?.value || "NOT_ASSESSED";
+  const l = document.getElementById("calc-lahm")?.value || "NOT_ASSESSED";
+  const s = document.getElementById("calc-shaar")?.value || "NOT_ASSESSED";
+  const c = document.getElementById("calc-lawn")?.value || "NOT_ASSESSED";
+  const bunya = document.getElementById("calc-bunya")?.value || "NOT_ASSESSED";
+  const inf = document.getElementById("calc-infial")?.value || "NOT_ASSESSED";
+  const nawm = document.getElementById("calc-nawm")?.value || "NOT_ASSESSED";
+  const afal = document.getElementById("calc-afal")?.value || "NOT_ASSESSED";
+  const fuz = document.getElementById("calc-fuzalat")?.value || "NOT_ASSESSED";
+  const p = document.getElementById("calc-nabz")?.value || "NOT_ASSESSED";
 
   const scores = { DAMAWWI: 0, SAFRAWI: 0, BALGHAMI: 0, SAUDAWI: 0 };
+  let assessedCount = 0;
   [m, l, s, c, bunya, inf, nawm, afal, fuz, p].forEach(v => {
-    if (scores[v] !== undefined) scores[v]++;
-  });
-
-  let dominant = "MOTADIL";
-  let maxScore = 0;
-  for (const [k, v] of Object.entries(scores)) {
-    if (v > maxScore) {
-      maxScore = v;
-      dominant = k;
+    if (scores[v] !== undefined) {
+      scores[v]++;
+      assessedCount++;
     }
-  }
-
-  const mizajSelect = document.getElementById("input-unani-mizaj");
-  if (mizajSelect) mizajSelect.value = dominant;
+  });
 
   const reasoning = document.getElementById("input-unani-reasoning");
   if (reasoning) {
     const pulseText = document.getElementById("calc-nabz")?.selectedOptions[0]?.text || "Nabz";
     const skinText = document.getElementById("calc-malmas")?.selectedOptions[0]?.text || "Malmas";
-    reasoning.value = `10-Ajnas-e-Ashara Scoring: Dominant ${dominant} (${maxScore}/10 classical parameters). Nabz: ${pulseText}; Malmās: ${skinText}; Breakdown: Damawwi=${scores.DAMAWWI}, Safrawi=${scores.SAFRAWI}, Balghami=${scores.BALGHAMI}, Saudawi=${scores.SAUDAWI}.`;
+    const obsEntry = `[10-Ajnas Physical Examination: ${assessedCount}/10 assessed. Nabz: ${pulseText}; Malmās: ${skinText}. Distribution: Damawwi=${scores.DAMAWWI}, Safrawi=${scores.SAFRAWI}, Balghami=${scores.BALGHAMI}, Saudawi=${scores.SAUDAWI}. Policy: CLINICIAN_ENTERED_ONLY - final diagnostic determination must be selected and entered by attending practitioner.]`;
+    reasoning.value = reasoning.value ? `${reasoning.value}\n${obsEntry}` : obsEntry;
+  }
+
+  // Clinical Governance: NEVER auto-select or auto-save the final diagnosis without clinician sign-off
+  if (typeof window.showToast === "function") {
+    window.showToast("10-Ajnas observations recorded. Please select your clinical Mizaj determination above.", "info");
   }
 
   toggle10AjnasCalculator();
-  triggerAutosave();
 }
 
 // -----------------------------------------------------------------------------

@@ -16,15 +16,15 @@ class PrescriptionService:
         """Fetch prescription with all its items and safety status."""
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT pr.id, pr.encounter_id, pr.patient_id, pr.practitioner_id as hakeem_id, pr.version_number,
+            SELECT pr.id, pr.encounter_id, pr.patient_id, pr.hakeem_id, pr.hakeem_id as practitioner_id, pr.version_number,
                    pr.parent_prescription_id, pr.amendment_reason, pr.status, pr.overall_safety_state,
-                   pr.signed_at as signature_timestamp, pr.signature_hash, pr.created_at,
+                   pr.signature_timestamp, pr.signature_hash, pr.created_at,
                    COALESCE(u.full_name, 'Hakeem Tariq Ahmad') as hakeem_name,
                    COALESCE(prac.registration_number, 'BUMS-AMU-2012') as registration_number,
                    COALESCE(prac.registration_council, 'Central Council of Indian Medicine (CCIM)') as registration_council
             FROM prescriptions pr
-            LEFT JOIN practitioners prac ON pr.practitioner_id = prac.id OR pr.practitioner_id = prac.user_id
-            LEFT JOIN users u ON prac.user_id = u.id OR pr.practitioner_id = u.id
+            LEFT JOIN practitioners prac ON pr.hakeem_id = prac.id OR pr.hakeem_id = prac.user_id
+            LEFT JOIN users u ON prac.user_id = u.id OR pr.hakeem_id = u.id
             WHERE pr.id = ?;
         """, (prescription_id,))
         row = cursor.fetchone()
@@ -39,10 +39,13 @@ class PrescriptionService:
         
         # Load items
         cursor.execute("""
-            SELECT pi.id, pi.item_type, pi.formulation_id, pi.item_name, pi.dosage_form,
+            SELECT pi.id, pi.item_type, pi.formulation_id,
+                   COALESCE(pi.custom_name, f.name, 'Formulation') as item_name,
+                   pi.custom_name, pi.dosage_form,
                    pi.dose_amount, pi.dose_unit, pi.frequency, pi.duration_days, pi.instructions,
                    pi.anupan_vehicle
             FROM prescription_items pi
+            LEFT JOIN formulations f ON pi.formulation_id = f.id
             WHERE pi.prescription_id = ?;
         """, (prescription_id,))
         raw_items = cursor.fetchall()

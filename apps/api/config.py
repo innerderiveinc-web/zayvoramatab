@@ -7,15 +7,20 @@ from typing import List
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Automatically load .env if present
+# Automatically load .env if present without overwriting existing environment variables
 env_file = BASE_DIR / ".env"
 if env_file.exists():
-    for line in env_file.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith('#') and '=' in line:
-            k, _, v = line.partition('=')
-            if v.strip():
-                os.environ[k.strip()] = v.strip()
+    try:
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, _, v = line.partition('=')
+                k = k.strip()
+                v = v.strip()
+                if v and k not in os.environ:
+                    os.environ[k] = v
+    except Exception:
+        pass
 
 DEFAULT_INSECURE_KEYS = [
     "change-this-insecure-dev-key-before-production-use-2026",

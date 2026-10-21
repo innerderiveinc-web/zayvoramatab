@@ -1,42 +1,24 @@
 version: "3.8"
 
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: matab_postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-matab_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-matab_secure_pass_2026}
-      POSTGRES_DB: ${POSTGRES_DB:-matab_os}
-    ports:
-      # Expose only on loopback for development; in production-like profile do not publish externally
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U matab_user -d matab_os"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   api:
     build:
       context: ..
       dockerfile: infra/Dockerfile
     container_name: matab_api
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
-      MATAB_ENV: development
-      DATABASE_URL: postgresql://matab_user:matab_secure_pass_2026@db:5432/matab_os
-      MATAB_SECRET_KEY: ${MATAB_SECRET_KEY:-matab-docker-dev-secret-key-2026}
+      MATAB_ENV: ${MATAB_ENV:-production}
+      DATABASE_PATH: /app/data/matab.db
+      DATABASE_URL: sqlite:////app/data/matab.db
+      MATAB_SECRET_KEY: ${MATAB_SECRET_KEY:-matab-docker-production-secret-key-must-be-rotated-64char}
       MATAB_HOST: 0.0.0.0
       MATAB_PORT: 8000
+    volumes:
+      - matab_data:/app/data
     ports:
       - "127.0.0.1:8000:8000"
 
 volumes:
-  postgres_data:
+  matab_data:
+

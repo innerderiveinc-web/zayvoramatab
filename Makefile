@@ -1,4 +1,4 @@
-.PHONY: test test-unit test-integration test-e2e migrate seed run help
+.PHONY: test test-unit test-integration test-e2e migrate seed run package help
 
 help:
 	@echo "ZAYVORA MATAB OS — Developer Commands"
@@ -9,6 +9,15 @@ help:
 	@echo "  make migrate          Apply database schema migrations"
 	@echo "  make seed             Seed synthetic development dataset"
 	@echo "  make run              Start the standalone MATAB OS server"
+	@echo "  make package          Create clean, secret-free release ZIP distribution"
+
+package:
+	@rm -f zayvora_matab_os_latest.zip zayvora_matab_os_distribution.zip
+	@zip -q -r zayvora_matab_os_latest.zip . \
+		-x "*.git*" ".venv/*" "node_modules/*" "*.pyc" "**/__pycache__/*" \
+		   "*.db*" "backups/*" "*.backup_*" "*.DS_Store" "*__MACOSX*" \
+		   ".env*" "!.env.example" "*.zip" "test_cds_unit_*" ".system_generated/*"
+	@echo "Created clean release package: zayvora_matab_os_latest.zip"
 
 test:
 	python3 -m unittest discover -s tests -p "test_*.py" -v
