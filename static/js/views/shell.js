@@ -167,10 +167,11 @@ export function renderShell(container, onNavigate, onLogout) {
         <span>Tibb Library</span>
       </button>
 
+      ${isAdmin ? `
       <button class="nav-tab ${state.activeTab === "settings" ? "active" : ""}" data-tab="settings">
         <span>⚙️</span>
         <span>Settings</span>
-      </button>
+      </button>` : ''}
 
       <button class="nav-tab ${state.activeTab === "more" ? "active" : ""}" data-tab="more">
         <span>🏛️</span>
