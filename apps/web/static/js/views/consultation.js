@@ -19,6 +19,16 @@ import { applyNabzPreset, applyBaulPreset, calculateBMI } from "./consultation-a
 import { currentPrintFormat, setPrintFormat, printPrescriptionDocument, applyQuickDuration, sendWhatsAppRx } from "./consultation-rx.js";
 import { openHakeemAiModal, closeHakeemAiModal, setAndRunHakeemAiQuery, queryHakeemAi } from "./consultation-ai.js";
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 let activeEncounterId = null;
 let workspaceData = null;
 let autosaveTimer = null;
@@ -1134,19 +1144,19 @@ async function openSwitchPatientModal() {
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border: 1px solid var(--matab-color-border-subtle); border-radius: var(--matab-radius-md); margin-bottom: 0.5rem; background: var(--matab-color-bg-card); transition: all 0.15s;">
         <div>
           <div style="font-weight: 700; color: var(--matab-color-brand-primary); font-size: 0.95rem;">
-            ${(p.display_name || p.full_name || 'Patient').replace(/\s*\[Synthetic\]/gi, "")}
+            ${escapeHtml((p.display_name || p.full_name || 'Patient').replace(/\s*\[Synthetic\]/gi, ""))}
           </div>
           <div style="font-size: 0.78rem; color: var(--matab-color-text-muted); margin-top: 0.2rem;">
-            MRN: <strong>${p.mrn}</strong> • Age: ${p.estimated_age || p.age || '--'} • Sex: ${p.sex || 'U'} • Contact: ${p.phone || '--'}
+            MRN: <strong>${escapeHtml(p.mrn)}</strong> • Age: ${escapeHtml(p.estimated_age || p.age || '--')} • Sex: ${escapeHtml(p.sex || 'U')} • Contact: ${escapeHtml(p.phone || '--')}
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="window.selectPatientForConsultation('${p.id}')">
+        <button class="btn btn-primary btn-sm" onclick="window.selectPatientForConsultation('${escapeHtml(p.id)}')">
           Open Consultation ➔
         </button>
       </div>
     `).join("");
   } catch (err) {
-    listEl.innerHTML = `<p style="color: var(--matab-color-status-danger);">Error loading patients: ${err.message}</p>`;
+    listEl.innerHTML = `<p style="color: var(--matab-color-status-danger);">Error loading patients: ${escapeHtml(err.message)}</p>`;
   }
 }
 

@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy project files
 COPY . /app
 
-# Ensure non-root execution
-RUN addgroup --system matab && adduser --system --group matab
+# Ensure non-root execution and data directory permissions
+RUN mkdir -p /app/data && addgroup --system matab && adduser --system --group matab && chown -R matab:matab /app
 USER matab
 
 EXPOSE 8000
