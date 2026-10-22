@@ -14,7 +14,7 @@ help:
 package:
 	@rm -f zayvora_matab_os_latest.zip zayvora_matab_os_distribution.zip
 	@zip -q -r zayvora_matab_os_latest.zip . \
-		-x "*.git*" ".venv/*" "node_modules/*" "*.pyc" "**/__pycache__/*" \
+		-x "*.git*" ".venv/*" "node_modules/*" "apps/mobile/node_modules/*" "apps/mobile/.expo/*" "*.pyc" "**/__pycache__/*" \
 		   "*.db*" "backups/*" "*.backup_*" "*.DS_Store" "*__MACOSX*" \
 		   ".env*" "!.env.example" ".matab_secret*" "*.zip" "test_cds_unit_*" ".system_generated/*"
 	@echo "Created clean release package: zayvora_matab_os_latest.zip"
