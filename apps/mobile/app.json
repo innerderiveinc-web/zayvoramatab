@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "ZAYVORA MATAB",
+    "slug": "zayvora-matab-mobile",
+    "version": "1.0.0",
+    "description": "Bedside Clinical Unani OPD & Systems Medicine Mobile App",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "primaryColor": "#0f766e",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0f766e",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zayvora.matab"
+    },
+    "android": {
+      "package": "com.zayvora.matab",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f766e",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
