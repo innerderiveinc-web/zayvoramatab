@@ -26,3 +26,4 @@ dist/
 node_modules/
 .system_generated/
 test_cds_unit_*
+.matab_secret

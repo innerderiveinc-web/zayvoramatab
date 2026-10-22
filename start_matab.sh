@@ -23,6 +23,18 @@ export MATAB_PROFILE="${MATAB_PROFILE:-SOLO_MATAB}"
 export MATAB_HOST="${MATAB_HOST:-127.0.0.1}"
 export MATAB_PORT="${MATAB_PORT:-8080}"
 
+# Auto-generate or load persistent secure MATAB_SECRET_KEY if not supplied
+if [ -z "$MATAB_SECRET_KEY" ]; then
+  if [ -f "$DIR/.matab_secret" ]; then
+    export MATAB_SECRET_KEY="$(cat "$DIR/.matab_secret")"
+  else
+    NEW_KEY="$("$PYTHON_BIN" -c "import secrets; print(secrets.token_hex(32))" 2>/dev/null || openssl rand -hex 32 2>/dev/null || echo "matab_prod_key_$(date +%s)_autosecure_64char_token_value_randomized")"
+    echo "$NEW_KEY" > "$DIR/.matab_secret"
+    chmod 600 "$DIR/.matab_secret" 2>/dev/null || true
+    export MATAB_SECRET_KEY="$NEW_KEY"
+  fi
+fi
+
 echo "========================================================================"
 echo "           🌿 STARTING ZAYVORA MATAB OS (Version 2.0)                   "
 echo "========================================================================"

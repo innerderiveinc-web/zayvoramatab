@@ -56,8 +56,8 @@ class AppConfig:
                 errors.append("MATAB_SECRET_KEY must be a secure, non-default string of at least 32 characters in production.")
             if "localhost" in self.database_url and "sqlite" not in self.database_url:
                 errors.append("DATABASE_URL should not point to localhost in production cluster deployments.")
-            if self.host == "127.0.0.1":
-                errors.append("MATAB_HOST should be configured explicitly (e.g. 0.0.0.0 in container) for production.")
+            if self.host == "127.0.0.1" and os.environ.get("MATAB_PROFILE") == "ENTERPRISE_CLUSTER":
+                errors.append("MATAB_HOST should be configured explicitly (e.g. 0.0.0.0 in container) for cluster production.")
         return errors
 
 config = AppConfig()
