@@ -24,13 +24,21 @@ from apps.api.routes import (
     api_integration_certification, performance_scalability, tenant_governance,
     backup_restore, library, master_clinical,
     ai_copilot, zfie_routes, inventory, library_corpus, outcomes_prom,
-    settings_routes
+    settings_routes, agentic_routes
 )
 
 
 
 
 ROUTES = [
+    # Autonomous Agentic Systems Pipelines (KAVS, Pharmacovigilance, FEFO Inventory, Clinical Evidence)
+    ("GET", r"^/api/v1/agents/status$", agentic_routes.handle_get_agentic_status, True),
+    ("POST", r"^/api/v1/agents/run-all$", agentic_routes.handle_run_all_agents, True),
+    ("POST", r"^/api/v1/agents/kavs/ingest$", agentic_routes.handle_run_kavs_agent, True),
+    ("POST", r"^/api/v1/agents/pharmacovigilance/scan$", agentic_routes.handle_run_pharmacovigilance_agent, True),
+    ("POST", r"^/api/v1/agents/inventory/restock-plan$", agentic_routes.handle_run_inventory_agent, True),
+    ("POST", r"^/api/v1/agents/evidence/generate$", agentic_routes.handle_run_evidence_agent, True),
+
     # 1. Clinical Advisor & Decision Support (Governed Clinical Reference & Classical Unani Engine)
     ("POST", r"^/api/v1/hakeem-ai/query$", ai_copilot.handle_ai_query, True),
     ("POST", r"^/api/v1/clinical/ai-assistant$", ai_copilot.handle_ai_query, True),
