@@ -29,6 +29,7 @@ export function renderShell(container, onNavigate, onLogout) {
   const showHospitalInterop = isAdmin || roles.has("NURSE") || perms.has("ipd:admission_read");
   const showEnterpriseAdmin = isAdmin || roles.has("READ_ONLY_AUDITOR");
   const showPilotLaunch = isAdmin;
+  const showAgents = isAdmin || isPractitioner;
 
   container.innerHTML = `
     <a href="#pageContent" class="skip-to-content">${i18n.t("skip_to_content", "Skip to main content")}</a>
@@ -144,6 +145,12 @@ export function renderShell(container, onNavigate, onLogout) {
       <button class="nav-tab ${state.activeTab === "hospital_interop" ? "active" : ""}" data-tab="hospital_interop">
         <span>🏥</span>
         <span>Hospital & Interop</span>
+      </button>` : ''}
+
+      ${showAgents ? `
+      <button class="nav-tab ${state.activeTab === "agents" ? "active" : ""}" data-tab="agents">
+        <span>🤖</span>
+        <span>Pipelines</span>
       </button>` : ''}
 
       ${showEnterpriseAdmin ? `

@@ -17,6 +17,7 @@ import { renderHospitalInterop } from "./views/hospital_interop.js";
 import { renderPilotLaunch } from "./views/pilot_launch.js";
 import { renderPostPilotEvaluation } from "./views/post_pilot_evaluation.js";
 import { renderLibrary } from "./views/library.js";
+import { renderAgenticDashboard } from "./views/agentic_dashboard.js";
 import { renderMore } from "./views/more.js";
 import { renderSettings } from "./views/settings.js";
 
@@ -366,6 +367,9 @@ async function renderCurrentTab(tab, force = false) {
         break;
       case "library":
         await renderLibrary(content);
+        break;
+      case "agents":
+        await renderAgenticDashboard(content);
         break;
       case "settings":
         await renderSettings(content);
