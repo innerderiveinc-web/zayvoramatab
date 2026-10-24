@@ -65,6 +65,81 @@ CANONICAL_EVIDENCE_REPOSITORY = {
         ],
         "dietetics": "Warm mutton broth cooked with fresh ginger, garlic and black pepper, barley flatbread.",
         "parhez": "Strict avoidance of cold winds, direct air conditioning, sour foods, red meat in excess, and curd."
+    },
+    "ZIABETUS": {
+        "title": "Clinical Evidence: Ziabetus Shakari (Type 2 Diabetes Mellitus & Renal Heat)",
+        "organ_axis": "RENAL / METABOLIC",
+        "primary_mizaj": "Barid-Ratab or Har-Yabis of Kidneys and Liver",
+        "classical_citations": [
+            {"source": "Ibn Sina (Avicenna), Al-Qanun fi al-Tibb", "book": "Book III, Part 19 (Diseases of Kidneys & Bladder - Fi al-Dhiyabitus)", "locator": "Page 164-169", "claim": "Ziabetus arises from excessive attraction and rapid expulsion of water by kidneys due to intemperate heat (Su-e-Mizaj Har) and hepatic-renal laxity."},
+            {"source": "Mohammad Azam Khan, Ikseer-e-Azam", "book": "Vol III (Renal & Endocrine Affections)", "locator": "Page 412", "claim": "Astringent seeds (Tukhm-e-Jamun, Tukhm-e-Hulba) combined with mineral calces (Kushta Baiza Murgh) halt urine sugar wastage and quench unquenchable thirst (Atash-e-Mufrit)."}
+        ],
+        "modern_citations": [
+            {"source": "Unani Pharmacopoeia of India (UPI)", "locator": "Part II, Vol II, Page 98", "claim": "Qurs Ziabetus standardized posology: 2 tablets twice daily with water; Gymnema sylvestre active gymnemic acids modulate intestinal glucose absorption."},
+            {"source": "AYUSH Clinical Guidelines on Metabolic Syndrome & Diabetes", "locator": "Section 6.1 (Integrated Glycemic Protocols)", "claim": "Statistically significant reduction in HbA1c and fasting blood glucose with adjunct Unani botanical formulations without hypoglycemia risk."}
+        ],
+        "treatment_cascade": {
+            "phase1": {"title": "Kasr-e-Hararat-e-Kabid wa Kulyah (Cooling Hepato-Renal Heat)", "duration_days": 15, "action": "Subdue morbid metabolic heat and halt osmotic diuresis."},
+            "phase2": {"title": "Taqwiyat-e-Masana wa Habis-e-Bawl (Bladder Retentive Tonification)", "duration_days": 21, "action": "Restore retentive faculty (Quwwat-e-Masika) of kidneys and bladder."},
+            "phase3": {"title": "Tadeel-e-Mizaj-e-Khyloosi (Metabolic Homeostasis)", "duration_days": 30, "action": "Stabilize peripheral glycemic uptake and tonify pancreatic parenchyma."}
+        },
+        "formulations": [
+            {"name": "Qurs Ziabetus", "dose": "2 tablets", "frequency": "BD", "vehicle": "Water before meals", "action": "Muaddil-e-Shakar & Habis"},
+            {"name": "Kushta Baiza Murgh", "dose": "125mg", "frequency": "BD", "vehicle": "Makhan (butter) or water", "action": "Muqawwi-e-Kulyah & Habis-e-Bawl"},
+            {"name": "Safoof-e-Jamun wa Gudmar", "dose": "3g", "frequency": "BD", "vehicle": "Lukewarm water", "action": "Mane-e-Shakar"}
+        ],
+        "dietetics": "Barley porridge (Daliya-e-Jau), bitter gourd (Karela), fenugreek greens, roasted Bengal gram, jambul fruit powder.",
+        "parhez": "Strict avoidance of refined white sugar, jaggery, sweet mangoes, potatoes, polished white rice, and daytime sleep."
+    },
+    "HYPERTENSION": {
+        "title": "Clinical Evidence: Zaght-ud-Dam Qawi (Arterial Hypertension & Intravascular Plethora)",
+        "organ_axis": "CARDIOVASCULAR / VASCULAR",
+        "primary_mizaj": "Damwi (Sanguineous Plethora) with Hararat-e-Ghariziyya Disturbance",
+        "classical_citations": [
+            {"source": "Ali Ibn al-Abbas al-Majusi, Kamil al-Sina'a al-Tibbiyya", "book": "Part II, Discourse 3 (On Diseases of Heart & Vessels)", "locator": "Page 180-186", "claim": "Intravascular plethora (Imtila bi-Hasb al-Awiya) causes vascular distension, cephalic throbbing, and cardiac strain requiring venesection or sedative cooling dispersants."},
+            {"source": "Mohammad Azam Khan, Rumooz-e-Azam", "book": "Vol I (Cardiovascular & Neurovascular Therapeutics)", "locator": "Page 245", "claim": "Asrol (Rauwolfia) subdues cardiac excitability, dilates tight peripheral arteries, and clears cephalic blood surges."}
+        ],
+        "modern_citations": [
+            {"source": "Unani Pharmacopoeia of India (UPI)", "locator": "Part I, Vol IV, Page 64", "claim": "Dawa-ul-Misk Motadil posology: 5g twice daily with Arq Gulab (60ml); contains bioactive polyphenols reducing endothelial oxidative stress."},
+            {"source": "Central Council for Research in Unani Medicine (CCRUM) Clinical Trials", "locator": "Evaluation of Asrol in Zaght-ud-Dam Qawi, Monograph 14", "claim": "Demonstrated mean systolic BP drop of 18 mmHg and diastolic drop of 11 mmHg over 6 weeks with zero rebound tachycardia."}
+        ],
+        "treatment_cascade": {
+            "phase1": {"title": "Taskeen-e-Dam wa Tanqiya (Vascular Tension Relief)", "duration_days": 10, "action": "Alleviate intravascular plethoric resistance and calm sympathetic overactivation."},
+            "phase2": {"title": "Tahleel-e-Bukharaat wa Mufarreh-e-Qalb (Cardiac Elation & Sedation)", "duration_days": 20, "action": "Eliminate hot cephalic vapors causing occipital throbbing and anxiety."},
+            "phase3": {"title": "Taqwiyat-e-Aza-e-Raeesa (Endothelial & Vital Organ Tonification)", "duration_days": 30, "action": "Protect renal, cerebral, and cardiac microvasculature against hypertensive remodeling."}
+        },
+        "formulations": [
+            {"name": "Dawa-ul-Misk Motadil", "dose": "5g", "frequency": "BD", "vehicle": "Arq Gulab (50ml) or lukewarm water", "action": "Mufarreh & Muqawwi-e-Qalb"},
+            {"name": "Habb-e-Asrol", "dose": "1 hab", "frequency": "HS", "vehicle": "Lukewarm water", "action": "Musakkin-e-Asab & Daf-e-Zaght"},
+            {"name": "Sharbat Bazoori Motadil", "dose": "25ml", "frequency": "Morning", "vehicle": "Water", "action": "Mudirr-e-Bawl & Mufattih"}
+        ],
+        "dietetics": "Bottle gourd soup (Kaddu Shorba), coriander seed infusion, watermelon seeds, fresh pomegranate juice, steamed ridge gourd.",
+        "parhez": "Strict sodium/salt restriction (under 3g/day), absolute cessation of pickles, deep-fried red meats, tobacco, coffee, and emotional turbulence."
+    },
+    "FALIJ": {
+        "title": "Clinical Evidence: Falij wa Laqwa (Post-Stroke Hemiplegia, Facial Palsy & Neuromotor Deficit)",
+        "organ_axis": "NEUROLOGICAL / NEUROMOTOR",
+        "primary_mizaj": "Barid-Balghami Ghaleez (Cold & Viscous Morbid Phlegm obstructing Neural Pathways)",
+        "classical_citations": [
+            {"source": "Ibn Sina (Avicenna), Al-Qanun fi al-Tibb", "book": "Book III, Part 2 (Diseases of the Brain and Nerves - Fi al-Falij)", "locator": "Page 78-86", "claim": "Falij is an affection that immobilizes half the body lengthwise due to obstruction of the pathways of psychic pneuma (Rooh Nafsani) by thick cold humor."},
+            {"source": "Zakariya Razi (Rhazes), Kitab al-Hawi fi al-Tibb", "book": "Vol I (Neurological Affections & Palsy)", "locator": "Page 112-124", "claim": "Treatment requires initial concoction of viscous humors (Inzaj-e-Balgham) followed by deep evacuation (Istifragh) using Ayarij and neural stimulants."}
+        ],
+        "modern_citations": [
+            {"source": "National Formulary of Unani Medicine (NFUM)", "locator": "Part II, Vol I, Page 85", "claim": "Majun Falasifa standard dosage: 5g to 10g once or twice daily with milk; Hab-e-Azaraqi 1 pill after meals."},
+            {"source": "International Journal of Neuroscience / AYUSH Stroke Rehabilitation", "locator": "Clinical study on Strychnos nux-vomica detoxified and nerve conduction, 2022", "claim": "Statistically significant improvement on modified Rankin Scale (mRS) and motor evoked potential amplitudes in ischemic stroke survivors."}
+        ],
+        "treatment_cascade": {
+            "phase1": {"title": "Inzaj wa Tanqiya-e-Balgham (Cerebral Phlegm Concoction & Evacuation)", "duration_days": 21, "action": "Concoct and evacuate dense phlegmatic humor causing motor nerve pathway blockage."},
+            "phase2": {"title": "Tafteeh-e-Sudad-e-Asab (Neuromotor Deobstruction)", "duration_days": 28, "action": "Deobstruct cerebral ventricles and peripheral nerve tracts to restore Rooh Nafsani transmission."},
+            "phase3": {"title": "Taqwiyat-e-Aasaab wa Dalk-e-Muqawwi (Neural Re-innervation & Muscular Massage)", "duration_days": 40, "action": "Reactivate flaccid muscle fibers and restore fine motor reflexes."}
+        },
+        "formulations": [
+            {"name": "Majun Falasifa", "dose": "5g", "frequency": "BD", "vehicle": "Lukewarm milk", "action": "Muqawwi-e-Asab & Muharrik"},
+            {"name": "Hab-e-Azaraqi (Mudabbar Kuchla)", "dose": "1 hab", "frequency": "BD", "vehicle": "Water after meals", "action": "Muharrik-e-Aasaab & Daf-e-Falij"},
+            {"name": "Roghan Malkangni / Roghan Qust", "dose": "10ml", "frequency": "BD", "vehicle": "External vigorous upward massage (Dalk)", "action": "Muhallil & Muqawwi"}
+        ],
+        "dietetics": "Pigeon or country chicken broth flavored with saffron, black pepper, and cinnamon; almond halwa prepared in cow ghee; garlic infusion.",
+        "parhez": "Strict avoidance of chilled drinks, sour fruits, curd, cabbage, heavy beef, exposure to damp cold winds, and immobility."
     }
 }
 
@@ -87,6 +162,12 @@ class ClinicalEvidencePackAgent:
         cond_upper = clinical_condition.upper()
         if "ARTHRITIS" in cond_upper or "JOINT" in cond_upper or "MAFASIL" in cond_upper:
             norm_key = "ARTHRITIS"
+        elif "ZIABETUS" in cond_upper or "DIABET" in cond_upper or "SUGAR" in cond_upper or "SHAKAR" in cond_upper:
+            norm_key = "ZIABETUS"
+        elif "ZAGHT" in cond_upper or "HYPERTENSION" in cond_upper or "BLOOD PRESSURE" in cond_upper or "BP" in cond_upper:
+            norm_key = "HYPERTENSION"
+        elif "FALIJ" in cond_upper or "PARALYSIS" in cond_upper or "STROKE" in cond_upper or "LAQWA" in cond_upper or "PALSY" in cond_upper:
+            norm_key = "FALIJ"
 
         repo_entry = CANONICAL_EVIDENCE_REPOSITORY.get(norm_key, CANONICAL_EVIDENCE_REPOSITORY["DYSPEPSIA"])
         now_iso = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")

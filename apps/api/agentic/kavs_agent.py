@@ -18,11 +18,15 @@ from apps.api.database.connection import DatabaseConnection
 
 SCHEDULE_E1_POISONS = {
     "kuchla": {"binomial": "Strychnos nux-vomica", "musleh": "Roghan Zard (Cow Ghee)", "max_daily_g": 0.12, "mudabbar_req": True},
+    "azaraqi": {"binomial": "Strychnos nux-vomica", "musleh": "Roghan Zard (Cow Ghee)", "max_daily_g": 0.12, "mudabbar_req": True},
     "jamalgota": {"binomial": "Croton tiglium", "musleh": "Dahi (Curd) / Zirishk", "max_daily_g": 0.06, "mudabbar_req": True},
     "suranjan": {"binomial": "Colchicum autumnale", "musleh": "Zafran / Kateera", "max_daily_g": 0.5, "mudabbar_req": True},
     "afiyun": {"binomial": "Papaver somniferum", "musleh": "Jundbedastar", "max_daily_g": 0.03, "mudabbar_req": True},
     "bhang": {"binomial": "Cannabis sativa", "musleh": "Roghan Pista", "max_daily_g": 0.25, "mudabbar_req": True},
     "rasaut": {"binomial": "Berberis aristata extract", "musleh": "Arq Gulab", "max_daily_g": 1.0, "mudabbar_req": False},
+    "asrol": {"binomial": "Rauwolfia serpentina", "musleh": "Filfil Siyah / Roghan Gul", "max_daily_g": 1.0, "mudabbar_req": False},
+    "bhilawa": {"binomial": "Semecarpus anacardium", "musleh": "Ghee / Coconut Oil", "max_daily_g": 0.25, "mudabbar_req": True},
+    "samm-ul-far": {"binomial": "Arsenic trioxide (Sankhiya)", "musleh": "Cow Milk / Ghee", "max_daily_g": 0.015, "mudabbar_req": True},
 }
 
 CLASSICAL_MIZAJ_KEYWORDS = {
@@ -266,16 +270,36 @@ class KAVSIngestionAgent:
                     current_herb["badal"] = line_str.split(":")[-1].strip()
 
         # If no explicit delimiters were present, parse general paragraphs into recognized Unani herbs
-        if not herbs and len(text) > 20:
-            for known_herb in ["Asgandh", "Suranjan", "Kuchla", "Zanjabeel", "Filfil Siyah", "Badiyan", "Jamalgota"]:
+        if not herbs and len(text) > 15:
+            known_catalog = {
+                "Suranjan": {"mizaj": "HOT & DRY", "darja": 3, "af'aal": "Muhallil-e-Warm & Musakkin-e-Waja", "badal": "Zafran (1/4 wazn)"},
+                "Kuchla": {"mizaj": "HOT & DRY", "darja": 3, "af'aal": "Muqawwi-e-Asab & Muharrik-e-Aasaab", "badal": "Suranjan"},
+                "Azaraqi": {"mizaj": "HOT & DRY", "darja": 3, "af'aal": "Muqawwi-e-Asab & Muharrik-e-Aasaab", "badal": "Suranjan"},
+                "Asgandh": {"mizaj": "HOT & DRY", "darja": 2, "af'aal": "Muqawwi-e-Aam & Musakkin-e-Asab", "badal": "Musli Safaid"},
+                "Zanjabeel": {"mizaj": "HOT & DRY", "darja": 2, "af'aal": "Kasir-e-Riyah & Hazim", "badal": "Filfil Daraz"},
+                "Filfil Siyah": {"mizaj": "HOT & DRY", "darja": 3, "af'aal": "Hazim & Jali", "badal": "Zanjabeel"},
+                "Badiyan": {"mizaj": "HOT & DRY", "darja": 2, "af'aal": "Mufattih & Kasir-e-Riyah", "badal": "Anisoon"},
+                "Jamalgota": {"mizaj": "HOT & DRY", "darja": 4, "af'aal": "Mushil-e-Qawi & Munaffis", "badal": "Turbud"},
+                "Jamun": {"mizaj": "COLD & DRY", "darja": 2, "af'aal": "Habis, Qabiz & Mane-e-Ziabetus", "badal": "Tukhm-e-Amba"},
+                "Gudmar": {"mizaj": "HOT & DRY", "darja": 1, "af'aal": "Muaddil-e-Shakar & Qatil-e-Kiram", "badal": "Karela Khushk"},
+                "Kushta Baiza Murgh": {"mizaj": "COLD & DRY", "darja": 3, "af'aal": "Habis-e-Bawl & Muqawwi-e-Masana", "badal": "Kushta Sadaf"},
+                "Asrol": {"mizaj": "COLD & DRY", "darja": 3, "af'aal": "Musakkin-e-Qalb & Daf-e-Zaght-ud-Dam", "badal": "Tukhm-e-Kahu"},
+                "Kishneez": {"mizaj": "COLD & DRY", "darja": 2, "af'aal": "Mufarreh-e-Qalb & Musakkin-e-Hararat", "badal": "Tukhm-e-Khas"},
+                "Sandal Safaid": {"mizaj": "COLD & DRY", "darja": 3, "af'aal": "Mufarreh & Qabiz", "badal": "Kafur"},
+                "Ustukhuddus": {"mizaj": "HOT & DRY", "darja": 2, "af'aal": "Munaqqi-e-Dimagh & Jarob-e-Dimagh", "badal": "Aftimoon"},
+                "Hab-e-Ayarij": {"mizaj": "HOT & DRY", "darja": 3, "af'aal": "Mushil-e-Balgham & Munaqqi-e-Asab", "badal": "Itrifal Ustukhuddus"},
+                "Majun Falasifa": {"mizaj": "HOT & DRY", "darja": 2, "af'aal": "Muqawwi-e-Asab, Masana wa Kulyah", "badal": "Majun Ushba"},
+                "Qurs Ziabetus": {"mizaj": "COLD & DRY", "darja": 2, "af'aal": "Kasr-e-Hararat & Habis-e-Bawl", "badal": "Kushta Zamarrud"}
+            }
+            for known_herb, meta in known_catalog.items():
                 if known_herb.lower() in text.lower():
                     herbs.append({
                         "name": known_herb,
-                        "mizaj_quality": "HOT & DRY" if known_herb in ["Suranjan", "Kuchla", "Zanjabeel"] else "BALANCED",
-                        "darja": 3 if known_herb in ["Kuchla", "Suranjan"] else 2,
-                        "af'aal": "Muhallil-e-Warm & Musakkin-e-Waja",
-                        "badal": "Zafran (1/4 wazn)" if known_herb == "Suranjan" else "Zanjabeel",
-                        "mudabbar_specified": "mudabbar" in text.lower(),
+                        "mizaj_quality": meta["mizaj"],
+                        "darja": meta["darja"],
+                        "af'aal": meta["af'aal"],
+                        "badal": meta["badal"],
+                        "mudabbar_specified": any(w in text.lower() for w in ["mudabbar", "shuddha", "purified"]),
                         "raw_passage": text[:200]
                     })
 

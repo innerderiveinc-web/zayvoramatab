@@ -126,6 +126,9 @@ export async function renderAgenticDashboard(container) {
             <select id="evidence-input-condition" class="form-input" style="font-size: 0.8rem; height: 32px; margin-top: 0.2rem;">
               <option value="Dyspepsia &amp; IBS Gastric Cascade">Su-e-Hazm / Dyspepsia &amp; IBS Gastric Cascade</option>
               <option value="Waja-ul-Mafasil Joint Arthritis">Waja-ul-Mafasil / Inflammatory Joint Disease</option>
+              <option value="Ziabetus Shakari (Diabetes Mellitus)">Ziabetus Shakari / Type 2 Diabetes &amp; Metabolic Syndrome</option>
+              <option value="Zaght-ud-Dam Qawi (Hypertension)">Zaght-ud-Dam Qawi / Arterial Hypertension &amp; Plethora</option>
+              <option value="Falij wa Laqwa (Stroke &amp; Facial Palsy)">Falij wa Laqwa / Post-Stroke Hemiplegia &amp; Facial Palsy</option>
             </select>
           </div>
           <div id="evidence-results-box" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; min-height: 120px; font-size: 0.8rem;">

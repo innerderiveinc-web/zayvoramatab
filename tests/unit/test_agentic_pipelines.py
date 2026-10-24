@@ -107,6 +107,25 @@ class TestAgenticPipelines(unittest.TestCase):
         self.assertTrue(res["pipeline_results"]["fefo_inventory"]["success"])
         self.assertTrue(res["pipeline_results"]["clinical_evidence"]["success"])
 
+    def test_06_extended_canonical_conditions_evidence_packs(self):
+        agent = ClinicalEvidencePackAgent(db_path=self.db_path)
+        for cond, expected_axis in [
+            ("Ziabetus Shakari Diabetes", "RENAL / METABOLIC"),
+            ("Zaght-ud-Dam Hypertension", "CARDIOVASCULAR / VASCULAR"),
+            ("Falij wa Laqwa Stroke", "NEUROLOGICAL / NEUROMOTOR")
+        ]:
+            res = agent.generate_evidence_pack(clinical_condition=cond, user_id="usr-hakeem-1")
+            self.assertTrue(res["success"])
+            pack = res["evidence_pack"]
+            self.assertEqual(pack["organ_axis"], expected_axis)
+            self.assertGreaterEqual(len(pack["classical_compendia_citations"]), 2)
+            self.assertGreaterEqual(len(pack["modern_pharmacopoeial_citations"]), 2)
+            self.assertIn("phase1", pack["usul_e_ilaj_cascade"])
+            self.assertIn("phase2", pack["usul_e_ilaj_cascade"])
+            self.assertIn("phase3", pack["usul_e_ilaj_cascade"])
+            self.assertGreaterEqual(len(pack["governed_formulations"]), 2)
+            self.assertTrue(pack["deterministic_sha256"])
+
 
 if __name__ == "__main__":
     unittest.main()
