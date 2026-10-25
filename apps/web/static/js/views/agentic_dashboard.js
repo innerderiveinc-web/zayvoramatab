@@ -242,7 +242,7 @@ export async function renderAgenticDashboard(container) {
           <div style="margin-top: 0.25rem; font-size: 0.76rem; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.2rem;">
             <strong>🌿 ${escapeHtml(m.name)}</strong> — Mizaj: <code>${escapeHtml(m.mizaj_quality)}</code> (Darja: ${m.darja})
             ${m.is_schedule_e1 ? `<span class="badge badge-warning" style="font-size: 0.65rem; margin-left: 0.3rem;">Schedule E(1) Mudabbar Verified</span>` : ''}
-            <div style="color: #64748b;">Af'aal: ${escapeHtml(m.af'aal)} • Badal: ${escapeHtml(m.badal)}</div>
+            <div style="color: #64748b;">Af'aal: ${escapeHtml(m["af'aal"] || m.afaal)} • Badal: ${escapeHtml(m.badal)}</div>
           </div>
         `).join("")}
       </div>

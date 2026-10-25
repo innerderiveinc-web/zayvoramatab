@@ -5873,6 +5873,10 @@ export async function renderKnowledgeAdmin(container) {
             alert(`Simulation failed: ${err.message}`);
           }
         });
+      } catch (err) {
+        tabContent.innerHTML = `<div class="card"><p style="color: red;">Failed to load Command Center: ${err.message}</p></div>`;
+      }
+    }
 
     async function showWorkflowAutomation() {
       tabContent.innerHTML = `<div class="card"><p>Loading Clinical Workflow Automation & Rules Engine (P35)...</p></div>`;
@@ -10824,6 +10828,10 @@ Known Unknowns: ${rep.known_unknowns?.length || 0}`);
             alert(`Failed registering change review: ${err.message}`);
           }
         });
+      } catch (err) {
+        tabContent.innerHTML = `<div class="card"><p style="color: red;">Failed to load Threat Modeling: ${err.message}</p></div>`;
+      }
+    }
 
     async function showClinicalSafetyWorkbench() {
       tabContent.innerHTML = `<div class="card"><p>Loading Enterprise Clinical Safety Cases, Hazard Analysis & Verification Workbench...</p></div>`;
