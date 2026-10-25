@@ -1,5 +1,5 @@
 [build]
-  command = "mkdir -p dist && cp -r index.html _redirects static packages dist/"
+  command = "mkdir -p dist && cp -r apps/web/index.html apps/web/science_and_research.html _redirects apps/web/static packages dist/"
   publish = "dist"
 
 [[redirects]]

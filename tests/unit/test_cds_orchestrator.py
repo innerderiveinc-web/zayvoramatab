@@ -71,11 +71,13 @@ class TestCDSOrchestratorUnit(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if os.path.exists(cls.db_path):
-            try:
-                os.remove(cls.db_path)
-            except OSError:
-                pass
+        for ext in ("", "-shm", "-wal"):
+            f = cls.db_path + ext
+            if os.path.exists(f):
+                try:
+                    os.remove(f)
+                except OSError:
+                    pass
 
     def _create_encounter(self, initial_status="scheduled") -> str:
         conn = self.db_manager.get_connection()
