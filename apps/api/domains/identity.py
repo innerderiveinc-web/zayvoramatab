@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Any, List
 import sqlite3
 import hashlib
-from matab.core.errors import AuthenticationError, ForbiddenError, NotFoundError
-from matab.core.security import verify_password, create_session, validate_session
-from matab.core.audit import record_audit_event
+from apps.api.core.errors import AuthenticationError, ForbiddenError, NotFoundError
+from apps.api.core.security import verify_password, create_session, validate_session
+from apps.api.core.audit import record_audit_event
 
 @dataclass
 class UserSession:
