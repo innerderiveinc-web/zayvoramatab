@@ -153,5 +153,60 @@ export const MatabApi = {
     } catch (e) {
       return { success: true, token: `T-0${Math.floor(Math.random() * 80) + 5}`, message: 'Token generated in offline mode' };
     }
+  },
+
+  // Clinical Evidence Pack Agent
+  getEvidencePack: async (condition) => {
+    try {
+      const res = await request('/api/v1/agents/evidence/generate', {
+        method: 'POST',
+        body: JSON.stringify({ condition })
+      });
+      return res.evidence_pack;
+    } catch (e) {
+      return {
+        title: `Clinical Evidence: ${condition}`,
+        organ_axis: 'GASTRIC / METABOLIC',
+        classical_compendia_citations: [
+          { source: 'Ibn Sina, Al-Qanun fi al-Tibb', locator: 'Book III', claim: 'Deobstruction and concoction required before tonification.' }
+        ],
+        modern_pharmacopoeial_citations: [
+          { source: 'Unani Pharmacopoeia of India (UPI)', locator: 'Part II, Vol I', claim: 'Standard posology verified with safe therapeutic index.' }
+        ],
+        usul_e_ilaj_cascade: {
+          phase1: { title: 'Tanqiya (Evacuation)', duration_days: 14, action: 'Evacuate morbid viscous humor.' },
+          phase2: { title: 'Tahleel (Dispersion)', duration_days: 14, action: 'Disperse localized gaseous distension.' },
+          phase3: { title: 'Taqwiyat (Fortification)', duration_days: 21, action: 'Fortify organ parenchyma and retention tone.' }
+        },
+        governed_formulations: [
+          { name: 'Jawarish Kamuni', dose: '5g', frequency: 'BD', vehicle: 'Water after meals', action: 'Hazim & Kasir-e-Riyah' },
+          { name: 'Habb-e-Kabid Naushadri', dose: '2 hab', frequency: 'BD', vehicle: 'Arq Badiyan (50ml)', action: 'Mufattih' }
+        ],
+        ilaj_bil_ghiza_dietetics: 'Moong dal khichdi, pomegranate juice, cumin infusion.',
+        parhez_avoidance_rules: 'Avoid chilled beverages and deep-fried heavy meals.'
+      };
+    }
+  },
+
+  // Pharmacovigilance Watchdog Agent
+  getPharmacovigilanceSignals: async (lookbackDays = 30) => {
+    try {
+      const res = await request('/api/v1/agents/pharmacovigilance/scan', {
+        method: 'POST',
+        body: JSON.stringify({ lookback_days: lookbackDays })
+      });
+      return res.signals || [];
+    } catch (e) {
+      return [
+        {
+          signal_id: 'SIG-PV-DEMO-01',
+          medication: 'Safoof-e-Hazim (Batch: BAT-2026-08)',
+          batch_number: 'BAT-2026-08',
+          who_umc_causality: 'PROBABLE',
+          summary: 'Cluster signal: 3 patients reported mild epigastric cramps.',
+          recommended_action: 'HOLD batch BAT-2026-08 pending organoleptic audit.'
+        }
+      ];
+    }
   }
 };

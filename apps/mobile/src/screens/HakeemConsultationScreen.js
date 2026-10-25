@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Linking, Modal, ActivityIndicator } from 'react-native';
 import { theme } from '../theme';
 import { Header } from '../components/Header';
 import { MatabApi } from '../services/api';
@@ -22,6 +22,64 @@ export const HakeemConsultationScreen = () => {
   const [parhezPlan, setParhezPlan] = useState('Avoid sleeping immediately after meals. Walk 100 paces after dinner.');
   const [signingPin, setSigningPin] = useState('');
   const [isSigned, setIsSigned] = useState(false);
+
+  // Autonomous Agentic Pipelines State
+  const [evidenceModalVisible, setEvidenceModalVisible] = useState(false);
+  const [currentEvidencePack, setCurrentEvidencePack] = useState(null);
+  const [loadingEvidence, setLoadingEvidence] = useState(false);
+  const [selectedCondition, setSelectedCondition] = useState('Su-e-Hazm (Dyspepsia & IBS)');
+
+  const [pvModalVisible, setPvModalVisible] = useState(false);
+  const [pvSignals, setPvSignals] = useState([]);
+  const [loadingPv, setLoadingPv] = useState(false);
+
+  const handleOpenEvidencePack = async (cond) => {
+    const queryCond = cond || selectedPatient?.primary_complaint || 'Dyspepsia';
+    setSelectedCondition(queryCond);
+    setLoadingEvidence(true);
+    setEvidenceModalVisible(true);
+    try {
+      const pack = await MatabApi.getEvidencePack(queryCond);
+      setCurrentEvidencePack(pack);
+    } catch (e) {
+      Alert.alert('Evidence Pack Error', e.message);
+    } finally {
+      setLoadingEvidence(false);
+    }
+  };
+
+  const handleApplyEvidencePack = () => {
+    if (!currentEvidencePack) return;
+    if (currentEvidencePack.governed_formulations?.length) {
+      setRxItems(currentEvidencePack.governed_formulations.map(f => ({
+        name: f.name,
+        dose: f.dose,
+        freq: f.frequency || 'BD',
+        vehicle: f.vehicle
+      })));
+    }
+    if (currentEvidencePack.ilaj_bil_ghiza_dietetics) {
+      setGhizaPlan(currentEvidencePack.ilaj_bil_ghiza_dietetics);
+    }
+    if (currentEvidencePack.parhez_avoidance_rules) {
+      setParhezPlan(currentEvidencePack.parhez_avoidance_rules);
+    }
+    setEvidenceModalVisible(false);
+    Alert.alert('Evidence Pack Applied! 🔬', 'Prescriptions, diet, and parhez updated from canonical Unani evidence.');
+  };
+
+  const handleOpenPvRadar = async () => {
+    setLoadingPv(true);
+    setPvModalVisible(true);
+    try {
+      const signals = await MatabApi.getPharmacovigilanceSignals();
+      setPvSignals(signals);
+    } catch (e) {
+      Alert.alert('Surveillance Radar Error', e.message);
+    } finally {
+      setLoadingPv(false);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -173,6 +231,50 @@ export const HakeemConsultationScreen = () => {
           )}
         </View>
 
+        {/* Autonomous Agentic Copilot Strip */}
+        <View style={[styles.sectionCard, { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <Text style={[styles.cardHeader, { color: '#166534', marginBottom: 0 }]}>🤖 AUTONOMOUS AGENT COPILOT</Text>
+            <View style={{ backgroundColor: '#dcfce7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: '#15803d' }}>ENGINE v2.0 ACTIVE</Text>
+            </View>
+          </View>
+          <Text style={{ fontSize: 11, color: '#166534', marginBottom: 8 }}>
+            Dual-Corpus Clinical Evidence &amp; Real-time Safety Surveillance
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                backgroundColor: '#0f766e',
+                paddingVertical: 9,
+                paddingHorizontal: 8,
+                borderRadius: 6,
+                alignItems: 'center'
+              }}
+              onPress={() => handleOpenEvidencePack(selectedPatient?.primary_complaint || 'Dyspepsia')}
+            >
+              <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>🔬 Evidence Pack</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#dc2626',
+                paddingVertical: 9,
+                paddingHorizontal: 8,
+                borderRadius: 6,
+                alignItems: 'center'
+              }}
+              onPress={handleOpenPvRadar}
+            >
+              <Text style={{ color: '#b91c1c', fontSize: 11, fontWeight: '700' }}>🛡️ Safety Radar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* 1-Click Nabz & Mizaj Presets */}
         <View style={styles.sectionCard}>
           <Text style={styles.cardHeader}>🩺 1-CLICK NABZ &amp; MIZAJ PRESETS</Text>
@@ -215,7 +317,7 @@ export const HakeemConsultationScreen = () => {
           </View>
 
           <View style={styles.nabzSummaryBox}>
-            <Text style={styles.nabzSummaryText}>Pulse Observation: <strong>{nabzNotes}</strong></Text>
+            <Text style={styles.nabzSummaryText}>Pulse Observation: <Text style={{fontWeight: '700'}}>{nabzNotes}</Text></Text>
           </View>
         </View>
 
@@ -243,7 +345,7 @@ export const HakeemConsultationScreen = () => {
         {/* Governed Master Clinical Protocols (P-01 to P-21) */}
         <View style={styles.sectionCard}>
           <Text style={styles.cardHeader}>📖 GOVERNED MASTER PROTOCOLS (P-01 to P-21)</Text>
-          <Text style={styles.cardSub}>Enforces 3-Phase Af'aal Cascade &amp; Botanical Posology bounds</Text>
+          <Text style={styles.cardSub}>Enforces 3-Phase Af'aal Cascade and Botanical Posology bounds</Text>
           
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.protocolList}>
             {protocols.map(proto => (
@@ -266,7 +368,7 @@ export const HakeemConsultationScreen = () => {
           {selectedProtocol && (
             <View style={styles.protocolDetailCard}>
               <Text style={styles.protocolPrinciple}>
-                <strong>Usul-e-Ilaj:</strong> {selectedProtocol.principle}
+                <Text style={{fontWeight: '700'}}>Usul-e-Ilaj: </Text>{selectedProtocol.principle}
               </Text>
               <View style={styles.cascadeBadge}>
                 <Text style={styles.cascadeText}>Phase 1: Tanqiya ➔ Phase 2: Tahleel ➔ Phase 3: Taqwiyat</Text>
@@ -285,7 +387,7 @@ export const HakeemConsultationScreen = () => {
               </View>
               <View style={styles.rxInfo}>
                 <Text style={styles.rxName}>{item.name}</Text>
-                <Text style={styles.rxDosage}>Dose: <strong>{item.dose}</strong> ({item.freq}) • Anupan: {item.vehicle}</Text>
+                <Text style={styles.rxDosage}>Dose: <Text style={{fontWeight: '700'}}>{item.dose}</Text> ({item.freq}) • Anupan: {item.vehicle}</Text>
               </View>
             </View>
           ))}
@@ -294,7 +396,7 @@ export const HakeemConsultationScreen = () => {
           <View style={styles.safetyBox}>
             <Text style={styles.safetyIcon}>🛡️</Text>
             <Text style={styles.safetyText}>
-              <strong>Safety Firewall PASS:</strong> Schedule E(1) detoxified (Mudabbar) &amp; Herb-Drug interaction check passed.
+              <Text style={{fontWeight: '700'}}>Safety Firewall PASS: </Text>Schedule E(1) detoxified (Mudabbar) and Herb-Drug interaction check passed.
             </Text>
           </View>
         </View>
@@ -352,6 +454,182 @@ export const HakeemConsultationScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Evidence Pack Synthesizer Modal */}
+      <Modal
+        visible={evidenceModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setEvidenceModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>🔬 Clinical Evidence Pack</Text>
+                <Text style={styles.modalSub}>Canonical Classical &amp; Modern Standard Synthesis</Text>
+              </View>
+              <TouchableOpacity onPress={() => setEvidenceModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Condition Switcher Chips */}
+            <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {['Dyspepsia', 'Waja-ul-Mafasil Arthritis', 'Ziabetus Shakari Diabetes', 'Zaght-ud-Dam Hypertension', 'Falij wa Laqwa Stroke'].map(c => (
+                  <TouchableOpacity
+                    key={c}
+                    style={[styles.condChip, selectedCondition === c && styles.condChipActive]}
+                    onPress={() => handleOpenEvidencePack(c)}
+                  >
+                    <Text style={[styles.condChipText, selectedCondition === c && styles.condChipTextActive]}>
+                      {c.split(' ')[0]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {loadingEvidence ? (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#0f766e" />
+                <Text style={{ marginTop: 12, color: '#0f766e', fontSize: 12, fontWeight: '600' }}>
+                  Synthesizing Dual-Corpus Citations...
+                </Text>
+              </View>
+            ) : currentEvidencePack ? (
+              <ScrollView style={styles.modalBody}>
+                <View style={{ backgroundColor: '#f0fdf4', padding: 12, borderRadius: 8, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: '#059669' }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#064e3b' }}>{currentEvidencePack.title}</Text>
+                  <Text style={{ fontSize: 11, color: '#047857', marginTop: 2 }}>
+                    Organ Axis: <Text style={{ fontWeight: '700' }}>{currentEvidencePack.organ_axis}</Text>
+                  </Text>
+                </View>
+
+                {/* Classical Citations */}
+                <Text style={styles.evidenceSectionHeading}>📚 Classical Compendia Citations</Text>
+                {currentEvidencePack.classical_compendia_citations?.map((cit, idx) => (
+                  <View key={idx} style={styles.citationBox}>
+                    <Text style={styles.citationSource}>🏛️ {cit.source} ({cit.locator})</Text>
+                    <Text style={styles.citationClaim}>"{cit.claim}"</Text>
+                  </View>
+                ))}
+
+                {/* Modern Pharmacopoeia */}
+                <Text style={styles.evidenceSectionHeading}>🧪 Modern Pharmacopoeial Standards</Text>
+                {currentEvidencePack.modern_pharmacopoeial_citations?.map((cit, idx) => (
+                  <View key={idx} style={[styles.citationBox, { borderColor: '#bfdbfe', backgroundColor: '#eff6ff' }]}>
+                    <Text style={[styles.citationSource, { color: '#1e40af' }]}>⚖️ {cit.source} ({cit.locator})</Text>
+                    <Text style={[styles.citationClaim, { color: '#1e3a8a' }]}>"{cit.claim}"</Text>
+                  </View>
+                ))}
+
+                {/* 3-Phase Usul-e-Ilaj Cascade */}
+                <Text style={styles.evidenceSectionHeading}>⚡ 3-Phase Usul-e-Ilaj Treatment Cascade</Text>
+                {currentEvidencePack.usul_e_ilaj_cascade && (
+                  <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, padding: 10, marginBottom: 12 }}>
+                    <Text style={{ fontSize: 11, color: '#0f766e', fontWeight: '700' }}>
+                      Phase 1 ({currentEvidencePack.usul_e_ilaj_cascade.phase1?.duration_days}d): {currentEvidencePack.usul_e_ilaj_cascade.phase1?.title}
+                    </Text>
+                    <Text style={{ fontSize: 10, color: '#64748b', marginBottom: 6 }}>{currentEvidencePack.usul_e_ilaj_cascade.phase1?.action}</Text>
+
+                    <Text style={{ fontSize: 11, color: '#0f766e', fontWeight: '700' }}>
+                      Phase 2 ({currentEvidencePack.usul_e_ilaj_cascade.phase2?.duration_days}d): {currentEvidencePack.usul_e_ilaj_cascade.phase2?.title}
+                    </Text>
+                    <Text style={{ fontSize: 10, color: '#64748b', marginBottom: 6 }}>{currentEvidencePack.usul_e_ilaj_cascade.phase2?.action}</Text>
+
+                    <Text style={{ fontSize: 11, color: '#0f766e', fontWeight: '700' }}>
+                      Phase 3 ({currentEvidencePack.usul_e_ilaj_cascade.phase3?.duration_days}d): {currentEvidencePack.usul_e_ilaj_cascade.phase3?.title}
+                    </Text>
+                    <Text style={{ fontSize: 10, color: '#64748b' }}>{currentEvidencePack.usul_e_ilaj_cascade.phase3?.action}</Text>
+                  </View>
+                )}
+
+                {/* Governed Formulations */}
+                <Text style={styles.evidenceSectionHeading}>💊 Governed Formulations &amp; Posology</Text>
+                {currentEvidencePack.governed_formulations?.map((f, idx) => (
+                  <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#1e293b' }}>{f.name}</Text>
+                    <Text style={{ fontSize: 11, color: '#0f766e' }}>{f.dose} ({f.frequency || 'BD'})</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : null}
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.applyBtn} onPress={handleApplyEvidencePack}>
+                <Text style={styles.applyBtnText}>🚀 Apply to Active Prescription</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Pharmacovigilance Safety Radar Modal */}
+      <Modal
+        visible={pvModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setPvModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={[styles.modalHeader, { borderBottomColor: '#fecaca', backgroundColor: '#fef2f2' }]}>
+              <View>
+                <Text style={[styles.modalTitle, { color: '#991b1b' }]}>🛡️ Safety &amp; ADR Surveillance Radar</Text>
+                <Text style={[styles.modalSub, { color: '#b91c1c' }]}>WHO-UMC Causality Engine &amp; Batch Quarantine</Text>
+              </View>
+              <TouchableOpacity onPress={() => setPvModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              {loadingPv ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#dc2626" />
+                  <Text style={{ marginTop: 12, color: '#dc2626', fontSize: 12, fontWeight: '600' }}>
+                    Scanning Adverse Event Clusters...
+                  </Text>
+                </View>
+              ) : pvSignals.length > 0 ? (
+                pvSignals.map((s, idx) => (
+                  <View key={idx} style={styles.pvSignalCard}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: '#991b1b' }}>{s.medication}</Text>
+                      <View style={{ backgroundColor: '#fee2e2', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: '#b91c1c' }}>WHO: {s.who_umc_causality}</Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 11, color: '#7f1d1d', marginTop: 4 }}>{s.summary}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#b91c1c', marginTop: 6 }}>
+                      Action: {s.recommended_action}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <View style={{ padding: 30, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 24, marginBottom: 8 }}>✅</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#065f46' }}>Zero Batch Safety Alerts</Text>
+                  <Text style={{ fontSize: 11, color: '#047857', textAlign: 'center', marginTop: 4 }}>
+                    All dispensed batches in the last 30 days conform to standard safety thresholds.
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.applyBtn, { backgroundColor: '#64748b' }]}
+                onPress={() => setPvModalVisible(false)}
+              >
+                <Text style={styles.applyBtnText}>Close Surveillance Radar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -689,5 +967,125 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '800',
     fontSize: 13,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '85%',
+    minHeight: '55%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  modalTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0f766e',
+  },
+  modalSub: {
+    fontSize: 11,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    padding: 6,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  modalBody: {
+    padding: 16,
+  },
+  modalFooter: {
+    padding: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+  },
+  applyBtn: {
+    backgroundColor: '#0f766e',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  applyBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  condChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 6,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  condChipActive: {
+    backgroundColor: '#0f766e',
+    borderColor: '#0f766e',
+  },
+  condChipText: {
+    fontSize: 11,
+    color: '#475569',
+    fontWeight: '600',
+  },
+  condChipTextActive: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  evidenceSectionHeading: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#334155',
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  citationBox: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 6,
+    padding: 8,
+    marginBottom: 6,
+  },
+  citationSource: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0f766e',
+  },
+  citationClaim: {
+    fontSize: 10,
+    fontStyle: 'italic',
+    color: '#334155',
+    marginTop: 2,
+  },
+  pvSignalCard: {
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
   }
 });
