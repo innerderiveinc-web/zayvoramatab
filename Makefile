@@ -1,4 +1,4 @@
-.PHONY: test test-unit test-integration test-e2e migrate seed run package help
+.PHONY: test test-unit test-integration test-e2e migrate seed run package clean help
 
 help:
 	@echo "ZAYVORA MATAB OS — Developer Commands"
@@ -10,6 +10,13 @@ help:
 	@echo "  make seed             Seed synthetic development dataset"
 	@echo "  make run              Start the standalone MATAB OS server"
 	@echo "  make package          Create clean, secret-free release ZIP distribution"
+	@echo "  make clean            Clean pycache, test DB artifacts and temporary files"
+
+clean:
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type f -name "*.py[cod]" -delete 2>/dev/null || true
+	@rm -f test_*.db* test_cds_unit_* .coverage
+	@echo "Cleaned pycache, test DB artifacts and temp files."
 
 package:
 	@rm -f zayvora_matab_os_latest.zip zayvora_matab_os_distribution.zip

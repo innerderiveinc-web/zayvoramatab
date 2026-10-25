@@ -16,6 +16,8 @@ matab_os.db
 *.db-wal
 *.sqlite
 *.sqlite3
+test_*.db*
+test_cds_unit_*
 
 # Environment & Secrets
 .env
