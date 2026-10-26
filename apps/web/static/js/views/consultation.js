@@ -18,6 +18,7 @@ import { consultationMode, setConsultationMode, scrollToSection, toggleAllSectio
 import { applyNabzPreset, applyBaulPreset, calculateBMI } from "./consultation-assessment.js";
 import { currentPrintFormat, setPrintFormat, printPrescriptionDocument, applyQuickDuration, sendWhatsAppRx } from "./consultation-rx.js";
 import { openHakeemAiModal, closeHakeemAiModal, setAndRunHakeemAiQuery, queryHakeemAi } from "./consultation-ai.js";
+import { renderExpressOpdBar, applyExpressProtocol, CANONICAL_UNANI_DRUGS } from "./consultation-express.js";
 
 function escapeHtml(str) {
   if (str === null || str === undefined) return "";
@@ -88,6 +89,9 @@ export async function renderConsultation(container) {
         </div>
       </div>
     </div>
+
+    <!-- ⚡ Bedside Express OPD Protocol Bar (30-Second 1-Click Bundles & Fast Autocomplete) -->
+    ${renderExpressOpdBar()}
 
     <!-- Main Workspace Streamlined Grid (Full-Width, Uncluttered) -->
     <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start;" id="workspace-grid">
@@ -1091,6 +1095,52 @@ export async function renderConsultation(container) {
       addNuskhaItemRow();
     }
   });
+
+  // Wire 1-Click Express OPD Protocol Pills
+  container.querySelectorAll(".btn-protocol-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const pKey = btn.dataset.protocol;
+      applyExpressProtocol(pKey, addNuskhaItemRow, triggerAutosave);
+      container.querySelectorAll(".btn-protocol-pill").forEach(b => {
+        b.style.background = "#ffffff";
+        b.style.color = "#065f46";
+      });
+      btn.style.background = "#059669";
+      btn.style.color = "#ffffff";
+    });
+  });
+
+  // Wire Fast Medication Lookup (Enter-to-Add)
+  const fastInp = container.querySelector("#fast-drug-lookup-input");
+  const fastBtn = container.querySelector("#btn-fast-add-drug");
+  const addFromFastInput = () => {
+    if (!fastInp) return;
+    const rawVal = fastInp.value.trim();
+    if (!rawVal) return;
+    const cleanDrugName = rawVal.split("•")[0].trim();
+    const found = CANONICAL_UNANI_DRUGS.find(d => d.name.toLowerCase() === cleanDrugName.toLowerCase());
+    let doseAmt = 5;
+    let doseUnit = "g";
+    let freq = "BD";
+    if (found) {
+      if (found.form === "SHARBAT") { doseAmt = 20; doseUnit = "ml"; }
+      else if (found.form === "HAB" || found.form === "QURS") { doseAmt = 1; doseUnit = "hab"; }
+      else if (found.form === "ITRIFAL") { doseAmt = 7; doseUnit = "g"; freq = "HS"; }
+      else if (found.form === "LAUQ") { doseAmt = 7; doseUnit = "g"; freq = "HS"; }
+    }
+    addNuskhaItemRow({ item_name: cleanDrugName, dose_amount: doseAmt, dose_unit: doseUnit, frequency: freq, duration_days: 14 });
+    triggerAutosave();
+    if (window.showToast) window.showToast(`+ Added ${cleanDrugName} to Nuskha`, "info", 1500);
+    fastInp.value = "";
+    fastInp.focus();
+  };
+  fastInp?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addFromFastInput();
+    }
+  });
+  fastBtn?.addEventListener("click", addFromFastInput);
 
   // Initial load
   await loadActiveEncounterWorkspace();

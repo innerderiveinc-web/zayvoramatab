@@ -1,16 +1,20 @@
-.PHONY: test test-unit test-integration test-e2e migrate seed run package clean help
+.PHONY: test test-unit test-integration test-e2e lint-ui migrate seed run package clean help
 
 help:
 	@echo "ZAYVORA MATAB OS — Developer Commands"
-	@echo "  make test             Run full automated test suite"
+	@echo "  make test             Run full automated test suite (backend + UI linter)"
 	@echo "  make test-unit        Run unit test suite"
 	@echo "  make test-integration Run integration test suite"
 	@echo "  make test-e2e         Run end-to-end smoke test"
+	@echo "  make lint-ui          Run syntax validation across all frontend JS modules"
 	@echo "  make migrate          Apply database schema migrations"
 	@echo "  make seed             Seed synthetic development dataset"
 	@echo "  make run              Start the standalone MATAB OS server"
 	@echo "  make package          Create clean, secret-free release ZIP distribution"
 	@echo "  make clean            Clean pycache, test DB artifacts and temporary files"
+
+lint-ui:
+	python3 scripts/lint_ui.py
 
 clean:
 	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
@@ -26,7 +30,7 @@ package:
 		   ".env*" "!.env.example" ".matab_secret*" "*.zip" "test_cds_unit_*" ".system_generated/*"
 	@echo "Created clean release package: zayvora_matab_os_latest.zip"
 
-test:
+test: lint-ui
 	python3 -m unittest discover -s tests -p "test_*.py" -v
 
 test-unit:
