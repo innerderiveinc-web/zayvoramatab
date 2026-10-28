@@ -24,7 +24,8 @@ class DatabaseConnection:
         # Enforce foreign key constraints, high-concurrency Write-Ahead Logging, and cache
         conn.execute("PRAGMA foreign_keys = ON;")
         conn.execute("PRAGMA journal_mode = WAL;")
-        conn.execute("PRAGMA busy_timeout = 10000;")
+        conn.execute("PRAGMA busy_timeout = 30000;")  # 30-second busy timeout for hospital-scale multi-user concurrency
+        conn.execute("PRAGMA wal_autocheckpoint = 1000;")
         conn.execute("PRAGMA synchronous = NORMAL;")
         conn.execute("PRAGMA cache_size = -64000;")
         conn.execute("PRAGMA temp_store = MEMORY;")

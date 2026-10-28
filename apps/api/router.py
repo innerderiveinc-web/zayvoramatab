@@ -1360,12 +1360,24 @@ class ApiRouter:
                             resp_bytes = json.dumps(e.to_dict()).encode("utf-8")
                             return e.status_code, {"Content-Type": "application/json", "X-Request-Id": request_id}, resp_bytes
                         except Exception as e:
+                            import traceback
+                            from datetime import datetime
+                            tb_str = traceback.format_exc()
+                            sys.stderr.write(f"\n[!] RECOVERED ROUTE EXCEPTION in {method} {path} [Req: {request_id}]:\n{tb_str}\n")
+                            try:
+                                log_dir = Path(__file__).resolve().parent.parent.parent / "logs"
+                                log_dir.mkdir(parents=True, exist_ok=True)
+                                with open(log_dir / "server_errors.log", "a", encoding="utf-8") as lf:
+                                    lf.write(f"[{datetime.now().isoformat()}] [{request_id}] {method} {path}\n{tb_str}\n---\n")
+                            except Exception:
+                                pass
+
                             err_resp = {
                                 "error": True,
                                 "code": "INTERNAL_SERVER_ERROR",
-                                "message": "An internal server error occurred.",
+                                "message": "An internal server error occurred and was safely captured by the clinical supervisor.",
                                 "request_id": request_id,
-                                "details": {}
+                                "details": {"path": path, "method": method}
                             }
                             resp_bytes = json.dumps(err_resp).encode("utf-8")
                             return 500, {"Content-Type": "application/json", "X-Request-Id": request_id}, resp_bytes

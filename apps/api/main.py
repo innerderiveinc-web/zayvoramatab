@@ -67,6 +67,13 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
             self.send_header("X-Frame-Options", "SAMEORIGIN")
         if "x-xss-protection" not in custom_lower:
             self.send_header("X-XSS-Protection", "1; mode=block")
+        if "referrer-policy" not in custom_lower:
+            self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        if "permissions-policy" not in custom_lower:
+            self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+        if "content-security-policy" not in custom_lower:
+            csp = "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+            self.send_header("Content-Security-Policy", csp)
         if "cache-control" not in custom_lower:
             self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
             self.send_header("Pragma", "no-cache")
@@ -79,18 +86,26 @@ class MatabRequestHandler(BaseHTTPRequestHandler):
 
         # 1. API Route Dispatch
         if path.startswith("/api/"):
-            content_length = int(self.headers.get("Content-Length", 0))
-            body_bytes = self.rfile.read(content_length) if content_length > 0 else b""
-            client_ip = self.client_address[0]
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body_bytes = self.rfile.read(content_length) if content_length > 0 else b""
+                client_ip = self.client_address[0]
 
-            status_code, resp_headers, resp_bytes = ApiRouter.dispatch(
-                method=method,
-                path=path,
-                headers=dict(self.headers),
-                query_params=query_params,
-                body_bytes=body_bytes,
-                client_ip=client_ip
-            )
+                status_code, resp_headers, resp_bytes = ApiRouter.dispatch(
+                    method=method,
+                    path=path,
+                    headers=dict(self.headers),
+                    query_params=query_params,
+                    body_bytes=body_bytes,
+                    client_ip=client_ip
+                )
+            except Exception as e:
+                import traceback
+                import json
+                sys.stderr.write(f"[!] Top-level gateway exception: {e}\n{traceback.format_exc()}\n")
+                status_code = 500
+                resp_headers = {"Content-Type": "application/json"}
+                resp_bytes = json.dumps({"error": True, "message": "Captured unhandled gateway error."}).encode("utf-8")
 
             self.send_response(status_code)
             self._send_security_headers(resp_headers)
@@ -174,6 +189,13 @@ def start_server():
 
     # Apply database migrations on boot
     run_migrations()
+
+    # Layer 3 ACID Armor: Start background database snapshot daemon
+    try:
+        from apps.api.core.backup_daemon import start_backup_daemon
+        start_backup_daemon(interval_seconds=3600)
+    except Exception as daemon_err:
+        print(f"[*] Backup daemon startup notice: {daemon_err}")
 
     print(f"Server listening on http://{config.host}:{config.port}")
     print(f"Local Access: http://127.0.0.1:{config.port} or http://localhost:{config.port}")

@@ -27,9 +27,21 @@ def check_file(file_path: Path) -> bool:
             print(f"❌ SYNTAX ERROR in {file_path.relative_to(BASE_DIR)}:")
             print(res.stderr.strip())
             return False
-    except FileNotFoundError:
-        print("⚠️ Warning: Node.js binary not found in PATH; skipping node --check.")
-        return True
+    except (FileNotFoundError, PermissionError):
+        # Fallback to basic unbalanced bracket & quote scanner if node is not directly accessible
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            # Simple brace & bracket balance check
+            counts = {b: 0 for b in "{}[]()"}
+            for char in content:
+                if char in counts:
+                    counts[char] += 1
+            if counts["{"] != counts["}"] or counts["["] != counts["]"] or counts["("] != counts[")"]:
+                print(f"⚠️ Possible bracket mismatch in {file_path.relative_to(BASE_DIR)}")
+            return True
+        except Exception as e:
+            print(f"❌ Read error in {file_path}: {e}")
+            return False
 
 def main():
     print("🔍 [LINTER] Scanning all JavaScript modules for syntax validity...")

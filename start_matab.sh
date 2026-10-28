@@ -80,5 +80,61 @@ if command -v open >/dev/null 2>&1; then
   (sleep 1.2 && open "http://127.0.0.1:${MATAB_PORT}") &
 fi
 
-"$PYTHON_BIN" "$DIR/apps/api/main.py"
+# ==============================================================================
+# Layer 2: Self-Healing Process Supervisor Watchdog
+# Automatically recovers the server if it terminates unexpectedly,
+# logs crash diagnostics, and enforces rate-limited restart backoff.
+# ==============================================================================
+CRASH_LOG="$DIR/logs/crash_supervisor.log"
+mkdir -p "$DIR/logs"
+
+MAX_RETRIES=5
+RETRY_COUNT=0
+LAST_CRASH_TIME=0
+
+cleanup() {
+  echo ""
+  echo "[*] Graceful shutdown signal received. Stopping ZAYVORA MATAB OS..."
+  if [ -n "$SERVER_PID" ]; then
+    kill -15 "$SERVER_PID" 2>/dev/null || true
+    wait "$SERVER_PID" 2>/dev/null || true
+  fi
+  exit 0
+}
+trap cleanup SIGINT SIGTERM SIGHUP
+
+echo "🛡️ Supervisor Watchdog: Self-healing process recovery active."
+
+while true; do
+  "$PYTHON_BIN" "$DIR/apps/api/main.py" &
+  SERVER_PID=$!
+  wait "$SERVER_PID"
+  EXIT_CODE=$?
+
+  # Exit code 0 or 130 (SIGINT Ctrl+C) means clean intentional shutdown
+  if [ "$EXIT_CODE" -eq 0 ] || [ "$EXIT_CODE" -eq 130 ]; then
+    echo "[*] Server stopped cleanly (Exit code: $EXIT_CODE)."
+    break
+  fi
+
+  CURRENT_TIME=$(date +%s)
+  echo "[!] [CRASH DETECTED] Server process terminated abnormally with exit code $EXIT_CODE at $(date)." | tee -a "$CRASH_LOG"
+
+  # Reset retry counter if last crash was > 60 seconds ago
+  TIME_DIFF=$((CURRENT_TIME - LAST_CRASH_TIME))
+  if [ "$TIME_DIFF" -gt 60 ]; then
+    RETRY_COUNT=0
+  fi
+  LAST_CRASH_TIME=$CURRENT_TIME
+  RETRY_COUNT=$((RETRY_COUNT + 1))
+
+  if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+    echo "❌ FATAL: Server crashed $MAX_RETRIES times in short succession. Halting auto-restart to protect system." | tee -a "$CRASH_LOG"
+    echo "Inspect $CRASH_LOG for detailed diagnostics."
+    exit 1
+  fi
+
+  echo "🔄 [SELF-HEALING] Auto-recovering server in 2 seconds (Attempt $RETRY_COUNT of $MAX_RETRIES)..."
+  sleep 2
+done
 

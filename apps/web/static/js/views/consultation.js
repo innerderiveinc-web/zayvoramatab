@@ -19,6 +19,7 @@ import { applyNabzPreset, applyBaulPreset, calculateBMI } from "./consultation-a
 import { currentPrintFormat, setPrintFormat, printPrescriptionDocument, applyQuickDuration, sendWhatsAppRx } from "./consultation-rx.js";
 import { openHakeemAiModal, closeHakeemAiModal, setAndRunHakeemAiQuery, queryHakeemAi } from "./consultation-ai.js";
 import { renderExpressOpdBar, applyExpressProtocol, CANONICAL_UNANI_DRUGS } from "./consultation-express.js";
+import { DraftManager } from "../draft_manager.js";
 
 function escapeHtml(str) {
   if (str === null || str === undefined) return "";
@@ -85,6 +86,27 @@ export async function renderConsultation(container) {
           </button>
           <button id="btn-toggle-drawer" class="btn btn-secondary btn-sm" onclick="window.toggleContextDrawer()" style="font-size: 0.74rem; padding: 0.2rem 0.5rem;" title="Show/Hide Audit & Gates Sidebar">
             📊 Audit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 💾 Layer 1 Zero-Data-Loss: Unsaved Local Draft Recovery Banner -->
+    <div id="local-draft-banner" style="display: none; margin-bottom: 0.75rem; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1.5px solid #f59e0b; border-radius: 8px; padding: 0.65rem 1rem; box-shadow: 0 2px 4px rgba(245,158,11,0.12);">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.25rem;">💾</span>
+          <div>
+            <div style="font-weight: 800; color: #92400e; font-size: 0.88rem;">Unsaved Bedside Draft Detected (<span id="draft-saved-time">recently</span>)</div>
+            <div style="font-size: 0.76rem; color: #b45309;" id="draft-summary-text">Preserved prescription items and clinical observations are ready to be restored.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.4rem; align-items: center;">
+          <button type="button" class="btn btn-sm" onclick="window.restoreLocalConsultationDraft()" style="background: #d97706; color: #ffffff; font-weight: 700; border: none; padding: 0.35rem 0.85rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+            🔄 Restore Draft
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.discardLocalConsultationDraft()" style="font-size: 0.76rem; padding: 0.35rem 0.65rem; border-color: #cbd5e1; background: #ffffff;">
+            Discard
           </button>
         </div>
       </div>
@@ -1040,6 +1062,8 @@ export async function renderConsultation(container) {
   window.openSwitchPatientModal = openSwitchPatientModal;
   window.closeSwitchPatientModal = closeSwitchPatientModal;
   window.selectPatientForConsultation = selectPatientForConsultation;
+  window.restoreLocalConsultationDraft = restoreLocalConsultationDraft;
+  window.discardLocalConsultationDraft = discardLocalConsultationDraft;
 
   // Master Clinical System Architecture (Prompt 10)
   window.toggle12AxisProfiler = toggle12AxisProfiler;
@@ -1169,6 +1193,7 @@ async function loadActiveEncounterWorkspace() {
     populateWorkspaceUI(workspaceData);
     setupAutosaveListeners();
     await fetchMasterClinicalData();
+    checkAndDisplayLocalDraft();
   } catch (err) {
     console.error("Failed to load consultation workspace:", err);
     const banner = document.getElementById("banner-patient-name");
@@ -1962,24 +1987,173 @@ function gatherAutosavePayload() {
 }
 
 async function executeAutosave() {
-  if (isSaving || !activeEncounterId) return;
+  if (isSaving) return;
   isSaving = true;
 
   const statusEl = document.getElementById("autosave-status");
-  statusEl.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--matab-color-status-info);"></span> Saving...`;
+  if (statusEl) {
+    statusEl.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--matab-color-status-info);"></span> Saving...`;
+  }
 
+  const payload = gatherAutosavePayload();
+  const currentPatId = state.activePatientId;
+
+  // Layer 1 Zero-Data-Loss: Always persist to client-side localStorage first
   try {
-    const payload = gatherAutosavePayload();
-    const res = await apiClient.post(`/api/v1/encounters/${activeEncounterId}/autosave`, payload);
-    if (workspaceData) {
-      workspaceData.encounter.version = res.version_number;
+    const patientNameEl = document.getElementById("banner-patient-name");
+    const patName = patientNameEl ? patientNameEl.innerText : "";
+    DraftManager.saveDraft(currentPatId, activeEncounterId, {
+      ...payload,
+      patientId: currentPatId,
+      patientName: patName
+    });
+  } catch (draftErr) {
+    console.warn("Local draft save error:", draftErr);
+  }
+
+  // Server-side synchronization
+  try {
+    if (activeEncounterId) {
+      const res = await apiClient.post(`/api/v1/encounters/${activeEncounterId}/autosave`, payload);
+      if (workspaceData && res && res.version_number) {
+        workspaceData.encounter.version = res.version_number;
+      }
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--matab-color-status-success);"></span> Synced`;
+      }
+    } else {
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--matab-color-status-success);"></span> Saved Locally`;
+      }
     }
-    statusEl.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--matab-color-status-success);"></span> Synchronized`;
   } catch (err) {
-    statusEl.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--matab-color-status-danger);"></span> Save error`;
-    console.error("Autosave failed:", err);
+    // Graceful offline fallback: The draft is already safe in localStorage!
+    if (statusEl) {
+      statusEl.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f59e0b;"></span> 💾 Saved Locally (Offline)`;
+    }
+    console.warn("Server autosave failed (draft safely preserved locally):", err);
   } finally {
     isSaving = false;
+  }
+}
+
+function checkAndDisplayLocalDraft() {
+  const banner = document.getElementById("local-draft-banner");
+  if (!banner) return;
+  const draft = DraftManager.getDraft(state.activePatientId);
+  if (!draft || !draft.data) {
+    banner.style.display = "none";
+    return;
+  }
+
+  const items = draft.data.prescription?.items || [];
+  const hasContent = items.length > 0 || (draft.data.reason_for_visit && draft.data.reason_for_visit.length > 3);
+  if (!hasContent) {
+    banner.style.display = "none";
+    return;
+  }
+
+  const timeAgo = DraftManager.formatTimeAgo(draft.timestamp);
+  const timeEl = document.getElementById("draft-saved-time");
+  if (timeEl) timeEl.innerText = timeAgo;
+
+  const summaryEl = document.getElementById("draft-summary-text");
+  if (summaryEl) {
+    summaryEl.innerText = `Draft contains ${items.length} prescription medicine${items.length === 1 ? '' : 's'} and clinical notes from ${timeAgo}.`;
+  }
+  banner.style.display = "block";
+}
+
+function restoreLocalConsultationDraft() {
+  const draft = DraftManager.getDraft(state.activePatientId);
+  if (!draft || !draft.data) {
+    if (typeof window.showToast === "function") window.showToast("No saved local draft found.", "warning");
+    return;
+  }
+  const d = draft.data;
+
+  // 1. Visit details
+  if (d.reason_for_visit) {
+    const el = document.getElementById("input-reason-visit");
+    if (el) el.value = d.reason_for_visit;
+  }
+  if (d.encounter_type) {
+    const el = document.getElementById("input-encounter-type");
+    if (el) el.value = d.encounter_type;
+  }
+
+  // 2. Unani assessment
+  if (d.unani_assessment) {
+    const u = d.unani_assessment;
+    if (u.chief_complaints && document.getElementById("input-chief-complaints")) {
+      document.getElementById("input-chief-complaints").value = u.chief_complaints;
+    }
+    if (u.hpi && document.getElementById("input-hpi")) {
+      document.getElementById("input-hpi").value = u.hpi;
+    }
+    if (u.nabz_notes && document.getElementById("input-nabz-notes")) {
+      document.getElementById("input-nabz-notes").value = u.nabz_notes;
+    }
+    if (u.baul_notes && document.getElementById("input-baul-notes")) {
+      document.getElementById("input-baul-notes").value = u.baul_notes;
+    }
+    if (u.baraz_notes && document.getElementById("input-baraz-notes")) {
+      document.getElementById("input-baraz-notes").value = u.baraz_notes;
+    }
+    if (u.mizaj_current && document.getElementById("input-mizaj-assessment")) {
+      document.getElementById("input-mizaj-assessment").value = u.mizaj_current;
+    }
+  }
+
+  // 3. Care plan
+  if (d.care_plan) {
+    const c = d.care_plan;
+    if (c.ghiza && document.getElementById("input-ghiza-diet")) {
+      document.getElementById("input-ghiza-diet").value = c.ghiza;
+    }
+    if (c.parhez && document.getElementById("input-parhez-avoid")) {
+      document.getElementById("input-parhez-avoid").value = c.parhez;
+    }
+    if (c.tadbeer_notes && document.getElementById("input-tadbeer-notes")) {
+      document.getElementById("input-tadbeer-notes").value = c.tadbeer_notes;
+    }
+  }
+
+  // 4. Prescription Items
+  const items = d.prescription?.items || [];
+  if (items.length > 0) {
+    const tbody = document.getElementById("tbody-nuskha-items");
+    if (tbody) {
+      tbody.innerHTML = "";
+      items.forEach(it => {
+        addNuskhaItemRow({
+          item_name: it.item_name || it.drug_name || it.name,
+          dose_amount: it.dose_amount || it.dose,
+          dose_unit: it.dose_unit || it.unit,
+          frequency: it.frequency,
+          duration_days: it.duration_days || it.days,
+          anupan_vehicle: it.anupan_vehicle || it.vehicle
+        });
+      });
+    }
+  }
+
+  // Hide draft banner
+  const banner = document.getElementById("local-draft-banner");
+  if (banner) banner.style.display = "none";
+
+  if (typeof window.showToast === "function") {
+    window.showToast(`✓ Restored ${items.length} prescription item(s) from local draft!`, "success");
+  }
+  triggerAutosave();
+}
+
+function discardLocalConsultationDraft() {
+  DraftManager.clearDraft(state.activePatientId);
+  const banner = document.getElementById("local-draft-banner");
+  if (banner) banner.style.display = "none";
+  if (typeof window.showToast === "function") {
+    window.showToast("Local draft discarded.", "info");
   }
 }
 
@@ -2239,6 +2413,7 @@ async function submitElectronicSignature() {
     };
 
     const res = await apiClient.post(`/api/v1/encounters/${activeEncounterId}/finalize`, payload);
+    DraftManager.clearDraft(state.activePatientId);
     closeSignModal();
     alert("✓ Consultation successfully electronically signed, locked, and finalized!");
     await loadActiveEncounterWorkspace();
