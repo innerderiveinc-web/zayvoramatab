@@ -64,10 +64,11 @@ def main():
     print(f"\n📊 [LINTER RESULT] {passed}/{total} JavaScript files verified cleanly.")
     if failed_files:
         print(f"❌ {len(failed_files)} file(s) failed syntax validation!")
-        sys.exit(1)
+        return False
     else:
         print("✅ All JavaScript modules are 100% syntactically valid.\n")
-        sys.exit(0)
+        return True
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    sys.exit(0 if success else 1)
