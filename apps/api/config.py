@@ -32,6 +32,8 @@ DEFAULT_INSECURE_KEYS = [
 
 @dataclass
 class AppConfig:
+    company_name: str = "Qsura India Pvt Ltd"
+    founder_architect: str = "Dr. Irfan Ashraf"
     env: str = os.getenv("MATAB_ENV", "development").lower()
     profile: str = os.getenv("MATAB_PROFILE", "MATAB").upper()
     host: str = os.getenv("MATAB_HOST", "0.0.0.0")

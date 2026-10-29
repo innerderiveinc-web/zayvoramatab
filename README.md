@@ -1,12 +1,16 @@
 # ZAYVORA MATAB OS (Version 2.0)
 
 > **Unani-first clinical operating system, supported by modern clinical workflows and autonomous agentic safety pipelines.**  
-> *Simple for an individual Hakeem. Complete for a clinic. Enterprise-grade for a multi-facility hospital.*
+> *Simple for an individual Hakeem. Complete for a clinic. Enterprise-grade for a multi-facility hospital.*  
+> 
+> **Proprietary Technology of Qsura India Pvt Ltd**  
+> **Founder & Chief System Architect:** Dr. Irfan Ashraf
 
-[![License: Proprietary / Enterprise](https://img.shields.io/badge/License-Enterprise-emerald.svg)](#)
+[![License: Proprietary / Qsura India](https://img.shields.io/badge/License-Qsura%20India%20Pvt%20Ltd-emerald.svg)](#)
+[![Architect: Dr. Irfan Ashraf](https://img.shields.io/badge/Architect-Dr.%20Irfan%20Ashraf-blue.svg)](#)
 [![Python: 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](#)
-[![SQLite: WAL](https://img.shields.io/badge/Storage-SQLite%20WAL-lightgrey.svg)](#)
-[![Tests: 524 Passing](https://img.shields.io/badge/Tests-524%20Passing-success.svg)](#)
+[![Storage: SQLite WAL](https://img.shields.io/badge/Storage-SQLite%20WAL-lightgrey.svg)](#)
+[![Tests: 930 Total](https://img.shields.io/badge/Tests-930%20Passing-success.svg)](#)
 [![Clinical Safety: 100%](https://img.shields.io/badge/Safety%20Preflight-Deterministic-purple.svg)](#)
 
 ---
@@ -195,3 +199,12 @@ python3 apps/api/main.py
 - **Clinician-in-the-Loop:** AI assistants never sign prescriptions; electronic signing requires practitioner PIN verification.
 - **Tamper-Evident Ledger:** Prescriptions and audit events are cryptographically sealed with SHA-256 forward-hash chaining.
 - **Zero Secrets / Zero External Calls:** Designed to function entirely offline on local premises without exposing patient protected health information (PHI) to third-party cloud services.
+
+---
+
+## 8. Intellectual Property & Commercial Governance
+
+- **Corporate Legal Owner:** **Qsura India Pvt Ltd** (All Rights Reserved)
+- **Founder & Chief System Architect:** **Dr. Irfan Ashraf**
+- **Proprietary Classification:** All algorithms, 57 database schema migrations, 518 tables, Unani decision support engines (10-Ajnas, 12-Axis Organ Scores), KAVS verification system, and 30-Second Express Bedside OPD workflows are the exclusive proprietary property of Qsura India Pvt Ltd.
+- **Commercial Licensing:** Single-facility and multi-room enterprise deployments require a valid Software License Agreement (SLA / EULA) issued by Qsura India Pvt Ltd. Contact corporate governance for enterprise deployments.

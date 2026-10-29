@@ -1,0 +1,44 @@
+PROPRIETARY & CONFIDENTIAL ENTERPRISE LICENSE
+================================================================================
+ZAYVORA MATAB OS — Clinical Hospital Information & Bedside Decision Support System
+Copyright (c) 2026 Qsura India Pvt Ltd. All Rights Reserved.
+
+FOUNDER & CHIEF SYSTEM ARCHITECT:
+Dr. Irfan Ashraf
+
+CORPORATE ENTITY & LEGAL OWNER:
+Qsura India Pvt Ltd
+
+================================================================================
+TERMS OF PROPRIETARY USE & INTELLECTUAL PROPERTY NOTICE
+================================================================================
+
+1. OWNERSHIP OF INTELLECTUAL PROPERTY:
+   All rights, title, and interest in and to ZAYVORA MATAB OS—including but not
+   limited to its clinical database schemas (57 migrations), Unani decision support
+   engines (10-Ajnas, 12-Axis Organ Scores), KAVS verification system, statutory
+   formulation posology algorithms, 30-Second Express Bedside OPD engines, and
+   all software code, user interface designs, and documentation—are the exclusive
+   proprietary intellectual property of Qsura India Pvt Ltd, founded and architected
+   by Dr. Irfan Ashraf.
+
+2. RESTRICTIONS:
+   No part of this software, monorepo, database structure, or clinical algorithms
+   may be copied, reproduced, disassembled, decompiled, reverse-engineered, modified,
+   sublicensed, distributed, or transmitted in any form or by any means, electronic
+   or mechanical, without prior written express consent from Qsura India Pvt Ltd.
+
+3. COMMERCIAL LICENSING:
+   Use of this software in commercial hospitals, private matabs, clinics, or academic
+   institutions is strictly contingent upon holding a valid, authorized Software License
+   Agreement (SLA / EULA) issued directly by Qsura India Pvt Ltd.
+
+4. CLINICAL DISCLAIMER & COMPLIANCE:
+   ZAYVORA MATAB OS is a clinical information and decision-support operating system.
+   Final diagnosis, prescription authorization, and medical responsibility remain
+   strictly with the registered medical practitioner (BUMS / MD / MBBS) holding a
+   valid license from their respective State Medical Council or Statutory Authority.
+
+For corporate inquiries, enterprise licensing, or pilot facility onboarding:
+Corporate Headquarters: Qsura India Pvt Ltd
+================================================================================

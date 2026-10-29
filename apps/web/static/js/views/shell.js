@@ -47,7 +47,7 @@ export function renderShell(container, onNavigate, onLogout) {
           <span class="status-dot-pulse" title="System Operational"></span>
           <span>${(user?.org_name || "ZAYVORA Matab & Hospital").replace(/\s*\[Synthetic\]/gi, "")}</span>
           <span style="opacity: 0.6;">|</span>
-          <span style="font-size: 0.75rem; color: #a7f3d0;">HL7 FHIR & ABDM Active</span>
+          <span style="font-size: 0.73rem; color: #a7f3d0;" title="Proprietary Property of Qsura India Pvt Ltd • Architect: Dr. Irfan Ashraf">Qsura India</span>
         </div>
       </div>
 
